@@ -15,8 +15,8 @@ class TestAuth(unittest.TestCase):
     def setUpClass(cls):
         cls.ev_loop: asyncio.BaseEventLoop = asyncio.get_event_loop()
 
-        api_key = conf.bitfinex_api_key
-        secret_key = conf.bitfinex_secret_key
+        api_key = conf.latoken_api_key
+        secret_key = conf.latoken_secret_key
         cls.auth = LatokenAuth(api_key, secret_key)
 
     async def con_auth(self):
