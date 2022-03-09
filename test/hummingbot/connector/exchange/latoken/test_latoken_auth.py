@@ -45,11 +45,11 @@ class LatokenAuthTests(TestCase):
             self._secret_key.encode("utf-8"),  # differs a bit from the official latoken api where they use b string
             ('GET' + endpoint + encoded_params).encode('ascii'),
             hashlib.sha512
-        )
+        ).hexdigest()
         # self.assertEqual(now * 1e3, configured_request.params["timestamp"])
         # self.assertEqual(expected_signature, configured_request.params["signature"])
         self.assertEqual({"X-LA-APIKEY": self._api_key,
-                          "X-LA-SIGNATURE": expected_rest_signature_get.hexdigest(),
+                          "X-LA-SIGNATURE": expected_rest_signature_get,
                           "X-LA-DIGEST": hashlib.sha512}, configured_request.headers)
 
     # todo implement function definitions
