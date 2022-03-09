@@ -1,6 +1,6 @@
 from decimal import Decimal
 # https://github.com/LATOKEN/latoken-api-v2-python-client/blob/main/latoken/client.py
-AUTH_PART = "/v2/auth"
+AUTH_PART = "/auth"
 # https://api.latoken.com/doc/v2/
 LATOKEN_REST_URL = "https://api.latoken.com/v2"
 LATOKEN_REST_AUTH_URL = LATOKEN_REST_URL + AUTH_PART

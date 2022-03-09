@@ -1,8 +1,10 @@
 from decimal import Decimal
+
+
 # https://github.com/LATOKEN/latoken-api-v2-python-client/blob/main/latoken/client.py
 AUTH_PART = "/v2/auth"
 # https://api.latoken.com/doc/v2/
-LATOKEN_REST_URL = "https://api.latoken.com/v2"
+LATOKEN_REST_URL = "https://api.latoken.com"
 LATOKEN_REST_AUTH_URL = LATOKEN_REST_URL + AUTH_PART
 # https://api.latoken.com/doc/ws/#section/Authorization-Using-API-Key-Signature
 LATOKEN_WS_URI = "wss://api.latoken.com/stomp"

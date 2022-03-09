@@ -14,8 +14,8 @@ from hummingbot.core.web_assistant.connections.data_types import RESTMethod, RES
 class BinanceAuthTests(TestCase):
 
     def setUp(self) -> None:
-        self._api_key = "testApiKey"
-        self._secret = "testSecret"
+        self._api_key = "70e46c0c-7400-4746-a50a-0b9e377c2f76"
+        self._secret = "ODRlMmM4ZDAtOTYwOC00OWFjLWFlOWQtOGI1NWIzNmQzOGU0"
 
     def async_run_with_timeout(self, coroutine: Awaitable, timeout: float = 1):
         ret = asyncio.get_event_loop().run_until_complete(asyncio.wait_for(coroutine, timeout))
