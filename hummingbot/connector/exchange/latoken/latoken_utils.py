@@ -1,6 +1,6 @@
 # import os
 # import socket
-# from typing import Any, Dict
+from typing import Any, Dict
 
 import hummingbot.connector.exchange.latoken.latoken_constants as CONSTANTS
 
@@ -31,13 +31,13 @@ DEFAULT_FEES = [0.1, 0.1]
 #     return f"{CONSTANTS.HBOT_ORDER_ID_PREFIX}-{side}{base_str}{quote_str}{client_instance_id}{get_tracking_nonce()}"
 
 
-# def is_exchange_information_valid(exchange_info: Dict[str, Any]) -> bool:
-#     """
-#     Verifies if a trading pair is enabled to operate with based on its exchange information
-#     :param exchange_info: the exchange information for a trading pair
-#     :return: True if the trading pair is enabled, False otherwise
-#     """
-#     return exchange_info.get("status", None) == "TRADING" and "SPOT" in exchange_info.get("permissions", list())
+def is_exchange_information_valid(exchange_info: Dict[str, Any]) -> bool:
+    """
+    Verifies if a trading pair is enabled to operate with based on its exchange information
+    :param exchange_info: the exchange information for a trading pair
+    :return: True if the trading pair is enabled, False otherwise
+    """
+    return exchange_info.get("status", None) == "TRADING" and "SPOT" in exchange_info.get("permissions", list())
 
 
 def public_rest_url(path_url: str, domain: str = "com") -> str:

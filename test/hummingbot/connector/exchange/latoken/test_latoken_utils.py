@@ -59,7 +59,7 @@ class LatokenUtilTestCases(unittest.TestCase):
     #
     #     self.assertTrue(utils.is_exchange_information_valid(invalid_info_4))
     #
-    # @patch("hummingbot.connector.exchange.binance.binance_utils.get_tracking_nonce")
+    # @patch("hummingbot.connector.exchange.latoken.latoken_utils.get_tracking_nonce")
     # def test_client_order_id_generation(self, nonce_mock):
     #     nonce = int(time.time() * 1e6)
     #     nonce_mock.return_value = nonce

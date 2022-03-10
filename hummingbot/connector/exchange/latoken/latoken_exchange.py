@@ -19,8 +19,8 @@ from hummingbot.connector.exchange_base import ExchangeBase
 from hummingbot.connector.exchange.latoken import latoken_utils
 # from hummingbot.connector.exchange.latoken.latoken_api_order_book_data_source import LatokenAPIOrderBookDataSource
 from hummingbot.connector.exchange.latoken.latoken_auth import LatokenAuth
-# from hummingbot.connector.exchange.latoken.latoken_order_book_tracker import LatokenOrderBookTracker
-# from hummingbot.connector.exchange.latoken.latoken_user_stream_tracker import LatokenUserStreamTracker
+from hummingbot.connector.exchange.latoken.latoken_order_book_tracker import LatokenOrderBookTracker
+from hummingbot.connector.exchange.latoken.latoken_user_stream_tracker import LatokenUserStreamTracker
 from hummingbot.connector.time_synchronizer import TimeSynchronizer
 from hummingbot.connector.trading_rule import TradingRule
 # from hummingbot.connector.utils import TradeFillOrderDetails
@@ -82,12 +82,12 @@ class LatokenExchange(ExchangeBase):
         self._api_factory = WebAssistantsFactory(auth=self._auth)
         self._rest_assistant = None
         self._throttler = AsyncThrottler(CONSTANTS.RATE_LIMITS)
-        # self._order_book_tracker = LatokenOrderBookTracker(
-        #     trading_pairs=trading_pairs,
-        #     domain=domain,
-        #     api_factory=self._api_factory,
-        #     throttler=self._throttler)
-        # self._user_stream_tracker = LatokenUserStreamTracker(auth=self._auth, domain=domain, throttler=self._throttler)
+        self._order_book_tracker = LatokenOrderBookTracker(
+            trading_pairs=trading_pairs,
+            domain=domain,
+            api_factory=self._api_factory,
+            throttler=self._throttler)
+        self._user_stream_tracker = LatokenUserStreamTracker(auth=self._auth, domain=domain, throttler=self._throttler)
         self._ev_loop = asyncio.get_event_loop()
         self._poll_notifier = asyncio.Event()
         self._last_timestamp = 0

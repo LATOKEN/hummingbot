@@ -11,19 +11,19 @@ PUBLIC_API_VERSION = "v2"
 PRIVATE_API_VERSION = "v2"
 
 # Public API endpoints or BinanceClient function
-# TICKER_PRICE_CHANGE_PATH_URL = "/ticker/24hr"
-# EXCHANGE_INFO_PATH_URL = "/exchangeInfo"
+TICKER_PRICE_CHANGE_PATH_URL = "/ticker/24hr"
+EXCHANGE_INFO_PATH_URL = "/exchangeInfo"
 PING_PATH_URL = "/time"
-# SNAPSHOT_PATH_URL = "/depth"
+SNAPSHOT_PATH_URL = "/depth"
 SERVER_TIME_PATH_URL = "/time"
 
 # Private API endpoints or BinanceClient function
 ACCOUNTS_PATH_URL = "/auth/account"
 # MY_TRADES_PATH_URL = "/myTrades"
 # ORDER_PATH_URL = "/order"
-# BINANCE_USER_STREAM_PATH_URL = "/userDataStream"
+LATOKEN_USER_STREAM_PATH_URL = "/userDataStream"
 
-# WS_HEARTBEAT_TIME_INTERVAL = 30
+WS_HEARTBEAT_TIME_INTERVAL = 30
 #
 # # Binance params
 #
@@ -61,8 +61,8 @@ ORDER_STATE = {
 }
 
 # # Websocket event types
-# DIFF_EVENT_TYPE = "depthUpdate"
-# TRADE_EVENT_TYPE = "trade"
+DIFF_EVENT_TYPE = "depthUpdate"
+TRADE_EVENT_TYPE = "trade"
 #
 RATE_LIMITS = [
     # Pools
