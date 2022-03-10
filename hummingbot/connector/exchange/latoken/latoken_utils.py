@@ -31,13 +31,19 @@ DEFAULT_FEES = [0.1, 0.1]
 #     return f"{CONSTANTS.HBOT_ORDER_ID_PREFIX}-{side}{base_str}{quote_str}{client_instance_id}{get_tracking_nonce()}"
 
 
-def is_exchange_information_valid(exchange_info: Dict[str, Any]) -> bool:
+def is_exchange_information_valid(pair_data: Dict[str, Any]) -> bool:
     """
     Verifies if a trading pair is enabled to operate with based on its exchange information
-    :param exchange_info: the exchange information for a trading pair
+    :param pair_data: the exchange information for a trading pair
     :return: True if the trading pair is enabled, False otherwise
     """
-    return exchange_info.get("status", None) == "TRADING" and "SPOT" in exchange_info.get("permissions", list())
+
+    # pair_details = pair_data["id"]
+    pair_base = pair_data["baseCurrency"]
+    pair_quote = pair_data["quoteCurrency"]
+    return pair_data["is_valid"] and pair_data["status"] == 'PAIR_STATUS_ACTIVE'\
+        and pair_base["status"] == 'CURRENCY_STATUS_ACTIVE' and pair_base["type"] == 'CURRENCY_TYPE_CRYPTO'\
+        and pair_quote["status"] == 'CURRENCY_STATUS_ACTIVE' and pair_quote["type"] == 'CURRENCY_TYPE_CRYPTO'
 
 
 def public_rest_url(path_url: str, domain: str = "com") -> str:
@@ -63,13 +69,13 @@ def private_rest_url(path_url: str, domain: str = "com") -> str:
 KEYS = {
     "latoken_api_key":
         ConfigVar(key="latoken_api_key",
-                  prompt="Enter your Binance API key >>> ",
+                  prompt="Enter your Latoken API key >>> ",
                   required_if=using_exchange("latoken"),
                   is_secure=True,
                   is_connect_key=True),
     "latoken_api_secret":
-        ConfigVar(key="binance_api_secret",
-                  prompt="Enter your Binance API secret >>> ",
+        ConfigVar(key="latoken_api_secret",
+                  prompt="Enter your Latoken API secret >>> ",
                   required_if=using_exchange("latoken"),
                   is_secure=True,
                   is_connect_key=True),

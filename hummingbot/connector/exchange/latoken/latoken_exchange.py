@@ -194,12 +194,12 @@ class LatokenExchange(ExchangeBase):
         - The polling loop to update order status and balance status using REST API (backup for main update process)
         - The background task to process the events received through the user stream tracker (websocket connection)
         """
-        self._order_book_tracker.start()
-        self._trading_rules_polling_task = safe_ensure_future(self._trading_rules_polling_loop())
+        # self._order_book_tracker.start()
+        # self._trading_rules_polling_task = safe_ensure_future(self._trading_rules_polling_loop())
         if self._trading_required:
             self._status_polling_task = safe_ensure_future(self._status_polling_loop())
-            self._user_stream_tracker_task = safe_ensure_future(self._user_stream_tracker.start())
-            self._user_stream_event_listener_task = safe_ensure_future(self._user_stream_event_listener())
+            # self._user_stream_tracker_task = safe_ensure_future(self._user_stream_tracker.start())
+            # self._user_stream_event_listener_task = safe_ensure_future(self._user_stream_event_listener())
 
     async def stop_network(self):
         """
@@ -603,9 +603,9 @@ class LatokenExchange(ExchangeBase):
                 await self._update_time_synchronizer()
                 await safe_gather(
                     self._update_balances(),
-                    self._update_order_fills_from_trades(),
+                    # self._update_order_fills_from_trades(),
                 )
-                await self._update_order_status()
+                # await self._update_order_status()
                 self._last_poll_timestamp = self.current_timestamp
             except asyncio.CancelledError:
                 raise

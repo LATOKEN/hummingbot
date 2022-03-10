@@ -462,20 +462,45 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         local_api_factory = api_factory or build_api_factory()
         rest_assistant = await local_api_factory.get_rest_assistant()
         local_throttler = throttler or cls._get_throttler_instance()
-        url = latoken_utils.public_rest_url(path_url=CONSTANTS.EXCHANGE_INFO_PATH_URL, domain=domain)
+
+        ticker_list = await cls._get_data(domain, rest_assistant, local_throttler, CONSTANTS.TICKER_PATH_URL)
+        currency_list = await cls._get_data(domain, rest_assistant, local_throttler, CONSTANTS.CURRENCY_PATH_URL)
+        pair_list = await cls._get_data(domain, rest_assistant, local_throttler, CONSTANTS.PAIR_PATH_URL)
+
+        ticker_dict = {f"{ticker['baseCurrency']}/{ticker['quoteCurrency']}": ticker for ticker in ticker_list}
+        # pair_dict = {f"{pair['baseCurrency']}/{pair['quoteCurrency']}": pair for pair in pair_list}
+        currency_dict = {currency["id"]: currency for currency in currency_list}
+
+        for pt in pair_list:
+            key = f"{pt['baseCurrency']}/{pt['quoteCurrency']}"
+            is_valid = key in ticker_dict
+            pt["is_valid"] = is_valid
+            pt["id"] = ticker_dict[key] if is_valid else dict()
+            base_currency_id = pt["baseCurrency"]
+            pt["baseCurrency"] = currency_dict[base_currency_id]
+            quote_currency_id = pt["quoteCurrency"]
+            pt["quoteCurrency"] = currency_dict[quote_currency_id]
+
+        for pair in filter(latoken_utils.is_exchange_information_valid, pair_list):
+            mapping[pair["id"]["symbol"]] = pair["id"]["symbol"].replace('/', '-')
+
+        cls._trading_pair_symbol_map[domain] = mapping
+
+    @classmethod
+    async def _get_data(cls, domain, rest_assistant, local_throttler, path_url) -> list:
+        data = []
+        url = latoken_utils.public_rest_url(path_url=path_url, domain=domain)
         request = RESTRequest(method=RESTMethod.GET, url=url)
 
         try:
-            async with local_throttler.execute_task(limit_id=CONSTANTS.EXCHANGE_INFO_PATH_URL):
+            async with local_throttler.execute_task(limit_id=path_url):
                 response: RESTResponse = await rest_assistant.call(request=request)
                 if response.status == 200:
-                    data = await response.json()
-                    for symbol_data in filter(latoken_utils.is_exchange_information_valid, data["symbols"]):
-                        mapping[symbol_data["symbol"]] = f"{symbol_data['baseAsset']}-{symbol_data['quoteAsset']}"
+                    data.extend(await response.json())
         except Exception as ex:
-            cls.logger().error(f"There was an error requesting exchange info ({str(ex)})")
+            cls.logger().error(f"There was an error requesting {path_url} ({str(ex)})")
 
-        cls._trading_pair_symbol_map[domain] = mapping
+        return data
 
     async def _get_rest_assistant(self) -> RESTAssistant:
         if self._rest_assistant is None:

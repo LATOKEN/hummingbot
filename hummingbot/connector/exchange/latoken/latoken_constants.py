@@ -7,12 +7,14 @@ HBOT_ORDER_ID_PREFIX = "x-XEKWYICX"
 REST_URL = "https://api.latoken.{}"
 WSS_URL = "wss://api.latoken.{}/stomp"
 
-PUBLIC_API_VERSION = "v2"
-PRIVATE_API_VERSION = "v2"
+PUBLIC_API_VERSION = "/v2"
+PRIVATE_API_VERSION = "/v2"
 
 # Public API endpoints or BinanceClient function
 TICKER_PRICE_CHANGE_PATH_URL = "/ticker/24hr"
-EXCHANGE_INFO_PATH_URL = "/exchangeInfo"
+TICKER_PATH_URL = "/ticker"
+CURRENCY_PATH_URL = "/currency"
+PAIR_PATH_URL = "/pair"
 PING_PATH_URL = "/time"
 SNAPSHOT_PATH_URL = "/depth"
 SERVER_TIME_PATH_URL = "/time"
@@ -71,6 +73,9 @@ RATE_LIMITS = [
     # RateLimit(limit_id=ORDERS_24HR, limit=100000, time_interval=ONE_DAY),
     RateLimit(limit_id=ACCOUNT, limit=100000, time_interval=ONE_DAY),
     RateLimit(limit_id=TIME, limit=100000, time_interval=ONE_DAY),
+    RateLimit(limit_id=TICKER_PATH_URL, limit=100000, time_interval=ONE_DAY),
+    RateLimit(limit_id=CURRENCY_PATH_URL, limit=100000, time_interval=ONE_DAY),
+    RateLimit(limit_id=PAIR_PATH_URL, limit=100000, time_interval=ONE_DAY),
     # # Weighted Limits
     # RateLimit(limit_id=TICKER_PRICE_CHANGE_PATH_URL, limit=MAX_REQUEST, time_interval=ONE_MINUTE,
     #           linked_limits=[LinkedLimitWeightPair(REQUEST_WEIGHT, 40)]),

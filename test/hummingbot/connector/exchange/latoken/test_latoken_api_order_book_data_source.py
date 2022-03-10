@@ -202,7 +202,7 @@ class LatokenAPIOrderBookDataSourceUnitTests(unittest.TestCase):
     @aioresponses()
     def test_fetch_trading_pairs(self, mock_api):
         LatokenAPIOrderBookDataSource._trading_pair_symbol_map = {}
-        url = utils.public_rest_url(path_url=CONSTANTS.EXCHANGE_INFO_PATH_URL, domain=self.domain)
+        url = utils.public_rest_url(path_url=CONSTANTS.TICKER_PATH_URL, domain=self.domain)
 
         mock_response: Dict[str, Any] = {
             "timezone": "UTC",
@@ -311,7 +311,7 @@ class LatokenAPIOrderBookDataSourceUnitTests(unittest.TestCase):
     def test_fetch_trading_pairs_exception_raised(self, mock_api):
         LatokenAPIOrderBookDataSource._trading_pair_symbol_map = {}
 
-        url = utils.public_rest_url(path_url=CONSTANTS.EXCHANGE_INFO_PATH_URL, domain=self.domain)
+        url = utils.public_rest_url(path_url=CONSTANTS.TICKER_PATH_URL, domain=self.domain)
         regex_url = re.compile(f"^{url}".replace(".", r"\.").replace("?", r"\?"))
 
         mock_api.get(regex_url, exception=Exception)
