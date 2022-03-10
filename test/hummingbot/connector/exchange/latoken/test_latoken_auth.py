@@ -50,7 +50,7 @@ class LatokenAuthTests(TestCase):
         # self.assertEqual(expected_signature, configured_request.params["signature"])
         self.assertEqual({"X-LA-APIKEY": self._api_key,
                           "X-LA-SIGNATURE": expected_rest_signature_get,
-                          "X-LA-DIGEST": hashlib.sha512}, configured_request.headers)
+                          "X-LA-DIGEST": 'HMAC-SHA512'}, configured_request.headers)
 
     # todo implement function definitions
     def test_rest_authenticate_post(self):

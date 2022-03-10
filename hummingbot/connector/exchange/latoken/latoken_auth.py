@@ -21,15 +21,10 @@ class LatokenAuth(AuthBase):
         self.time_provider = time_provider  # not used atm
 
     async def rest_authenticate(self, request: RESTRequest) -> RESTRequest:
-        headers = {}
-
-        if request.headers is not None:
-            headers.update(request.headers)
 
         if request.method == RESTMethod.POST:
             request_params = self.add_auth_to_params(params=request.data)  # probably not necessary
             request.data = request_params
-            headers.update({'Content-Type': 'application/json'})  # for now not sure if this must be set on a higher level
         else:
             request_params = self.add_auth_to_params(params=request.params)
             request.params = request_params
@@ -38,7 +33,9 @@ class LatokenAuth(AuthBase):
         signature = self._generate_signature(method=str(request.method),
                                              endpoint=endpoint,
                                              params=request_params)
-
+        headers = {}
+        if request.headers is not None:
+            headers.update(request.headers)
         headers.update(self.header_for_authentication(signature))
         request.headers = headers
 
@@ -56,7 +53,7 @@ class LatokenAuth(AuthBase):
     def header_for_authentication(self, signature) -> Dict[str, str]:
         return {"X-LA-APIKEY": self.api_key,
                 "X-LA-SIGNATURE": signature,
-                "X-LA-DIGEST": hashlib.sha512}
+                "X-LA-DIGEST": 'HMAC-SHA512'}
 
     def _generate_signature(self, method, endpoint, params: Dict[str, Any]) -> str:
         encoded_params = urlencode(params)
@@ -77,7 +74,7 @@ class LatokenAuth(AuthBase):
 
         headers = {"X-LA-APIKEY": self.api_key,
                    "X-LA-SIGNATURE": signature.hexdigest(),
-                   "X-LA-DIGEST": hashlib.sha512,
+                   "X-LA-DIGEST": 'HMAC-SHA512',
                    "X-LA-SIGDATA": timestamp}
 
         request.payload = dict(request.payload).update(headers)  # not sure about this line
