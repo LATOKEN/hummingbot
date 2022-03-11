@@ -1,7 +1,7 @@
 from hummingbot.core.api_throttler.data_types import RateLimit  # ,LinkedLimitWeightPair,
 from hummingbot.core.data_type.in_flight_order import OrderState
 
-HBOT_ORDER_ID_PREFIX = "x-XEKWYICX"
+HBOT_ORDER_ID_PREFIX = "hbot-prefix"  # not sure how to interpret this for latoken
 
 # Base URL
 REST_URL = "https://api.latoken.{}"

@@ -10,7 +10,6 @@ from typing import (
     List,
     Optional,
 )
-
 # from async_timeout import timeout
 
 import hummingbot.connector.exchange.latoken.latoken_constants as CONSTANTS
@@ -940,10 +939,16 @@ class LatokenExchange(ExchangeBase):
         remote_asset_names = set()
 
         try:
+
+            params = {
+                'zeros': 'true'
+            }
+
             balances = await self._api_request(
                 method=RESTMethod.GET,
                 path_url=CONSTANTS.ACCOUNTS_PATH_URL,
-                is_auth_required=True)
+                is_auth_required=True,
+                params=params)
 
             # "id": "1e200836-a037-4475-825e-f202dd0b0e92",
             # "status": "ACCOUNT_STATUS_ACTIVE",

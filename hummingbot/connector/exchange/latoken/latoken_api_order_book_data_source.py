@@ -433,16 +433,16 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
                                      rest_assistant: RESTAssistant,
                                      throttler: AsyncThrottler) -> float:
 
-        url = latoken_utils.public_rest_url(path_url=CONSTANTS.TICKER_PRICE_CHANGE_PATH_URL, domain=domain)
+        url = latoken_utils.public_rest_url(path_url=CONSTANTS.TICKER_PATH_URL, domain=domain)
         symbol = await cls.exchange_symbol_associated_to_pair(
             trading_pair=trading_pair,
             domain=domain,
             throttler=throttler)
         request = RESTRequest(
             method=RESTMethod.GET,
-            url=f"{url}?symbol={symbol}")
+            url=f"{url}/{symbol}")  # symbol should be in format base_id/quote_id
 
-        async with throttler.execute_task(limit_id=CONSTANTS.TICKER_PRICE_CHANGE_PATH_URL):
+        async with throttler.execute_task(limit_id=CONSTANTS.TICKER_PATH_URL):
             resp: RESTResponse = await rest_assistant.call(request=request)
             if resp.status == 200:
                 resp_json = await resp.json()
