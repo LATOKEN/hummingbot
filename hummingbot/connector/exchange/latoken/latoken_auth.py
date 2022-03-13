@@ -23,7 +23,7 @@ class LatokenAuth(AuthBase):
     async def rest_authenticate(self, request: RESTRequest) -> RESTRequest:
 
         if request.method == RESTMethod.POST:
-            request_params = self.add_auth_to_params(params=request.data)  # probably not necessary
+            request_params = self.add_auth_to_params(params=request.data)
             request.data = request_params
         else:
             request_params = self.add_auth_to_params(params=request.params)

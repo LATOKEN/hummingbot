@@ -361,11 +361,11 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         if limit != 0:
             params["limit"] = str(limit)
 
-        symbol = (await self.exchange_symbol_associated_to_pair(
+        symbol = await self.exchange_symbol_associated_to_pair(
             trading_pair=trading_pair,
             domain=self._domain,
             api_factory=self._api_factory,
-            throttler=self._throttler)).split('/')
+            throttler=self._throttler)
 
         path_url = f"{CONSTANTS.BOOK_PATH_URL}/{symbol}"
         url = latoken_utils.public_rest_url(path_url=path_url, domain=self._domain)
