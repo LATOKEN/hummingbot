@@ -18,8 +18,8 @@ from hummingbot.core.web_assistant.connections.data_types import RESTMethod, RES
 class LatokenAuthTests(TestCase):
 
     def setUp(self) -> None:
-        self._api_key = "26f73f0b-05d7-4007-bf82-dc7b36cef9ee"
-        self._secret_key = "MMGIyMjhjMDgtZDJmOS00MDYwLWFmMjUtNDc0OTI1ODg3MGI5"
+        self._api_key = "api_key"
+        self._secret = "secret"
 
     @staticmethod
     def async_run_with_timeout(coroutine: Awaitable, timeout: float = 1):
@@ -34,7 +34,7 @@ class LatokenAuthTests(TestCase):
         params = {'zeros': 'true'}
         full_params = copy(params)
         auth_account_url = 'https://api.latoken.com/v2/auth/account'
-        auth = LatokenAuth(api_key=self._api_key, secret_key=self._secret_key, time_provider=mock_time_provider)
+        auth = LatokenAuth(api_key=self._api_key, secret_key=self._secret, time_provider=mock_time_provider)
         request = RESTRequest(method=RESTMethod.GET, url=auth_account_url, params=params, is_auth_required=True)
         configured_request = self.async_run_with_timeout(auth.rest_authenticate(request))
 
@@ -42,7 +42,7 @@ class LatokenAuthTests(TestCase):
         endpoint = urlsplit(request.url).path
         encoded_params = urlencode(full_params)
         expected_rest_signature_get = hmac.new(
-            self._secret_key.encode("utf-8"),  # differs a bit from the official latoken api where they use b string
+            self._secret.encode("utf-8"),  # differs a bit from the official latoken api where they use b string
             ('GET' + endpoint + encoded_params).encode('ascii'),
             hashlib.sha512
         ).hexdigest()

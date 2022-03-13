@@ -10,35 +10,35 @@ from typing import (
     List,
     Optional,
 )
-# from async_timeout import timeout
+from async_timeout import timeout
 
 import hummingbot.connector.exchange.latoken.latoken_constants as CONSTANTS
 from hummingbot.connector.client_order_tracker import ClientOrderTracker
 from hummingbot.connector.exchange_base import ExchangeBase
 from hummingbot.connector.exchange.latoken import latoken_utils
-# from hummingbot.connector.exchange.latoken.latoken_api_order_book_data_source import LatokenAPIOrderBookDataSource
+from hummingbot.connector.exchange.latoken.latoken_api_order_book_data_source import LatokenAPIOrderBookDataSource
 from hummingbot.connector.exchange.latoken.latoken_auth import LatokenAuth
 from hummingbot.connector.exchange.latoken.latoken_order_book_tracker import LatokenOrderBookTracker
 from hummingbot.connector.exchange.latoken.latoken_user_stream_tracker import LatokenUserStreamTracker
 from hummingbot.connector.time_synchronizer import TimeSynchronizer
 from hummingbot.connector.trading_rule import TradingRule
-# from hummingbot.connector.utils import TradeFillOrderDetails
+from hummingbot.connector.utils import TradeFillOrderDetails
 from hummingbot.core.api_throttler.async_throttler import AsyncThrottler
-# from hummingbot.core.data_type.cancellation_result import CancellationResult
-# from hummingbot.core.data_type.in_flight_order import InFlightOrder, OrderUpdate, OrderState, TradeUpdate
-# from hummingbot.core.data_type.limit_order import LimitOrder
-# from hummingbot.core.data_type.order_book import OrderBook
-# from hummingbot.core.data_type.trade_fee import (
-#     DeductedFromReturnsTradeFee,
-#     TokenAmount,
-#     TradeFeeBase,
-# )
-# from hummingbot.core.event.events import (
-#      MarketEvent,
-#      OrderFilledEvent,
-#      OrderType,
-#      TradeType,
-# )
+from hummingbot.core.data_type.cancellation_result import CancellationResult
+from hummingbot.core.data_type.in_flight_order import InFlightOrder, OrderUpdate, OrderState, TradeUpdate
+from hummingbot.core.data_type.limit_order import LimitOrder
+from hummingbot.core.data_type.order_book import OrderBook
+from hummingbot.core.data_type.trade_fee import (
+    DeductedFromReturnsTradeFee,
+    TokenAmount,
+    TradeFeeBase,
+)
+from hummingbot.core.event.events import (
+    MarketEvent,
+    OrderFilledEvent,
+    # OrderType,
+    TradeType,
+)
 from hummingbot.core.event.events import OrderType
 
 from hummingbot.core.network_iterator import NetworkStatus
@@ -115,24 +115,24 @@ class LatokenExchange(ExchangeBase):
         else:
             return f"latoken_{self._domain}"
 
-    # @property
-    # def order_books(self) -> Dict[str, OrderBook]:
-    #     return self._order_book_tracker.order_books
+    @property
+    def order_books(self) -> Dict[str, OrderBook]:
+        return self._order_book_tracker.order_books
 
     @property
     def trading_rules(self) -> Dict[str, TradingRule]:
         return self._trading_rules
 
-    # @property
-    # def in_flight_orders(self) -> Dict[str, InFlightOrder]:
-    #     return self._order_tracker.active_orders
+    @property
+    def in_flight_orders(self) -> Dict[str, InFlightOrder]:
+        return self._order_tracker.active_orders
 
-    # @property
-    # def limit_orders(self) -> List[LimitOrder]:
-    #     return [
-    #         in_flight_order.to_limit_order()
-    #         for in_flight_order in self.in_flight_orders.values()
-    #     ]
+    @property
+    def limit_orders(self) -> List[LimitOrder]:
+        return [
+            in_flight_order.to_limit_order()
+            for in_flight_order in self.in_flight_orders.values()
+        ]
 
     @property
     def tracking_states(self) -> Dict[str, any]:
@@ -144,27 +144,27 @@ class LatokenExchange(ExchangeBase):
             for key, value in self.in_flight_orders.items()
         }
 
-    # @property
-    # def order_book_tracker(self) -> LatokenOrderBookTracker:
-    #     return self._order_book_tracker
-    #
-    # @property
-    # def user_stream_tracker(self) -> LatokenUserStreamTracker:
-    #     return self._user_stream_tracker
+    @property
+    def order_book_tracker(self) -> LatokenOrderBookTracker:
+        return self._order_book_tracker
 
-    # @property
-    # def status_dict(self) -> Dict[str, bool]:
-    #     """
-    #     Returns a dictionary with the values of all the conditions that determine if the connector is ready to operate.
-    #     The key of each entry is the condition name, and the value is True if condition is ready, False otherwise.
-    #     """
-    #     return {
-    #         "symbols_mapping_initialized": LatokenAPIOrderBookDataSource.trading_pair_symbol_map_ready(
-    #             domain=self._domain),
-    #         "order_books_initialized": self._order_book_tracker.ready,
-    #         "account_balance": len(self._account_balances) > 0 if self._trading_required else True,
-    #         "trading_rule_initialized": len(self._trading_rules) > 0,
-    #     }
+    @property
+    def user_stream_tracker(self) -> LatokenUserStreamTracker:
+        return self._user_stream_tracker
+
+    @property
+    def status_dict(self) -> Dict[str, bool]:
+        """
+        Returns a dictionary with the values of all the conditions that determine if the connector is ready to operate.
+        The key of each entry is the condition name, and the value is True if condition is ready, False otherwise.
+        """
+        return {
+            "symbols_mapping_initialized": LatokenAPIOrderBookDataSource.trading_pair_symbol_map_ready(
+                domain=self._domain),
+            "order_books_initialized": self._order_book_tracker.ready,
+            "account_balance": len(self._account_balances) > 0 if self._trading_required else True,
+            "trading_rule_initialized": len(self._trading_rules) > 0,
+        }
 
     @property
     def ready(self) -> bool:
@@ -174,13 +174,13 @@ class LatokenExchange(ExchangeBase):
         """
         return all(self.status_dict.values())
 
-    # @staticmethod
-    # def latoken_order_type(order_type: OrderType) -> str:
-    #     return order_type.name.upper()
-    #
-    # @staticmethod
-    # def to_hb_order_type(latoken_type: str) -> OrderType:
-    #     return OrderType[latoken_type]
+    @staticmethod
+    def latoken_order_type(order_type: OrderType) -> str:
+        return order_type.name.upper()
+
+    @staticmethod
+    def to_hb_order_type(latoken_type: str) -> OrderType:
+        return OrderType[latoken_type]
 
     def supported_order_types(self):
         return [OrderType.LIMIT, OrderType.LIMIT_MAKER]
@@ -193,12 +193,12 @@ class LatokenExchange(ExchangeBase):
         - The polling loop to update order status and balance status using REST API (backup for main update process)
         - The background task to process the events received through the user stream tracker (websocket connection)
         """
-        # self._order_book_tracker.start()
-        # self._trading_rules_polling_task = safe_ensure_future(self._trading_rules_polling_loop())
+        self._order_book_tracker.start()
+        self._trading_rules_polling_task = safe_ensure_future(self._trading_rules_polling_loop())
         if self._trading_required:
             self._status_polling_task = safe_ensure_future(self._status_polling_loop())
-            # self._user_stream_tracker_task = safe_ensure_future(self._user_stream_tracker.start())
-            # self._user_stream_event_listener_task = safe_ensure_future(self._user_stream_event_listener())
+            self._user_stream_tracker_task = safe_ensure_future(self._user_stream_tracker.start())
+            self._user_stream_event_listener_task = safe_ensure_future(self._user_stream_event_listener())
 
     async def stop_network(self):
         """
@@ -261,44 +261,44 @@ class LatokenExchange(ExchangeBase):
                 self._poll_notifier.set()
         self._last_timestamp = timestamp
 
-    # def get_order_book(self, trading_pair: str) -> OrderBook:
-    #     """
-    #     Returns the current order book for a particular market
-    #     :param trading_pair: the pair of tokens for which the order book should be retrieved
-    #     """
-    #     if trading_pair not in self._order_book_tracker.order_books:
-    #         raise ValueError(f"No order book exists for '{trading_pair}'.")
-    #     return self._order_book_tracker.order_books[trading_pair]
+    def get_order_book(self, trading_pair: str) -> OrderBook:
+        """
+        Returns the current order book for a particular market
+        :param trading_pair: the pair of tokens for which the order book should be retrieved
+        """
+        if trading_pair not in self._order_book_tracker.order_books:
+            raise ValueError(f"No order book exists for '{trading_pair}'.")
+        return self._order_book_tracker.order_books[trading_pair]
 
-    # def start_tracking_order(self,
-    #                          order_id: str,
-    #                          exchange_order_id: Optional[str],
-    #                          trading_pair: str,
-    #                          trade_type: TradeType,
-    #                          price: Decimal,
-    #                          amount: Decimal,
-    #                          order_type: OrderType):
-    #     """
-    #     Starts tracking an order by adding it to the order tracker.
-    #     :param order_id: the order identifier
-    #     :param exchange_order_id: the identifier for the order in the exchange
-    #     :param trading_pair: the token pair for the operation
-    #     :param trade_type: the type of order (buy or sell)
-    #     :param price: the price for the order
-    #     :param amount: the amount for the order
-    #     :order type: type of execution for the order (MARKET, LIMIT, LIMIT_MAKER)
-    #     """
-    #     self._order_tracker.start_tracking_order(
-    #         InFlightOrder(
-    #             client_order_id=order_id,
-    #             exchange_order_id=exchange_order_id,
-    #             trading_pair=trading_pair,
-    #             order_type=order_type,
-    #             trade_type=trade_type,
-    #             amount=amount,
-    #             price=price,
-    #         )
-    #     )
+    def start_tracking_order(self,
+                             order_id: str,
+                             exchange_order_id: Optional[str],
+                             trading_pair: str,
+                             trade_type: TradeType,
+                             price: Decimal,
+                             amount: Decimal,
+                             order_type: OrderType):
+        """
+        Starts tracking an order by adding it to the order tracker.
+        :param order_id: the order identifier
+        :param exchange_order_id: the identifier for the order in the exchange
+        :param trading_pair: the token pair for the operation
+        :param trade_type: the type of order (buy or sell)
+        :param price: the price for the order
+        :param amount: the amount for the order
+        :order type: type of execution for the order (MARKET, LIMIT, LIMIT_MAKER)
+        """
+        self._order_tracker.start_tracking_order(
+            InFlightOrder(
+                client_order_id=order_id,
+                exchange_order_id=exchange_order_id,
+                trading_pair=trading_pair,
+                order_type=order_type,
+                trade_type=trade_type,
+                amount=amount,
+                price=price,
+            )
+        )
 
     def stop_tracking_order(self, order_id: str):
         """
@@ -307,285 +307,287 @@ class LatokenExchange(ExchangeBase):
         """
         self._order_tracker.stop_tracking_order(client_order_id=order_id)
 
-    # def get_order_price_quantum(self, trading_pair: str, price: Decimal) -> Decimal:
-    #     """
-    #     Used by quantize_order_price() in _create_order()
-    #     Returns a price step, a minimum price increment for a given trading pair.
-    #     :param trading_pair: the trading pair to check for market conditions
-    #     :param price: the starting point price
-    #     """
-    #     trading_rule = self._trading_rules[trading_pair]
-    #     return trading_rule.min_price_increment
-    #
-    # def get_order_size_quantum(self, trading_pair: str, order_size: Decimal) -> Decimal:
-    #     """
-    #     Used by quantize_order_price() in _create_order()
-    #     Returns an order amount step, a minimum amount increment for a given trading pair.
-    #     :param trading_pair: the trading pair to check for market conditions
-    #     :param order_size: the starting point order price
-    #     """
-    #     trading_rule = self._trading_rules[trading_pair]
-    #     return trading_rule.min_base_amount_increment
-    #
-    # def quantize_order_amount(self, trading_pair: str, amount: Decimal, price: Decimal = s_decimal_0) -> Decimal:
-    #     """
-    #     Applies the trading rules to calculate the correct order amount for the market
-    #     :param trading_pair: the token pair for which the order will be created
-    #     :param amount: the intended amount for the order
-    #     :param price: the intended price for the order
-    #     :return: the quantized order amount after applying the trading rules
-    #     """
-    #     trading_rule = self._trading_rules[trading_pair]
-    #     quantized_amount: Decimal = super().quantize_order_amount(trading_pair, amount)
-    #
-    #     # Check against min_order_size and min_notional_size. If not passing either check, return 0.
-    #     if quantized_amount < trading_rule.min_order_size:
-    #         return s_decimal_0
-    #
-    #     if price == s_decimal_0:
-    #         current_price: Decimal = self.get_price(trading_pair, False)
-    #         notional_size = current_price * quantized_amount
-    #     else:
-    #         notional_size = price * quantized_amount
-    #
-    #     # Add 1% as a safety factor in case the prices changed while making the order.
-    #     if notional_size < trading_rule.min_notional_size * Decimal("1.01"):
-    #         return s_decimal_0
-    #
-    #     return quantized_amount
-    #
-    # def get_fee(self,
-    #             base_currency: str,
-    #             quote_currency: str,
-    #             order_type: OrderType,
-    #             order_side: TradeType,
-    #             amount: Decimal,
-    #             price: Decimal = s_decimal_NaN,
-    #             is_maker: Optional[bool] = None) -> TradeFeeBase:
-    #     """
-    #     Calculates the estimated fee an order would pay based on the connector configuration
-    #     :param base_currency: the order base currency
-    #     :param quote_currency: the order quote currency
-    #     :param order_type: the type of order (MARKET, LIMIT, LIMIT_MAKER)
-    #     :param order_side: if the order is for buying or selling
-    #     :param amount: the order amount
-    #     :param price: the order price
-    #     :return: the estimated fee for the order
-    #     """
-    #
-    #     """
-    #     To get trading fee, this function is simplified by using fee override configuration. Most parameters to this
-    #     function are ignore except order_type. Use OrderType.LIMIT_MAKER to specify you want trading fee for
-    #     maker order.
-    #     """
-    #     is_maker = order_type is OrderType.LIMIT_MAKER
-    #     return DeductedFromReturnsTradeFee(percent=self.estimate_fee_pct(is_maker))
+    def get_order_price_quantum(self, trading_pair: str, price: Decimal) -> Decimal:
+        """
+        Used by quantize_order_price() in _create_order()
+        Returns a price step, a minimum price increment for a given trading pair.
+        :param trading_pair: the trading pair to check for market conditions
+        :param price: the starting point price
+        """
+        trading_rule = self._trading_rules[trading_pair]
+        return trading_rule.min_price_increment
 
-    # def buy(self, trading_pair: str, amount: Decimal, order_type: OrderType = OrderType.LIMIT,
-    #         price: Decimal = s_decimal_NaN, **kwargs) -> str:
-    #     """
-    #     Creates a promise to create a buy order using the parameters.
-    #     :param trading_pair: the token pair to operate with
-    #     :param amount: the order amount
-    #     :param order_type: the type of order to create (MARKET, LIMIT, LIMIT_MAKER)
-    #     :param price: the order price
-    #     :return: the id assigned by the connector to the order (the client id)
-    #     """
-    #     new_order_id = latoken_utils.get_new_client_order_id(is_buy=True, trading_pair=trading_pair)
-    #     safe_ensure_future(self._create_order(TradeType.BUY, new_order_id, trading_pair, amount, order_type, price))
-    #     return new_order_id
-    #
-    # def sell(self, trading_pair: str, amount: Decimal, order_type: OrderType = OrderType.MARKET,
-    #          price: Decimal = s_decimal_NaN, **kwargs) -> str:
-    #     """
-    #     Creates a promise to create a sell order using the parameters.
-    #     :param trading_pair: the token pair to operate with
-    #     :param amount: the order amount
-    #     :param order_type: the type of order to create (MARKET, LIMIT, LIMIT_MAKER)
-    #     :param price: the order price
-    #     :return: the id assigned by the connector to the order (the client id)
-    #     """
-    #     order_id = latoken_utils.get_new_client_order_id(is_buy=False, trading_pair=trading_pair)
-    #     safe_ensure_future(self._create_order(TradeType.SELL, order_id, trading_pair, amount, order_type, price))
-    #     return order_id
-    #
-    # def cancel(self, trading_pair: str, order_id: str):
-    #     """
-    #     Creates a promise to cancel an order in the exchange
-    #     :param trading_pair: the trading pair the order to cancel operates with
-    #     :param order_id: the client id of the order to cancel
-    #     :return: the client id of the order to cancel
-    #     """
-    #     safe_ensure_future(self._execute_cancel(trading_pair, order_id))
-    #     return order_id
-    #
-    # async def cancel_all(self, timeout_seconds: float) -> List[CancellationResult]:
-    #     """
-    #     Cancels all currently active orders. The cancellations are performed in parallel tasks.
-    #     :param timeout_seconds: the maximum time (in seconds) the cancel logic should run
-    #     :return: a list of CancellationResult instances, one for each of the orders to be cancelled
-    #     """
-    #     incomplete_orders = [o for o in self.in_flight_orders.values() if not o.is_done]
-    #     tasks = [self._execute_cancel(o.trading_pair, o.client_order_id) for o in incomplete_orders]
-    #     order_id_set = set([o.client_order_id for o in incomplete_orders])
-    #     successful_cancellations = []
-    #
-    #     try:
-    #         async with timeout(timeout_seconds):
-    #             cancellation_results = await safe_gather(*tasks, return_exceptions=True)
-    #             for cr in cancellation_results:
-    #                 if isinstance(cr, Exception):
-    #                     continue
-    #                 if isinstance(cr, dict) and "origClientOrderId" in cr:
-    #                     client_order_id = cr.get("origClientOrderId")
-    #                     order_id_set.remove(client_order_id)
-    #                     successful_cancellations.append(CancellationResult(client_order_id, True))
-    #     except Exception:
-    #         self.logger().network(
-    #             "Unexpected error cancelling orders.",
-    #             exc_info=True,
-    #             app_warning_msg="Failed to cancel order with Latoken. Check API key and network connection."
-    #         )
-    #
-    #     failed_cancellations = [CancellationResult(oid, False) for oid in order_id_set]
-    #     return successful_cancellations + failed_cancellations
+    def get_order_size_quantum(self, trading_pair: str, order_size: Decimal) -> Decimal:
+        """
+        Used by quantize_order_price() in _create_order()
+        Returns an order amount step, a minimum amount increment for a given trading pair.
+        :param trading_pair: the trading pair to check for market conditions
+        :param order_size: the starting point order price
+        """
+        trading_rule = self._trading_rules[trading_pair]
+        return trading_rule.min_base_amount_increment
 
-    # async def _create_order(self,
-    #                         trade_type: TradeType,
-    #                         order_id: str,
-    #                         trading_pair: str,
-    #                         amount: Decimal,
-    #                         order_type: OrderType,
-    #                         price: Optional[Decimal] = Decimal("NaN")):
-    #     """
-    #     Creates a an order in the exchange using the parameters to configure it
-    #     :param trade_type: the side of the order (BUY of SELL)
-    #     :param order_id: the id that should be assigned to the order (the client id)
-    #     :param trading_pair: the token pair to operate with
-    #     :param amount: the order amount
-    #     :param order_type: the type of order to create (MARKET, LIMIT, LIMIT_MAKER)
-    #     :param price: the order price
-    #     """
-    #     trading_rule: TradingRule = self._trading_rules[trading_pair]
-    #     price = self.quantize_order_price(trading_pair, price)
-    #     quantize_amount_price = Decimal("0") if price.is_nan() else price
-    #     amount = self.quantize_order_amount(trading_pair=trading_pair, amount=amount, price=quantize_amount_price)
-    #
-    #     self.start_tracking_order(
-    #         order_id=order_id,
-    #         exchange_order_id=None,
-    #         trading_pair=trading_pair,
-    #         trade_type=trade_type,
-    #         price=price,
-    #         amount=amount,
-    #         order_type=order_type)
-    #
-    #     if amount < trading_rule.min_order_size:
-    #         self.logger().warning(f"{trade_type.name.title()} order amount {amount} is lower than the minimum order"
-    #                               f" size {trading_rule.min_order_size}. The order will not be created.")
-    #         order_update: OrderUpdate = OrderUpdate(
-    #             client_order_id=order_id,
-    #             trading_pair=trading_pair,
-    #             update_timestamp=int(self.current_timestamp * 1e3),
-    #             new_state=OrderState.FAILED,
-    #         )
-    #         self._order_tracker.process_order_update(order_update)
-    #         return
-    #
-    #     order_result = None
-    #     amount_str = f"{amount:f}"
-    #     price_str = f"{price:f}"
-    #     type_str = LatokenExchange.latoken_order_type(order_type)
-    #     side_str = CONSTANTS.SIDE_BUY if trade_type is TradeType.BUY else CONSTANTS.SIDE_SELL
-    #     symbol = await LatokenAPIOrderBookDataSource.exchange_symbol_associated_to_pair(
-    #         trading_pair=trading_pair,
-    #         domain=self._domain,
-    #         api_factory=self._api_factory,
-    #         throttler=self._throttler)
-    #     api_params = {"symbol": symbol,
-    #                   "side": side_str,
-    #                   "quantity": amount_str,
-    #                   "type": type_str,
-    #                   "newClientOrderId": order_id,
-    #                   "price": price_str}
-    #     if order_type == OrderType.LIMIT:
-    #         api_params["timeInForce"] = CONSTANTS.TIME_IN_FORCE_GTC
-    #
-    #     try:
-    #         order_result = await self._api_request(
-    #             method=RESTMethod.POST,
-    #             path_url=CONSTANTS.ORDER_PATH_URL,
-    #             data=api_params,
-    #             is_auth_required=True)
-    #
-    #         exchange_order_id = str(order_result["orderId"])
-    #
-    #         order_update: OrderUpdate = OrderUpdate(
-    #             client_order_id=order_id,
-    #             exchange_order_id=exchange_order_id,
-    #             trading_pair=trading_pair,
-    #             update_timestamp=int(order_result["transactTime"]),
-    #             new_state=OrderState.OPEN,
-    #         )
-    #         self._order_tracker.process_order_update(order_update)
-    #
-    #     except asyncio.CancelledError:
-    #         raise
-    #     except Exception as e:
-    #         self.logger().network(
-    #             f"Error submitting {side_str} {type_str} order to Latoken for "
-    #             f"{amount} {trading_pair} "
-    #             f"{price}.",
-    #             exc_info=True,
-    #             app_warning_msg=str(e)
-    #         )
-    #         order_update: OrderUpdate = OrderUpdate(
-    #             client_order_id=order_id,
-    #             trading_pair=trading_pair,
-    #             update_timestamp=int(self.current_timestamp * 1e3),
-    #             new_state=OrderState.FAILED,
-    #         )
-    #         self._order_tracker.process_order_update(order_update)
-    #
-    # async def _execute_cancel(self, trading_pair: str, order_id: str):
-    #     """
-    #     Requests the exchange to cancel an active order
-    #     :param trading_pair: the trading pair the order to cancel operates with
-    #     :param order_id: the client id of the order to cancel
-    #     """
-    #     tracked_order = self._order_tracker.fetch_tracked_order(order_id)
-    #     if tracked_order is not None:
-    #         try:
-    #             symbol = await LatokenAPIOrderBookDataSource.exchange_symbol_associated_to_pair(
-    #                 trading_pair=trading_pair,
-    #                 domain=self._domain,
-    #                 api_factory=self._api_factory,
-    #                 throttler=self._throttler)
-    #             api_params = {
-    #                 "symbol": symbol,
-    #                 "origClientOrderId": order_id,
-    #             }
-    #             cancel_result = await self._api_request(
-    #                 method=RESTMethod.DELETE,
-    #                 path_url=CONSTANTS.ORDER_PATH_URL,
-    #                 params=api_params,
-    #                 is_auth_required=True)
-    #
-    #             if cancel_result.get("status") == "CANCELED":
-    #                 order_update: OrderUpdate = OrderUpdate(
-    #                     client_order_id=order_id,
-    #                     trading_pair=tracked_order.trading_pair,
-    #                     update_timestamp=int(self.current_timestamp * 1e3),
-    #                     new_state=OrderState.CANCELLED,
-    #                 )
-    #                 self._order_tracker.process_order_update(order_update)
-    #             return cancel_result
-    #
-    #         except asyncio.CancelledError:
-    #             raise
-    #         except Exception:
-    #             self.logger().exception(f"There was a an error when requesting cancellation of order {order_id}")
-    #             raise
+    def quantize_order_amount(self, trading_pair: str, amount: Decimal, price: Decimal = s_decimal_0) -> Decimal:
+        """
+        Applies the trading rules to calculate the correct order amount for the market
+        :param trading_pair: the token pair for which the order will be created
+        :param amount: the intended amount for the order
+        :param price: the intended price for the order
+        :return: the quantized order amount after applying the trading rules
+        """
+        trading_rule = self._trading_rules[trading_pair]
+        quantized_amount: Decimal = super().quantize_order_amount(trading_pair, amount)
+
+        # Check against min_order_size and min_notional_size. If not passing either check, return 0.
+        if quantized_amount < trading_rule.min_order_size:
+            return s_decimal_0
+
+        if price == s_decimal_0:
+            current_price: Decimal = self.get_price(trading_pair, False)
+            notional_size = current_price * quantized_amount
+        else:
+            notional_size = price * quantized_amount
+
+        # Add 1% as a safety factor in case the prices changed while making the order.
+        if notional_size < trading_rule.min_notional_size * Decimal("1.01"):
+            return s_decimal_0
+
+        return quantized_amount
+
+    def get_fee(self,
+                base_currency: str,
+                quote_currency: str,
+                order_type: OrderType,
+                order_side: TradeType,
+                amount: Decimal,
+                price: Decimal = s_decimal_NaN,
+                is_maker: Optional[bool] = None) -> TradeFeeBase:
+        """
+        Calculates the estimated fee an order would pay based on the connector configuration
+        :param base_currency: the order base currency
+        :param quote_currency: the order quote currency
+        :param order_type: the type of order (MARKET, LIMIT, LIMIT_MAKER)
+        :param order_side: if the order is for buying or selling
+        :param amount: the order amount
+        :param price: the order price
+        :return: the estimated fee for the order
+        """
+
+        """
+        To get trading fee, this function is simplified by using fee override configuration. Most parameters to this
+        function are ignore except order_type. Use OrderType.LIMIT_MAKER to specify you want trading fee for
+        maker order.
+        """
+        is_maker = order_type is OrderType.LIMIT_MAKER
+        return DeductedFromReturnsTradeFee(percent=self.estimate_fee_pct(is_maker))
+
+    def buy(self, trading_pair: str, amount: Decimal, order_type: OrderType = OrderType.LIMIT,
+            price: Decimal = s_decimal_NaN, **kwargs) -> str:
+        """
+        Creates a promise to create a buy order using the parameters.
+        :param trading_pair: the token pair to operate with
+        :param amount: the order amount
+        :param order_type: the type of order to create (MARKET, LIMIT, LIMIT_MAKER)
+        :param price: the order price
+        :return: the id assigned by the connector to the order (the client id)
+        """
+        new_order_id = latoken_utils.get_new_client_order_id(is_buy=True, trading_pair=trading_pair)
+        safe_ensure_future(self._create_order(TradeType.BUY, new_order_id, trading_pair, amount, order_type, price))
+        return new_order_id
+
+    def sell(self, trading_pair: str, amount: Decimal, order_type: OrderType = OrderType.MARKET,
+             price: Decimal = s_decimal_NaN, **kwargs) -> str:
+        """
+        Creates a promise to create a sell order using the parameters.
+        :param trading_pair: the token pair to operate with
+        :param amount: the order amount
+        :param order_type: the type of order to create (MARKET, LIMIT, LIMIT_MAKER)
+        :param price: the order price
+        :return: the id assigned by the connector to the order (the client id)
+        """
+        order_id = latoken_utils.get_new_client_order_id(is_buy=False, trading_pair=trading_pair)
+        safe_ensure_future(self._create_order(TradeType.SELL, order_id, trading_pair, amount, order_type, price))
+        return order_id
+
+    def cancel(self, trading_pair: str, order_id: str):
+        """
+        Creates a promise to cancel an order in the exchange
+        :param trading_pair: the trading pair the order to cancel operates with
+        :param order_id: the client id of the order to cancel
+        :return: the client id of the order to cancel
+        """
+        safe_ensure_future(self._execute_cancel(trading_pair, order_id))
+        return order_id
+
+    async def cancel_all(self, timeout_seconds: float) -> List[CancellationResult]:
+        """
+        Cancels all currently active orders. The cancellations are performed in parallel tasks.
+        :param timeout_seconds: the maximum time (in seconds) the cancel logic should run
+        :return: a list of CancellationResult instances, one for each of the orders to be cancelled
+        """
+        incomplete_orders = [o for o in self.in_flight_orders.values() if not o.is_done]
+        tasks = [self._execute_cancel(o.trading_pair, o.client_order_id) for o in incomplete_orders]
+        order_id_set = set([o.client_order_id for o in incomplete_orders])
+        successful_cancellations = []
+
+        try:
+            async with timeout(timeout_seconds):
+                cancellation_results = await safe_gather(*tasks, return_exceptions=True)
+                for cr in cancellation_results:
+                    if isinstance(cr, Exception):
+                        continue
+                    if isinstance(cr, dict) and "id" in cr:
+                        client_order_id = cr.get("id")
+                        order_id_set.remove(client_order_id)
+                        successful_cancellations.append(CancellationResult(client_order_id, True))
+        except Exception:
+            self.logger().network(
+                "Unexpected error cancelling orders.",
+                exc_info=True,
+                app_warning_msg="Failed to cancel order with Latoken. Check API key and network connection."
+            )
+
+        failed_cancellations = [CancellationResult(oid, False) for oid in order_id_set]
+        return successful_cancellations + failed_cancellations
+
+    async def _create_order(self,
+                            trade_type: TradeType,
+                            order_id: str,
+                            trading_pair: str,
+                            amount: Decimal,
+                            order_type: OrderType,
+                            price: Optional[Decimal] = Decimal("NaN")):
+        """
+        Creates a an order in the exchange using the parameters to configure it
+        :param trade_type: the side of the order (BUY of SELL)
+        :param order_id: the id that should be assigned to the order (the client id)
+        :param trading_pair: the token pair to operate with
+        :param amount: the order amount
+        :param order_type: the type of order to create (MARKET, LIMIT, LIMIT_MAKER)
+        :param price: the order price
+        """
+        trading_rule: TradingRule = self._trading_rules[trading_pair]
+        price = self.quantize_order_price(trading_pair, price)
+        quantize_amount_price = Decimal("0") if price.is_nan() else price
+        amount = self.quantize_order_amount(trading_pair=trading_pair, amount=amount, price=quantize_amount_price)
+
+        self.start_tracking_order(
+            order_id=order_id,
+            exchange_order_id=None,
+            trading_pair=trading_pair,
+            trade_type=trade_type,
+            price=price,
+            amount=amount,
+            order_type=order_type)
+
+        if amount < trading_rule.min_order_size:
+            self.logger().warning(f"{trade_type.name.title()} order amount {amount} is lower than the minimum order"
+                                  f" size {trading_rule.min_order_size}. The order will not be created.")
+            order_update: OrderUpdate = OrderUpdate(
+                client_order_id=order_id,
+                trading_pair=trading_pair,
+                update_timestamp=int(self.current_timestamp * 1e3),
+                new_state=OrderState.FAILED,
+            )
+            self._order_tracker.process_order_update(order_update)
+            return
+
+        order_result = None
+        amount_str = f"{amount:f}"
+        price_str = f"{price:f}"
+        type_str = LatokenExchange.latoken_order_type(order_type)
+        side_str = CONSTANTS.SIDE_BUY if trade_type is TradeType.BUY else CONSTANTS.SIDE_SELL
+        symbol = await LatokenAPIOrderBookDataSource.exchange_symbol_associated_to_pair(
+            trading_pair=trading_pair,
+            domain=self._domain,
+            api_factory=self._api_factory,
+            throttler=self._throttler)
+
+        base, quote = symbol.split('-')
+        api_params = {'baseCurrency': base,
+                      'quoteCurrency': quote,
+                      "side": side_str,
+                      "clientOrderId": order_id,
+                      "quantity": amount_str,
+                      "type": type_str,
+                      "price": price_str}
+        if order_type == OrderType.LIMIT:
+            api_params['condition'] = CONSTANTS.TIME_IN_FORCE_GTC
+
+        try:
+            order_result = await self._api_request(
+                method=RESTMethod.POST,
+                path_url=CONSTANTS.ORDER_PLACE_PATH_URL,
+                data=api_params,
+                is_auth_required=True)
+
+            exchange_order_id = str(order_result["id"])
+
+            order_update: OrderUpdate = OrderUpdate(
+                client_order_id=order_id,
+                exchange_order_id=exchange_order_id,
+                trading_pair=trading_pair,
+                update_timestamp=int(order_result["timestamp"]),
+                new_state=OrderState.OPEN,
+            )
+            self._order_tracker.process_order_update(order_update)
+
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:
+            self.logger().network(
+                f"Error submitting {side_str} {type_str} order to Latoken for "
+                f"{amount} {trading_pair} "
+                f"{price}.",
+                exc_info=True,
+                app_warning_msg=str(e)
+            )
+            order_update: OrderUpdate = OrderUpdate(
+                client_order_id=order_id,
+                trading_pair=trading_pair,
+                update_timestamp=int(self.current_timestamp * 1e3),
+                new_state=OrderState.FAILED,
+            )
+            self._order_tracker.process_order_update(order_update)
+
+    async def _execute_cancel(self, trading_pair: str, order_id: str):
+        """
+        Requests the exchange to cancel an active order
+        :param trading_pair: the trading pair the order to cancel operates with
+        :param order_id: the client id of the order to cancel
+        """
+        tracked_order = self._order_tracker.fetch_tracked_order(order_id)
+        if tracked_order is not None:
+            try:
+                # symbol = await LatokenAPIOrderBookDataSource.exchange_symbol_associated_to_pair(
+                #     trading_pair=trading_pair,
+                #     domain=self._domain,
+                #     api_factory=self._api_factory,
+                #     throttler=self._throttler)
+                api_params = {
+                    "id": order_id,
+                }
+                cancel_result = await self._api_request(
+                    method=RESTMethod.DELETE,
+                    path_url=CONSTANTS.ORDER_CANCEL_PATH_URL,
+                    params=api_params,
+                    is_auth_required=True)
+
+                if cancel_result.get("status") == "CANCELED":
+                    order_update: OrderUpdate = OrderUpdate(
+                        client_order_id=order_id,
+                        trading_pair=tracked_order.trading_pair,
+                        update_timestamp=int(self.current_timestamp * 1e3),
+                        new_state=OrderState.CANCELLED,
+                    )
+                    self._order_tracker.process_order_update(order_update)
+                return cancel_result
+
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                self.logger().exception(f"There was a an error when requesting cancellation of order {order_id}")
+                raise
 
     async def _status_polling_loop(self):
         """
@@ -602,9 +604,9 @@ class LatokenExchange(ExchangeBase):
                 await self._update_time_synchronizer()
                 await safe_gather(
                     self._update_balances(),
-                    # self._update_order_fills_from_trades(),
+                    self._update_order_fills_from_trades(),
                 )
-                # await self._update_order_status()
+                await self._update_order_status()
                 self._last_poll_timestamp = self.current_timestamp
             except asyncio.CancelledError:
                 raise
@@ -635,290 +637,282 @@ class LatokenExchange(ExchangeBase):
                                                       "Check network connection.")
                 await asyncio.sleep(0.5)
 
-    # async def _update_trading_rules(self):
-    #     exchange_info = await self._api_request(
-    #         method=RESTMethod.GET,
-    #         path_url=CONSTANTS.EXCHANGE_INFO_PATH_URL)
-    #     trading_rules_list = await self._format_trading_rules(exchange_info)
-    #     self._trading_rules.clear()
-    #     for trading_rule in trading_rules_list:
-    #         self._trading_rules[trading_rule.trading_pair] = trading_rule
-    #
-    # async def _format_trading_rules(self, exchange_info_dict: Dict[str, Any]) -> List[TradingRule]:
-    #     """
-    #     Example:
-    #     {
-    #         "symbol": "ETHBTC",
-    #         "baseAssetPrecision": 8,
-    #         "quotePrecision": 8,
-    #         "orderTypes": ["LIMIT", "MARKET"],
-    #         "filters": [
-    #             {
-    #                 "filterType": "PRICE_FILTER",
-    #                 "minPrice": "0.00000100",
-    #                 "maxPrice": "100000.00000000",
-    #                 "tickSize": "0.00000100"
-    #             }, {
-    #                 "filterType": "LOT_SIZE",
-    #                 "minQty": "0.00100000",
-    #                 "maxQty": "100000.00000000",
-    #                 "stepSize": "0.00100000"
-    #             }, {
-    #                 "filterType": "MIN_NOTIONAL",
-    #                 "minNotional": "0.00100000"
-    #             }
-    #         ]
-    #     }
-    #     """
-    #     trading_pair_rules = exchange_info_dict.get("symbols", [])
-    #     retval = []
-    #     for rule in filter(latoken_utils.is_exchange_information_valid, trading_pair_rules):
-    #         try:
-    #             trading_pair = await LatokenAPIOrderBookDataSource.trading_pair_associated_to_exchange_symbol(
-    #                 symbol=rule.get("symbol"),
-    #                 domain=self._domain,
-    #                 api_factory=self._api_factory,
-    #                 throttler=self._throttler)
-    #             filters = rule.get("filters")
-    #             price_filter = [f for f in filters if f.get("filterType") == "PRICE_FILTER"][0]
-    #             lot_size_filter = [f for f in filters if f.get("filterType") == "LOT_SIZE"][0]
-    #             min_notional_filter = [f for f in filters if f.get("filterType") == "MIN_NOTIONAL"][0]
-    #
-    #             min_order_size = Decimal(lot_size_filter.get("minQty"))
-    #             tick_size = price_filter.get("tickSize")
-    #             step_size = Decimal(lot_size_filter.get("stepSize"))
-    #             min_notional = Decimal(min_notional_filter.get("minNotional"))
-    #
-    #             retval.append(
-    #                 TradingRule(trading_pair,
-    #                             min_order_size=min_order_size,
-    #                             min_price_increment=Decimal(tick_size),
-    #                             min_base_amount_increment=Decimal(step_size),
-    #                             min_notional_size=Decimal(min_notional)))
-    #
-    #         except Exception:
-    #             self.logger().exception(f"Error parsing the trading pair rule {rule}. Skipping.")
-    #     return retval
-    #
-    # async def _user_stream_event_listener(self):
-    #     """
-    #     This functions runs in background continuously processing the events received from the exchange by the user
-    #     stream data source. It keeps reading events from the queue until the task is interrupted.
-    #     The events received are balance updates, order updates and trade events.
-    #     """
-    #     async for event_message in self._iter_user_event_queue():
-    #         try:
-    #             event_type = event_message.get("e")
-    #             # As per the order update section in Latoken the ID of the order being cancelled is under the "C" key
-    #             if event_type == "executionReport":
-    #                 execution_type = event_message.get("x")
-    #                 if execution_type != "CANCELED":
-    #                     client_order_id = event_message.get("c")
-    #                 else:
-    #                     client_order_id = event_message.get("C")
-    #
-    #                 if execution_type == "TRADE":
-    #                     tracked_order = self._order_tracker.fetch_order(client_order_id=client_order_id)
-    #                     if tracked_order is not None:
-    #                         trade_update = TradeUpdate(
-    #                             trade_id=str(event_message["t"]),
-    #                             client_order_id=client_order_id,
-    #                             exchange_order_id=str(event_message["i"]),
-    #                             trading_pair=tracked_order.trading_pair,
-    #                             fee_asset=event_message["N"],
-    #                             fee_paid=Decimal(event_message["n"]),
-    #                             fill_base_amount=Decimal(event_message["l"]),
-    #                             fill_quote_amount=Decimal(event_message["l"]) * Decimal(event_message["L"]),
-    #                             fill_price=Decimal(event_message["L"]),
-    #                             fill_timestamp=int(event_message["T"]),
-    #                         )
-    #                         self._order_tracker.process_trade_update(trade_update)
-    #
-    #                 tracked_order = self.in_flight_orders.get(client_order_id)
-    #                 if tracked_order is not None:
-    #                     order_update = OrderUpdate(
-    #                         trading_pair=tracked_order.trading_pair,
-    #                         update_timestamp=int(event_message["E"]),
-    #                         new_state=CONSTANTS.ORDER_STATE[event_message["X"]],
-    #                         client_order_id=client_order_id,
-    #                         exchange_order_id=str(event_message["i"]),
-    #                     )
-    #                     self._order_tracker.process_order_update(order_update=order_update)
-    #
-    #             elif event_type == "outboundAccountPosition":
-    #                 balances = event_message["B"]
-    #                 for balance_entry in balances:
-    #                     asset_name = balance_entry["a"]
-    #                     free_balance = Decimal(balance_entry["f"])
-    #                     total_balance = Decimal(balance_entry["f"]) + Decimal(balance_entry["l"])
-    #                     self._account_available_balances[asset_name] = free_balance
-    #                     self._account_balances[asset_name] = total_balance
-    #
-    #         except asyncio.CancelledError:
-    #             raise
-    #         except Exception:
-    #             self.logger().error("Unexpected error in user stream listener loop.", exc_info=True)
-    #             await asyncio.sleep(5.0)
-    #
-    # async def _update_order_fills_from_trades(self):
-    #     """
-    #     This is intended to be a backup measure to get filled events with trade ID for orders,
-    #     in case Latoken's user stream events are not working.
-    #     NOTE: It is not required to copy this functionality in other connectors.
-    #     This is separated from _update_order_status which only updates the order status without producing filled
-    #     events, since Latoken's get order endpoint does not return trade IDs.
-    #     The minimum poll interval for order status is 10 seconds.
-    #     """
-    #     small_interval_last_tick = self._last_poll_timestamp / self.UPDATE_ORDER_STATUS_MIN_INTERVAL
-    #     small_interval_current_tick = self.current_timestamp / self.UPDATE_ORDER_STATUS_MIN_INTERVAL
-    #     long_interval_last_tick = self._last_poll_timestamp / self.LONG_POLL_INTERVAL
-    #     long_interval_current_tick = self.current_timestamp / self.LONG_POLL_INTERVAL
-    #
-    #     if (long_interval_current_tick > long_interval_last_tick
-    #             or (self.in_flight_orders and small_interval_current_tick > small_interval_last_tick)):
-    #         query_time = int(self._last_trades_poll_latoken_timestamp * 1e3)
-    #         self._last_trades_poll_latoken_timestamp = self._latoken_time_synchronizer.time()
-    #         order_by_exchange_id_map = {}
-    #         for order in self._order_tracker.all_orders.values():
-    #             order_by_exchange_id_map[order.exchange_order_id] = order
-    #
-    #         tasks = []
-    #         trading_pairs = self._order_book_tracker._trading_pairs
-    #         for trading_pair in trading_pairs:
-    #             params = {
-    #                 "symbol": await LatokenAPIOrderBookDataSource.exchange_symbol_associated_to_pair(
-    #                     trading_pair=trading_pair,
-    #                     domain=self._domain,
-    #                     api_factory=self._api_factory,
-    #                     throttler=self._throttler)
-    #             }
-    #             if self._last_poll_timestamp > 0:
-    #                 params["startTime"] = query_time
-    #             tasks.append(self._api_request(
-    #                 method=RESTMethod.GET,
-    #                 path_url=CONSTANTS.MY_TRADES_PATH_URL,
-    #                 params=params,
-    #                 is_auth_required=True))
-    #
-    #         self.logger().debug(f"Polling for order fills of {len(tasks)} trading pairs.")
-    #         results = await safe_gather(*tasks, return_exceptions=True)
-    #
-    #         for trades, trading_pair in zip(results, trading_pairs):
-    #
-    #             if isinstance(trades, Exception):
-    #                 self.logger().network(
-    #                     f"Error fetching trades update for the order {trading_pair}: {trades}.",
-    #                     app_warning_msg=f"Failed to fetch trade update for {trading_pair}."
-    #                 )
-    #                 continue
-    #             for trade in trades:
-    #                 exchange_order_id = str(trade["orderId"])
-    #                 if exchange_order_id in order_by_exchange_id_map:
-    #                     # This is a fill for a tracked order
-    #                     tracked_order = order_by_exchange_id_map[exchange_order_id]
-    #                     trade_update = TradeUpdate(
-    #                         trade_id=str(trade["id"]),
-    #                         client_order_id=tracked_order.client_order_id,
-    #                         exchange_order_id=exchange_order_id,
-    #                         trading_pair=trading_pair,
-    #                         fee_asset=trade["commissionAsset"],
-    #                         fee_paid=Decimal(trade["commission"]),
-    #                         fill_base_amount=Decimal(trade["qty"]),
-    #                         fill_quote_amount=Decimal(trade["quoteQty"]),
-    #                         fill_price=Decimal(trade["price"]),
-    #                         fill_timestamp=int(trade["time"]),
-    #                     )
-    #                     self._order_tracker.process_trade_update(trade_update)
-    #                 elif self.is_confirmed_new_order_filled_event(str(trade["id"]), exchange_order_id, trading_pair):
-    #                     # This is a fill of an order registered in the DB but not tracked any more
-    #                     self._current_trade_fills.add(TradeFillOrderDetails(
-    #                         market=self.display_name,
-    #                         exchange_trade_id=str(trade["id"]),
-    #                         symbol=trading_pair))
-    #                     self.trigger_event(
-    #                         MarketEvent.OrderFilled,
-    #                         OrderFilledEvent(
-    #                             timestamp=float(trade["time"]) * 1e-3,
-    #                             order_id=self._exchange_order_ids.get(str(trade["orderId"]), None),
-    #                             trading_pair=trading_pair,
-    #                             trade_type=TradeType.BUY if trade["isBuyer"] else TradeType.SELL,
-    #                             order_type=OrderType.LIMIT_MAKER if trade["isMaker"] else OrderType.LIMIT,
-    #                             price=Decimal(trade["price"]),
-    #                             amount=Decimal(trade["qty"]),
-    #                             trade_fee=DeductedFromReturnsTradeFee(
-    #                                 flat_fees=[
-    #                                     TokenAmount(
-    #                                         trade["commissionAsset"],
-    #                                         Decimal(trade["commission"])
-    #                                     )
-    #                                 ]
-    #                             ),
-    #                             exchange_trade_id=str(trade["id"])
-    #                         ))
-    #                     self.logger().info(f"Recreating missing trade in TradeFill: {trade}")
-    #
-    # async def _update_order_status(self):
-    #     # This is intended to be a backup measure to close straggler orders, in case Latoken's user stream events
-    #     # are not working.
-    #     # The minimum poll interval for order status is 10 seconds.
-    #     last_tick = self._last_poll_timestamp / self.UPDATE_ORDER_STATUS_MIN_INTERVAL
-    #     current_tick = self.current_timestamp / self.UPDATE_ORDER_STATUS_MIN_INTERVAL
-    #
-    #     tracked_orders: List[InFlightOrder] = list(self.in_flight_orders.values())
-    #     if current_tick > last_tick and len(tracked_orders) > 0:
-    #
-    #         tasks = [self._api_request(
-    #                  method=RESTMethod.GET,
-    #                  path_url=CONSTANTS.ORDER_PATH_URL,
-    #                  params={
-    #                      "symbol": await LatokenAPIOrderBookDataSource.exchange_symbol_associated_to_pair(
-    #                          trading_pair=o.trading_pair,
-    #                          domain=self._domain,
-    #                          api_factory=self._api_factory,
-    #                          throttler=self._throttler),
-    #                      "origClientOrderId": o.client_order_id},
-    #                  is_auth_required=True) for o in tracked_orders]
-    #         self.logger().debug(f"Polling for order status updates of {len(tasks)} orders.")
-    #         results = await safe_gather(*tasks, return_exceptions=True)
-    #         for order_update, tracked_order in zip(results, tracked_orders):
-    #             client_order_id = tracked_order.client_order_id
-    #
-    #             # If the order has already been cancelled or has failed do nothing
-    #             if client_order_id not in self.in_flight_orders:
-    #                 continue
-    #
-    #             if isinstance(order_update, Exception):
-    #                 self.logger().network(
-    #                     f"Error fetching status update for the order {client_order_id}: {order_update}.",
-    #                     app_warning_msg=f"Failed to fetch status update for the order {client_order_id}."
-    #                 )
-    #                 self._order_not_found_records[client_order_id] = (
-    #                     self._order_not_found_records.get(client_order_id, 0) + 1)
-    #                 if (self._order_not_found_records[client_order_id] >=
-    #                         self.MAX_ORDER_UPDATE_RETRIEVAL_RETRIES_WITH_FAILURES):
-    #                     # Wait until the order not found error have repeated a few times before actually treating
-    #                     # it as failed. See: https://github.com/CoinAlpha/hummingbot/issues/601
-    #
-    #                     order_update: OrderUpdate = OrderUpdate(
-    #                         client_order_id=client_order_id,
-    #                         trading_pair=tracked_order.trading_pair,
-    #                         update_timestamp=int(self.current_timestamp * 1e3),
-    #                         new_state=OrderState.FAILED,
-    #                     )
-    #                     self._order_tracker.process_order_update(order_update)
-    #
-    #             else:
-    #                 # Update order execution status
-    #                 new_state = CONSTANTS.ORDER_STATE[order_update["status"]]
-    #
-    #                 update = OrderUpdate(
-    #                     client_order_id=client_order_id,
-    #                     exchange_order_id=str(order_update["orderId"]),
-    #                     trading_pair=tracked_order.trading_pair,
-    #                     update_timestamp=int(order_update["updateTime"]),
-    #                     new_state=new_state,
-    #                 )
-    #                 self._order_tracker.process_order_update(update)
+    async def _update_trading_rules(self):
+        pairs = await self._api_request(
+            method=RESTMethod.GET,
+            path_url=CONSTANTS.PAIR_PATH_URL)
+        trading_rules_list = await self._format_trading_rules(pairs)
+        self._trading_rules.clear()
+        for trading_rule in trading_rules_list:
+            self._trading_rules[trading_rule.trading_pair] = trading_rule
+
+    async def _format_trading_rules(self, pairs_list: List[Any]) -> List[TradingRule]:
+        """
+        Example:
+        {
+            "symbol": "ETHBTC",
+            "baseAssetPrecision": 8,
+            "quotePrecision": 8,
+            "orderTypes": ["LIMIT", "MARKET"],
+            "filters": [
+                {
+                    "filterType": "PRICE_FILTER",
+                    "minPrice": "0.00000100",
+                    "maxPrice": "100000.00000000",
+                    "tickSize": "0.00000100"
+                }, {
+                    "filterType": "LOT_SIZE",
+                    "minQty": "0.00100000",
+                    "maxQty": "100000.00000000",
+                    "stepSize": "0.00100000"
+                }, {
+                    "filterType": "MIN_NOTIONAL",
+                    "minNotional": "0.00100000"
+                }
+            ]
+        }
+        """
+        retval = []
+        for rule in filter(latoken_utils.is_pair_valid, pairs_list):
+            try:
+                trading_pair = await LatokenAPIOrderBookDataSource.trading_pair_associated_to_exchange_symbol(
+                    symbol=f"{rule['baseCurrency']}/{rule['quoteCurrency']}",
+                    domain=self._domain,
+                    api_factory=self._api_factory,
+                    throttler=self._throttler)
+
+                min_order_size = Decimal(rule["minOrderQuantity"])
+                tick_size = rule["priceTick"]
+                step_size = Decimal(rule["quantityTick"])
+                min_notional = Decimal(rule["minOrderCostUsd"])
+
+                retval.append(
+                    TradingRule(trading_pair,
+                                min_order_size=min_order_size,
+                                min_price_increment=Decimal(tick_size),
+                                min_base_amount_increment=Decimal(step_size),
+                                min_notional_size=Decimal(min_notional)))
+
+            except Exception:
+                self.logger().exception(f"Error parsing the trading pair rule {rule}. Skipping.")
+        return retval
+
+    async def _user_stream_event_listener(self):
+        """
+        This functions runs in background continuously processing the events received from the exchange by the user
+        stream data source. It keeps reading events from the queue until the task is interrupted.
+        The events received are balance updates, order updates and trade events.
+        """
+        async for event_message in self._iter_user_event_queue():
+            try:
+                event_type = event_message.get("e")
+                # As per the order update section in Latoken the ID of the order being cancelled is under the "C" key
+                if event_type == "executionReport":
+                    execution_type = event_message.get("x")
+                    if execution_type != "CANCELED":
+                        client_order_id = event_message.get("c")
+                    else:
+                        client_order_id = event_message.get("C")
+
+                    if execution_type == "TRADE":
+                        tracked_order = self._order_tracker.fetch_order(client_order_id=client_order_id)
+                        if tracked_order is not None:
+                            trade_update = TradeUpdate(
+                                trade_id=str(event_message["t"]),
+                                client_order_id=client_order_id,
+                                exchange_order_id=str(event_message["i"]),
+                                trading_pair=tracked_order.trading_pair,
+                                fee_asset=event_message["N"],
+                                fee_paid=Decimal(event_message["n"]),
+                                fill_base_amount=Decimal(event_message["l"]),
+                                fill_quote_amount=Decimal(event_message["l"]) * Decimal(event_message["L"]),
+                                fill_price=Decimal(event_message["L"]),
+                                fill_timestamp=int(event_message["T"]),
+                            )
+                            self._order_tracker.process_trade_update(trade_update)
+
+                    tracked_order = self.in_flight_orders.get(client_order_id)
+                    if tracked_order is not None:
+                        order_update = OrderUpdate(
+                            trading_pair=tracked_order.trading_pair,
+                            update_timestamp=int(event_message["E"]),
+                            new_state=CONSTANTS.ORDER_STATE[event_message["X"]],
+                            client_order_id=client_order_id,
+                            exchange_order_id=str(event_message["i"]),
+                        )
+                        self._order_tracker.process_order_update(order_update=order_update)
+
+                elif event_type == "outboundAccountPosition":
+                    balances = event_message["B"]
+                    for balance_entry in balances:
+                        asset_name = balance_entry["a"]
+                        free_balance = Decimal(balance_entry["f"])
+                        total_balance = Decimal(balance_entry["f"]) + Decimal(balance_entry["l"])
+                        self._account_available_balances[asset_name] = free_balance
+                        self._account_balances[asset_name] = total_balance
+
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                self.logger().error("Unexpected error in user stream listener loop.", exc_info=True)
+                await asyncio.sleep(5.0)
+
+    async def _update_order_fills_from_trades(self):
+        """
+        This is intended to be a backup measure to get filled events with trade ID for orders,
+        in case Latoken's user stream events are not working.
+        NOTE: It is not required to copy this functionality in other connectors.
+        This is separated from _update_order_status which only updates the order status without producing filled
+        events, since Latoken's get order endpoint does not return trade IDs.
+        The minimum poll interval for order status is 10 seconds.
+        """
+        small_interval_last_tick = self._last_poll_timestamp / self.UPDATE_ORDER_STATUS_MIN_INTERVAL
+        small_interval_current_tick = self.current_timestamp / self.UPDATE_ORDER_STATUS_MIN_INTERVAL
+        long_interval_last_tick = self._last_poll_timestamp / self.LONG_POLL_INTERVAL
+        long_interval_current_tick = self.current_timestamp / self.LONG_POLL_INTERVAL
+
+        if (long_interval_current_tick > long_interval_last_tick
+                or (self.in_flight_orders and small_interval_current_tick > small_interval_last_tick)):
+            # query_time = int(self._last_trades_poll_latoken_timestamp * 1e3)
+            self._last_trades_poll_latoken_timestamp = self._latoken_time_synchronizer.time()
+            order_by_exchange_id_map = {}
+            for order in self._order_tracker.all_orders.values():
+                order_by_exchange_id_map[order.exchange_order_id] = order
+
+            tasks = []
+            trading_pairs = self._order_book_tracker._trading_pairs
+            for trading_pair in trading_pairs:
+                base_quote = await LatokenAPIOrderBookDataSource.exchange_symbol_associated_to_pair(
+                    trading_pair=trading_pair,
+                    domain=self._domain,
+                    api_factory=self._api_factory,
+                    throttler=self._throttler)
+
+                params = {
+                    # "from": "time"
+                    "limit": "100"
+                }
+                tasks.append(self._api_request(
+                    method=RESTMethod.GET,
+                    path_url=f"{CONSTANTS.MY_TRADES_PATH_URL}/{base_quote}",
+                    params=params,
+                    is_auth_required=True))
+
+            self.logger().debug(f"Polling for order fills of {len(tasks)} trading pairs.")
+            results = await safe_gather(*tasks, return_exceptions=True)
+
+            for trades, trading_pair in zip(results, trading_pairs):
+
+                if isinstance(trades, Exception):
+                    self.logger().network(
+                        f"Error fetching trades update for the order {trading_pair}: {trades}.",
+                        app_warning_msg=f"Failed to fetch trade update for {trading_pair}."
+                    )
+                    continue
+                for trade in trades:
+                    exchange_order_id = str(trade["id"])
+                    if exchange_order_id in order_by_exchange_id_map:
+                        # This is a fill for a tracked order
+                        tracked_order = order_by_exchange_id_map[exchange_order_id]
+                        trade_update = TradeUpdate(
+                            trade_id=str(trade["id"]),
+                            client_order_id=tracked_order.client_order_id,
+                            exchange_order_id=exchange_order_id,
+                            trading_pair=trading_pair,
+                            # fee_asset=trade["commissionAsset"],
+                            fee_paid=Decimal(trade["fee"]),
+                            # fill_base_amount=Decimal(trade["filled"]),
+                            # fill_quote_amount=Decimal(trade["quoteQty"]),
+                            fill_price=Decimal(trade["price"]),
+                            fill_timestamp=int(trade["timestamp"]),
+                        )
+                        self._order_tracker.process_trade_update(trade_update)
+                    elif self.is_confirmed_new_order_filled_event(str(trade["id"]), exchange_order_id, trading_pair):
+                        # This is a fill of an order registered in the DB but not tracked any more
+                        self._current_trade_fills.add(TradeFillOrderDetails(
+                            market=self.display_name,
+                            exchange_trade_id=str(trade["id"]),
+                            symbol=trading_pair))
+                        self.trigger_event(
+                            MarketEvent.OrderFilled,
+                            OrderFilledEvent(
+                                timestamp=float(trade["time"]) * 1e-3,
+                                order_id=self._exchange_order_ids.get(str(trade["id"]), None),
+                                trading_pair=trading_pair,
+                                trade_type=TradeType.BUY if trade[
+                                    "direction"] == "TRADE_DIRECTION_BUY" else TradeType.SELL,
+                                order_type=OrderType.LIMIT_MAKER if trade["isMakerBuyer"] else OrderType.LIMIT,
+                                price=Decimal(trade["price"]),
+                                amount=Decimal(trade["quantity"]),
+                                trade_fee=DeductedFromReturnsTradeFee(
+                                    flat_fees=[
+                                        TokenAmount(
+                                            trade["baseCurrency" if trade[
+                                                "direction"] == "TRADE_DIRECTION_BUY" else "quoteCurrency"],
+                                            Decimal(trade["fee"])
+                                        )
+                                    ]
+                                ),
+                                exchange_trade_id=str(trade["id"])
+                            ))
+                        self.logger().info(f"Recreating missing trade in TradeFill: {trade}")
+
+    async def _update_order_status(self):
+        # This is intended to be a backup measure to close straggler orders, in case Latoken's user stream events
+        # are not working.
+        # The minimum poll interval for order status is 10 seconds.
+        last_tick = self._last_poll_timestamp / self.UPDATE_ORDER_STATUS_MIN_INTERVAL
+        current_tick = self.current_timestamp / self.UPDATE_ORDER_STATUS_MIN_INTERVAL
+
+        tracked_orders: List[InFlightOrder] = list(self.in_flight_orders.values())
+        if current_tick > last_tick and len(tracked_orders) > 0:
+            # not sure if the exchange order id is always up-to-date on the moment this function is called (?)
+            tasks = [self._api_request(
+                method=RESTMethod.GET,
+                path_url=f"{CONSTANTS.GET_ORDER_PATH_URL}/{tracked_order.exchange_order_id}",
+                is_auth_required=True) for tracked_order in tracked_orders]
+
+            self.logger().debug(f"Polling for order status updates of {len(tasks)} orders.")
+            results = await safe_gather(*tasks, return_exceptions=True)
+            for order_update, tracked_order in zip(results, tracked_orders):
+                client_order_id = tracked_order.client_order_id
+
+                # If the order has already been cancelled or has failed do nothing
+                if client_order_id not in self.in_flight_orders:
+                    continue
+
+                if isinstance(order_update, Exception):
+                    self.logger().network(
+                        f"Error fetching status update for the order {client_order_id}: {order_update}.",
+                        app_warning_msg=f"Failed to fetch status update for the order {client_order_id}."
+                    )
+                    self._order_not_found_records[client_order_id] = (
+                        self._order_not_found_records.get(client_order_id, 0) + 1)
+                    if (self._order_not_found_records[client_order_id] >=
+                            self.MAX_ORDER_UPDATE_RETRIEVAL_RETRIES_WITH_FAILURES):
+                        # Wait until the order not found error have repeated a few times before actually treating
+                        # it as failed. See: https://github.com/CoinAlpha/hummingbot/issues/601
+
+                        order_update: OrderUpdate = OrderUpdate(
+                            client_order_id=client_order_id,
+                            trading_pair=tracked_order.trading_pair,
+                            update_timestamp=int(self.current_timestamp * 1e3),
+                            new_state=OrderState.FAILED,
+                        )
+                        self._order_tracker.process_order_update(order_update)
+
+                else:
+                    # Update order execution status
+                    new_state = CONSTANTS.ORDER_STATE[order_update["status"]]
+
+                    update = OrderUpdate(
+                        client_order_id=client_order_id,
+                        exchange_order_id=str(order_update["id"]),
+                        trading_pair=tracked_order.trading_pair,
+                        update_timestamp=int(order_update["timestamp"]),
+                        new_state=new_state,
+                    )
+                    self._order_tracker.process_order_update(update)
 
     async def _iter_user_event_queue(self) -> AsyncIterable[Dict[str, any]]:
         while True:
@@ -942,24 +936,28 @@ class LatokenExchange(ExchangeBase):
 
             params = {
                 'zeros': 'true'
-            }
+            }  # if not testing this can be set to the default of false
+            import asyncio
+            balances, pairs = await asyncio.gather(
+                self._api_request(
+                    method=RESTMethod.GET,
+                    path_url=CONSTANTS.ACCOUNTS_PATH_URL,
+                    is_auth_required=True,
+                    params=params),
+                self._api_request(
+                    method=RESTMethod.GET,
+                    path_url=CONSTANTS.TICKER_PATH_URL))
 
-            balances = await self._api_request(
-                method=RESTMethod.GET,
-                path_url=CONSTANTS.ACCOUNTS_PATH_URL,
-                is_auth_required=True,
-                params=params)
-
-            # "id": "1e200836-a037-4475-825e-f202dd0b0e92",
-            # "status": "ACCOUNT_STATUS_ACTIVE",
-            # "type": "ACCOUNT_TYPE_WALLET",
-            # "timestamp": 1566408522980,
-            # "currency": "6ae140a9-8e75-4413-b157-8dd95c711b23",
-            # "available": "898849.3300",
-            # "blocked": "4581.9510"
+            uuid_to_asset_name = {}
+            for pair in pairs:
+                base, quote = pair["symbol"].split('/')
+                uuid_to_asset_name[pair["baseCurrency"]] = base
+                uuid_to_asset_name[pair["quoteCurrency"]] = quote
 
             for balance_entry in balances:
-                asset_name = balance_entry["currency"]
+                asset_name = uuid_to_asset_name.get(balance_entry["currency"])
+                if asset_name is None:
+                    continue
                 free_balance = Decimal(balance_entry["available"])
                 total_balance = Decimal(balance_entry["available"]) + Decimal(balance_entry["blocked"])
                 self._account_available_balances[asset_name] = free_balance

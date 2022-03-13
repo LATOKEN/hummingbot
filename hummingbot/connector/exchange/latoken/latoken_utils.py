@@ -22,9 +22,7 @@ def get_new_client_order_id(is_buy: bool, trading_pair: str) -> str:
     :return: an identifier for the new order to be used in the client
     """
     side = "B" if is_buy else "S"
-    symbols = trading_pair.split("-")
-    base = symbols[0].upper()
-    quote = symbols[1].upper()
+    base, quote = trading_pair.split("-")
     base_str = f"{base[0]}{base[-1]}"
     quote_str = f"{quote[0]}{quote[-1]}"
     client_instance_id = hex(abs(hash(f"{socket.gethostname()}{os.getpid()}")))[2:6]
@@ -44,6 +42,10 @@ def is_exchange_information_valid(pair_data: Dict[str, Any]) -> bool:
     return pair_data["is_valid"] and pair_data["status"] == 'PAIR_STATUS_ACTIVE'\
         and pair_base["status"] == 'CURRENCY_STATUS_ACTIVE' and pair_base["type"] == 'CURRENCY_TYPE_CRYPTO'\
         and pair_quote["status"] == 'CURRENCY_STATUS_ACTIVE' and pair_quote["type"] == 'CURRENCY_TYPE_CRYPTO'
+
+
+def is_pair_valid(pair_data: Dict[str, Any]) -> bool:
+    return pair_data["status"] == 'PAIR_STATUS_ACTIVE'
 
 
 def public_rest_url(path_url: str, domain: str = "com") -> str:
@@ -80,22 +82,3 @@ KEYS = {
                   is_secure=True,
                   is_connect_key=True),
 }
-#
-# OTHER_DOMAINS = ["binance_us"]
-# OTHER_DOMAINS_PARAMETER = {"binance_us": "us"}
-# OTHER_DOMAINS_EXAMPLE_PAIR = {"binance_us": "BTC-USDT"}
-# OTHER_DOMAINS_DEFAULT_FEES = {"binance_us": [0.1, 0.1]}
-# OTHER_DOMAINS_KEYS = {"binance_us": {
-#     "binance_us_api_key":
-#         ConfigVar(key="binance_us_api_key",
-#                   prompt="Enter your Binance US API key >>> ",
-#                   required_if=using_exchange("binance_us"),
-#                   is_secure=True,
-#                   is_connect_key=True),
-#     "binance_us_api_secret":
-#         ConfigVar(key="binance_us_api_secret",
-#                   prompt="Enter your Binance US API secret >>> ",
-#                   required_if=using_exchange("binance_us"),
-#                   is_secure=True,
-#                   is_connect_key=True),
-# }}

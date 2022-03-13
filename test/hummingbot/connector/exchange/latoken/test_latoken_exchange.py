@@ -50,8 +50,8 @@ class LatokenExchangeTests(TestCase):
         self.test_task: Optional[asyncio.Task] = None
 
         self.exchange = LatokenExchange(
-            latoken_api_key="70e46c0c-7400-4746-a50a-0b9e377c2f76",
-            latoken_api_secret="ODRlMmM4ZDAtOTYwOC00OWFjLWFlOWQtOGI1NWIzNmQzOGU0",
+            latoken_api_key="32d0d3a8-6de0-484b-9553-2c94db9fdc8a",
+            latoken_api_secret="MmJlOGRkMzctOTVkNS00OGFiLTljZjUtZWRmNDYyYTlhODUz",
             trading_pairs=[],  # self.trading_pair],
         )
 
@@ -134,8 +134,8 @@ class LatokenExchangeTests(TestCase):
         self.assertIn("timestamp", request_params)  # todo other logic in our version, e.g. no timestamp for REST
         self.assertIn("signature", request_params)
         request_headers = request_call_tuple.kwargs["headers"]
-        self.assertIn("X-MBX-APIKEY", request_headers)
-        self.assertEqual("testAPIKey", request_headers["X-MBX-APIKEY"])
+        self.assertIn("X-LA-APIKEY", request_headers)
+        self.assertEqual("testAPIKey", request_headers["X-LA-APIKEY"])
 
     def test_supported_order_types(self):  # todo needs to be verified from docs
         supported_types = self.exchange.supported_order_types()

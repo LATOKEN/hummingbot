@@ -37,7 +37,6 @@ from hummingbot.logger import HummingbotLogger
 
 
 class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
-
     HEARTBEAT_TIME_INTERVAL = 30.0
     TRADE_STREAM_ID = 1
     DIFF_STREAM_ID = 2
@@ -87,7 +86,8 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         local_api_factory = api_factory or build_api_factory()
         rest_assistant = await local_api_factory.get_rest_assistant()
         local_throttler = throttler or cls._get_throttler_instance()
-        tasks = [cls._get_last_traded_price(t_pair, domain, rest_assistant, local_throttler) for t_pair in trading_pairs]
+        tasks = [cls._get_last_traded_price(t_pair, domain, rest_assistant, local_throttler) for t_pair in
+                 trading_pairs]
         results = await safe_gather(*tasks)
         return {t_pair: result for t_pair, result in zip(trading_pairs, results)}
 
@@ -104,10 +104,10 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         rest_assistant = await local_api_factory.get_rest_assistant()
         throttler = LatokenAPIOrderBookDataSource._get_throttler_instance()
 
-        url = latoken_utils.public_rest_url(path_url=CONSTANTS.TICKER_PRICE_CHANGE_PATH_URL, domain=domain)
+        url = latoken_utils.public_rest_url(path_url=CONSTANTS.TICKER_PATH_URL, domain=domain)
         request = RESTRequest(method=RESTMethod.GET, url=url)
 
-        async with throttler.execute_task(limit_id=CONSTANTS.TICKER_PRICE_CHANGE_PATH_URL):
+        async with throttler.execute_task(limit_id=CONSTANTS.TICKER_PATH_URL):
             resp: RESTResponse = await rest_assistant.call(request=request)
             resp_json = await resp.json()
 
@@ -117,8 +117,8 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
                 pair = await LatokenAPIOrderBookDataSource.trading_pair_associated_to_exchange_symbol(
                     symbol=record["symbol"],
                     domain=domain)
-                ret_val[pair] = ((Decimal(record.get("bidPrice", "0")) +
-                                  Decimal(record.get("askPrice", "0")))
+                ret_val[pair] = ((Decimal(record.get("bestBid", "0")) +
+                                  Decimal(record.get("bestAsk", "0")))
                                  / Decimal("2"))
             except KeyError:
                 # Ignore results for pairs that are not tracked
@@ -356,20 +356,21 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         :return: the response from the exchange (JSON dictionary)
         """
         rest_assistant = await self._get_rest_assistant()
-        params = {
-            "symbol": await self.exchange_symbol_associated_to_pair(
-                trading_pair=trading_pair,
-                domain=self._domain,
-                api_factory=self._api_factory,
-                throttler=self._throttler)
-        }
+        params = {}
+
         if limit != 0:
             params["limit"] = str(limit)
 
-        url = latoken_utils.public_rest_url(path_url=CONSTANTS.SNAPSHOT_PATH_URL, domain=self._domain)
-        request = RESTRequest(method=RESTMethod.GET, url=url, params=params)
+        symbol = (await self.exchange_symbol_associated_to_pair(
+            trading_pair=trading_pair,
+            domain=self._domain,
+            api_factory=self._api_factory,
+            throttler=self._throttler)).split('/')
 
-        async with self._throttler.execute_task(limit_id=CONSTANTS.SNAPSHOT_PATH_URL):
+        path_url = f"{CONSTANTS.BOOK_PATH_URL}/{symbol}"
+        url = latoken_utils.public_rest_url(path_url=path_url, domain=self._domain)
+        request = RESTRequest(method=RESTMethod.GET, url=url, params=params)
+        async with self._throttler.execute_task(limit_id=path_url):
             response: RESTResponse = await rest_assistant.call(request=request)
             if response.status != 200:
                 raise IOError(f"Error fetching market snapshot for {trading_pair}. "
@@ -384,32 +385,16 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         :param ws: the websocket assistant used to connect to the exchange
         """
         try:
-            trade_params = []
-            depth_params = []
+            # trade_params = []
+            # depth_params = []
             for trading_pair in self._trading_pairs:
                 symbol = await self.exchange_symbol_associated_to_pair(
                     trading_pair=trading_pair,
                     domain=self._domain,
                     api_factory=self._api_factory,
                     throttler=self._throttler)
-                trade_params.append(f"{symbol.lower()}@trade")
-                depth_params.append(f"{symbol.lower()}@depth@100ms")
-            payload = {
-                "method": "SUBSCRIBE",
-                "params": trade_params,
-                "id": 1
-            }
-            subscribe_trade_request: WSRequest = WSRequest(payload=payload)
-
-            payload = {
-                "method": "SUBSCRIBE",
-                "params": depth_params,
-                "id": 2
-            }
-            subscribe_orderbook_request: WSRequest = WSRequest(payload=payload)
-
-            await ws.send(subscribe_trade_request)
-            await ws.send(subscribe_orderbook_request)
+                await ws.subscribe(WSRequest(payload=f"/v1/trade/{symbol}"))
+                await ws.subscribe(WSRequest(payload=f"/v1/book/{symbol}"))
 
             self.logger().info("Subscribed to public order book and trade channels...")
         except asyncio.CancelledError:
@@ -462,10 +447,11 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         local_api_factory = api_factory or build_api_factory()
         rest_assistant = await local_api_factory.get_rest_assistant()
         local_throttler = throttler or cls._get_throttler_instance()
-
-        ticker_list = await cls._get_data(domain, rest_assistant, local_throttler, CONSTANTS.TICKER_PATH_URL)
-        currency_list = await cls._get_data(domain, rest_assistant, local_throttler, CONSTANTS.CURRENCY_PATH_URL)
-        pair_list = await cls._get_data(domain, rest_assistant, local_throttler, CONSTANTS.PAIR_PATH_URL)
+        import asyncio
+        ticker_list, currency_list, pair_list = await asyncio.gather(
+            cls._get_data(domain, rest_assistant, local_throttler, CONSTANTS.TICKER_PATH_URL),
+            cls._get_data(domain, rest_assistant, local_throttler, CONSTANTS.CURRENCY_PATH_URL),
+            cls._get_data(domain, rest_assistant, local_throttler, CONSTANTS.PAIR_PATH_URL))
 
         ticker_dict = {f"{ticker['baseCurrency']}/{ticker['quoteCurrency']}": ticker for ticker in ticker_list}
         # pair_dict = {f"{pair['baseCurrency']}/{pair['quoteCurrency']}": pair for pair in pair_list}
@@ -475,11 +461,9 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
             key = f"{pt['baseCurrency']}/{pt['quoteCurrency']}"
             is_valid = key in ticker_dict
             pt["is_valid"] = is_valid
-            pt["id"] = ticker_dict[key] if is_valid else dict()
-            base_currency_id = pt["baseCurrency"]
-            pt["baseCurrency"] = currency_dict[base_currency_id]
-            quote_currency_id = pt["quoteCurrency"]
-            pt["quoteCurrency"] = currency_dict[quote_currency_id]
+            pt["id"] = ticker_dict[key] if is_valid else {"id": key}
+            pt["baseCurrency"] = currency_dict[pt["baseCurrency"]]
+            pt["quoteCurrency"] = currency_dict[pt["quoteCurrency"]]
 
         for pair in filter(latoken_utils.is_exchange_information_valid, pair_list):
             mapping[pair["id"]["symbol"]] = pair["id"]["symbol"].replace('/', '-')

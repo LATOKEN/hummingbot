@@ -25,10 +25,10 @@ class LatokenOrderBook(OrderBook):
         if metadata:
             msg.update(metadata)
         return OrderBookMessage(OrderBookMessageType.SNAPSHOT, {
-            "trading_pair": msg["trading_pair"],
-            "update_id": msg["lastUpdateId"],
-            "bids": msg["bids"],
-            "asks": msg["asks"]
+            # "trading_pair": msg["trading_pair"],
+            # "update_id": msg["lastUpdateId"],
+            "bids": msg["bid"],
+            "asks": msg["ask"]
         }, timestamp=timestamp)
 
     @classmethod
@@ -47,10 +47,10 @@ class LatokenOrderBook(OrderBook):
             msg.update(metadata)
         return OrderBookMessage(OrderBookMessageType.DIFF, {
             "trading_pair": msg["trading_pair"],
-            "first_update_id": msg["U"],
-            "update_id": msg["u"],
-            "bids": msg["b"],
-            "asks": msg["a"]
+            # "first_update_id": msg["U"],
+            # "update_id": msg["u"],
+            "bids": msg["bid"],
+            "asks": msg["ask"]
         }, timestamp=timestamp)
 
     @classmethod
@@ -63,12 +63,12 @@ class LatokenOrderBook(OrderBook):
         """
         if metadata:
             msg.update(metadata)
-        ts = msg["E"]
+        ts = msg["timestamp"]
         return OrderBookMessage(OrderBookMessageType.TRADE, {
-            "trading_pair": msg["trading_pair"],
-            "trade_type": float(TradeType.SELL.value) if msg["m"] else float(TradeType.BUY.value),
-            "trade_id": msg["t"],
+            "trading_pair": f"{msg['baseCurrency']}/{msg['quoteCurrency']}",
+            "trade_type": float(TradeType.BUY.value) if msg["makerBuyer"] else float(TradeType.SELL.value),
+            "trade_id": msg["id"],
             "update_id": ts,
-            "price": msg["p"],
-            "amount": msg["q"]
+            "price": msg["price"],
+            "amount": msg["quantity"]
         }, timestamp=ts * 1e-3)

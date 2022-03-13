@@ -16,25 +16,29 @@ TICKER_PATH_URL = "/ticker"
 CURRENCY_PATH_URL = "/currency"
 PAIR_PATH_URL = "/pair"
 PING_PATH_URL = "/time"
+BOOK_PATH_URL = "/book"
 SNAPSHOT_PATH_URL = "/depth"
 SERVER_TIME_PATH_URL = "/time"
 
 # Private API endpoints or BinanceClient function
 ACCOUNTS_PATH_URL = "/auth/account"
-# MY_TRADES_PATH_URL = "/myTrades"
-# ORDER_PATH_URL = "/order"
+MY_TRADES_PATH_URL = "/trade"
+ORDER_PATH_URL = "/order"
+ORDER_PLACE_PATH_URL = "/order/place"
+ORDER_CANCEL_PATH_URL = "/order/cancel"
+GET_ORDER_PATH_URL = "/order/getOrder"
 LATOKEN_USER_STREAM_PATH_URL = "/userDataStream"
 
 WS_HEARTBEAT_TIME_INTERVAL = 30
 #
-# # Binance params
-#
-# SIDE_BUY = 'BUY'
-# SIDE_SELL = 'SELL'
-#
-# TIME_IN_FORCE_GTC = 'GTC'  # Good till cancelled
-# TIME_IN_FORCE_IOC = 'IOC'  # Immediate or cancel
-# TIME_IN_FORCE_FOK = 'FOK'  # Fill or kill
+# Latoken params
+
+SIDE_BUY = 'BUY'
+SIDE_SELL = 'SELL'
+
+TIME_IN_FORCE_GTC = 'GTC'  # Good till cancelled
+TIME_IN_FORCE_IOC = 'IOC'  # Immediate or cancel
+TIME_IN_FORCE_FOK = 'FOK'  # Fill or kill
 
 # Rate Limit Type
 # REQUEST_WEIGHT = "REQUEST_WEIGHT"
@@ -68,14 +72,15 @@ TRADE_EVENT_TYPE = "trade"
 #
 RATE_LIMITS = [
     # Pools
+    RateLimit(limit_id=ACCOUNT, limit=5, time_interval=ONE_SECOND),
+    RateLimit(limit_id=TIME, limit=5, time_interval=ONE_SECOND),
+    RateLimit(limit_id=TICKER_PATH_URL, limit=5, time_interval=ONE_SECOND),
+    RateLimit(limit_id=CURRENCY_PATH_URL, limit=5, time_interval=ONE_SECOND),
+    RateLimit(limit_id=PAIR_PATH_URL, limit=5, time_interval=ONE_SECOND),
     # RateLimit(limit_id=REQUEST_WEIGHT, limit=1200, time_interval=ONE_MINUTE),
     # RateLimit(limit_id=ORDERS, limit=10, time_interval=ONE_SECOND),
     # RateLimit(limit_id=ORDERS_24HR, limit=100000, time_interval=ONE_DAY),
-    RateLimit(limit_id=ACCOUNT, limit=100000, time_interval=ONE_DAY),
-    RateLimit(limit_id=TIME, limit=100000, time_interval=ONE_DAY),
-    RateLimit(limit_id=TICKER_PATH_URL, limit=100000, time_interval=ONE_DAY),
-    RateLimit(limit_id=CURRENCY_PATH_URL, limit=100000, time_interval=ONE_DAY),
-    RateLimit(limit_id=PAIR_PATH_URL, limit=100000, time_interval=ONE_DAY),
+
     # # Weighted Limits
     # RateLimit(limit_id=TICKER_PRICE_CHANGE_PATH_URL, limit=MAX_REQUEST, time_interval=ONE_MINUTE,
     #           linked_limits=[LinkedLimitWeightPair(REQUEST_WEIGHT, 40)]),

@@ -42,9 +42,6 @@ mock_api_enabled = os.getenv("MOCK_API_ENABLED")
 for key in connector_keys().keys():
     locals()[key] = os.getenv(key.upper())
 
-# Latoken Tests
-latoken_api_key = os.getenv("LATOKEN_API_KEY", "70e46c0c-7400-4746-a50a-0b9e377c2f76")
-latoken_secret_key = os.getenv("LATOKEN_SECRET_KEY", "ODRlMmM4ZDAtOTYwOC00OWFjLWFlOWQtOGI1NWIzNmQzOGU0")
 
 """
 # AscendEX Tests
@@ -78,6 +75,10 @@ loopring_private_key = os.getenv("LOOPRING_PRIVATE_KEY")
 # Bittrex Tests
 bittrex_api_key = os.getenv("BITTREX_API_KEY")
 bittrex_secret_key = os.getenv("BITTREX_SECRET_KEY")
+
+# Latoken Tests
+latoken_api_key = os.getenv("LATOKEN_API_KEY")
+latoken_secret_key = os.getenv("LATOKEN_SECRET_KEY")
 
 # KuCoin Tests
 kucoin_api_key = os.getenv("KUCOIN_API_KEY")
