@@ -24,3 +24,15 @@ git clone --branch TRD-3815-latoken-into-hummingbot-integration https://gitlab.n
 export hummingbotPath="$(pwd)/humming-bot" && cd $hummingbotPath && ./clean && ./install
 conda activate hummingbot && ./compile
 bin/hummingbot.py
+
+
+# pulling from latoken gitlab (needs testing)
+cd ~/Downloads
+sudo apt-get update
+sudo apt-get install -y build-essential
+wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+sh Miniconda3-latest-Linux-x86_64.sh
+exec bash
+export hummingbotPath="$(pwd)/humming-bot" && cd $hummingbotPath && ./clean && ./install
+conda activate hummingbot && ./compile
+bin/hummingbot.py

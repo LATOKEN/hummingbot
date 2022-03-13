@@ -14,27 +14,25 @@ bin/hummingbot.py
 
 
 # pulling from latoken gitlab (needs testing)
-#cd ~
+cd ~
 sudo apt-get update
 sudo apt-get install -y build-essential
 wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
 sh Miniconda3-latest-Linux-x86_64.sh
-# exec bash
-# git clone --branch TRD-3815-latoken-into-hummingbot-integration https://gitlab.nekotal.tech/market-making/quantitative/humming-bot.git
-# export hummingbotPath="$(pwd)/humming-bot" && cd $hummingbotPath && ./clean && ./install
-export hummingbotPath="$(pwd)" && ./clean && ./install
+exec bash
+git clone --branch TRD-3815-latoken-into-hummingbot-integration https://gitlab.nekotal.tech/market-making/quantitative/humming-bot.git
+export hummingbotPath="$(pwd)/humming-bot" && cd $hummingbotPath && ./clean && ./instal
 conda activate hummingbot && ./compile
-export LATOKEN_API_KEY=70e46c0c-7400-4746-a50a-0b9e377c2f76
-export LATOKEN_SECRET_KEY=ODRlMmM4ZDAtOTYwOC00OWFjLWFlOWQtOGI1NWIzNmQzOGU0
 bin/hummingbot.py
 
 
-# pulling from latoken gitlab (needs testing)
+# pulling from latoken gitlab (needs testing), humming-bot folder already present
+cd ~/Downloads
 sudo apt-get update
 sudo apt-get install -y build-essential
 wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
 sh Miniconda3-latest-Linux-x86_64.sh
 rm Miniconda3-latest-Linux-x86_64.sh
-export hummingbotPath="$(pwd)" && ./clean && ./install
+export hummingbotPath="$(pwd)/humming-bot" && cd $hummingbotPath && ./clean && ./install
 conda activate hummingbot && ./compile
-bin/hummingbot.py
+# open project in pycharm, create venv/hummingbot, see image
