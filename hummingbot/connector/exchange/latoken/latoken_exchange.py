@@ -935,7 +935,7 @@ class LatokenExchange(ExchangeBase):
         try:
 
             params = {
-                'zeros': 'true'
+                'zeros': 'false'
             }  # if not testing this can be set to the default of false
             import asyncio
             balances, pairs = await asyncio.gather(
