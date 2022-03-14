@@ -956,7 +956,7 @@ class LatokenExchange(ExchangeBase):
 
             for balance_entry in balances:
                 asset_name = uuid_to_asset_name.get(balance_entry["currency"])
-                if asset_name is None:
+                if asset_name is None or balance_entry["type"] != "ACCOUNT_TYPE_SPOT":
                     continue
                 free_balance = Decimal(balance_entry["available"])
                 total_balance = Decimal(balance_entry["available"]) + Decimal(balance_entry["blocked"])
