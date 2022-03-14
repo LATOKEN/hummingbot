@@ -78,4 +78,3 @@ coverage.xml
 # Debug console
 .debug_console_ssh_host_key
 /logs/logs_hummingbot.log
-/logs/logs_hummingbot.log
