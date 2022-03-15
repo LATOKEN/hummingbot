@@ -11,6 +11,10 @@ from hummingbot.core.data_type.order_book_message import (
 class LatokenOrderBook(OrderBook):
 
     @classmethod
+    def _get_book_side(cls, book):
+        return tuple((row['price'], row['quantity']) for row in book)
+
+    @classmethod
     def snapshot_message_from_exchange(cls,
                                        msg: Dict[str, any],
                                        timestamp: int,
@@ -25,18 +29,8 @@ class LatokenOrderBook(OrderBook):
         if metadata:
             msg.update(metadata)
 
-        ask_book = msg.pop("ask")  # need list of tuples for processing correctly in orderbook
-        ask_list = []
-        for ask_row in ask_book:
-            ask_list.append((ask_row['price'], ask_row['quantity']))
-        msg["asks"] = ask_list
-
-        bid_book = msg.pop("bid")  # need list of tuples for processing correctly in orderbook
-        bid_list = []
-        for bid_row in bid_book:
-            bid_list.append((bid_row['price'], bid_row['quantity']))
-        msg["bids"] = bid_list
-
+        msg["asks"] = cls._get_book_side(msg.pop("ask"))
+        msg["bids"] = cls._get_book_side(msg.pop("bid"))
         msg["update_id"] = timestamp  # ts in nanosecond
 
         return OrderBookMessage(OrderBookMessageType.SNAPSHOT, msg, timestamp=timestamp / (10 ** 9))  # need float ts
