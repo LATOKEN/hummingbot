@@ -50,8 +50,8 @@ class LatokenExchangeTests(TestCase):
         self.test_task: Optional[asyncio.Task] = None
 
         self.exchange = LatokenExchange(
-            latoken_api_key="32d0d3a8-6de0-484b-9553-2c94db9fdc8a",
-            latoken_api_secret="MmJlOGRkMzctOTVkNS00OGFiLTljZjUtZWRmNDYyYTlhODUz",
+            latoken_api_key="latoken_api_key",
+            latoken_api_secret="latoken_api_secret",
             trading_pairs=[],  # self.trading_pair],
         )
 

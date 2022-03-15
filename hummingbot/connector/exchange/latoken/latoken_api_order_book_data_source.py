@@ -370,7 +370,8 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         path_url = f"{CONSTANTS.BOOK_PATH_URL}/{symbol}"
         url = latoken_utils.public_rest_url(path_url=path_url, domain=self._domain)
         request = RESTRequest(method=RESTMethod.GET, url=url, params=params)
-        async with self._throttler.execute_task(limit_id=path_url):
+        # async with self._throttler.execute_task(limit_id=path_url):
+        async with self._throttler.execute_task(limit_id=CONSTANTS.GLOBAL_RATE_LIMIT):
             response: RESTResponse = await rest_assistant.call(request=request)
             if response.status != 200:
                 raise IOError(f"Error fetching market snapshot for {trading_pair}. "
@@ -385,16 +386,15 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         :param ws: the websocket assistant used to connect to the exchange
         """
         try:
-            # trade_params = []
-            # depth_params = []
             for trading_pair in self._trading_pairs:
                 symbol = await self.exchange_symbol_associated_to_pair(
                     trading_pair=trading_pair,
                     domain=self._domain,
                     api_factory=self._api_factory,
                     throttler=self._throttler)
-                await ws.subscribe(WSRequest(payload=f"/v1/trade/{symbol}"))
-                await ws.subscribe(WSRequest(payload=f"/v1/book/{symbol}"))
+                path_params = {'symbol': symbol}
+                await ws.subscribe(WSRequest(payload=CONSTANTS.TRADES_STREAM.format(**path_params)))
+                await ws.subscribe(WSRequest(payload=CONSTANTS.BOOK_STREAM.format(**path_params)))
 
             self.logger().info("Subscribed to public order book and trade channels...")
         except asyncio.CancelledError:
@@ -466,8 +466,8 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
             pt["quoteCurrency"] = currency_dict[pt["quoteCurrency"]]
 
         for pair in filter(latoken_utils.is_exchange_information_valid, pair_list):
-            mapping[pair["id"]["symbol"]] = pair["id"]["symbol"].replace('/', '-')
-
+            mapping[f"{pair['id']['baseCurrency']}/{pair['id']['quoteCurrency']}"] = pair["id"]["symbol"].replace('/',
+                                                                                                                  '-')
         cls._trading_pair_symbol_map[domain] = mapping
 
     @classmethod

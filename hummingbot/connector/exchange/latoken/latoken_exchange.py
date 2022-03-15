@@ -989,23 +989,16 @@ class LatokenExchange(ExchangeBase):
                            data: Optional[Dict[str, Any]] = None,
                            is_auth_required: bool = False) -> Dict[str, Any]:
 
-        headers = {
-            "Content-Type": "application/json" if method == RESTMethod.POST else "application/x-www-form-urlencoded"}
+        url = latoken_utils.private_rest_url(path_url, domain=self._domain) if is_auth_required else \
+            latoken_utils.public_rest_url(path_url, domain=self._domain)
+
+        headers = {"Content-Type": "application/json" if method == RESTMethod.POST else "application/x-www-form-urlencoded"}
+        request = RESTRequest(
+            method=method, url=url, data=data, params=params, headers=headers, is_auth_required=is_auth_required)
+
         client = await self._get_rest_assistant()
-
-        if is_auth_required:
-            url = latoken_utils.private_rest_url(path_url, domain=self._domain)
-        else:
-            url = latoken_utils.public_rest_url(path_url, domain=self._domain)
-
-        request = RESTRequest(method=method,
-                              url=url,
-                              data=data,
-                              params=params,
-                              headers=headers,
-                              is_auth_required=is_auth_required)
-
-        async with self._throttler.execute_task(limit_id=path_url):
+        # async with self._throttler.execute_task(limit_id=path_url):
+        async with self._throttler.execute_task(limit_id=CONSTANTS.GLOBAL_RATE_LIMIT):
             response = await client.call(request)
 
             if response.status != 200:

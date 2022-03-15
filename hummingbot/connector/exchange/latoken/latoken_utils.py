@@ -10,7 +10,7 @@ from hummingbot.core.utils.tracking_nonce import get_tracking_nonce
 
 
 CENTRALIZED = True
-EXAMPLE_PAIR = "ZRX-ETH"
+EXAMPLE_PAIR = "LA-USDT"
 DEFAULT_FEES = [0.1, 0.1]
 
 

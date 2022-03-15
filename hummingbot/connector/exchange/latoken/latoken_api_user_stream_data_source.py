@@ -5,7 +5,7 @@ import time
 from typing import (
     Dict,
     Optional,
-    Tuple,
+    # Tuple,
 )
 
 import hummingbot.connector.exchange.latoken.latoken_constants as CONSTANTS
@@ -78,10 +78,12 @@ class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
             try:
                 self._manage_listen_key_task = safe_ensure_future(self._manage_listen_key_task_loop())
                 await self._listen_key_initialized_event.wait()
+                path_params = {'user': str(self._current_listen_key)}
+                account_path = CONSTANTS.ACCOUNT_STREAM.format(**path_params)
 
                 ws: WSAssistant = await self._get_ws_assistant()
-                url = f"{CONSTANTS.WSS_URL.format(self._domain)}/{self._current_listen_key}"
-                await ws.connect(ws_url=url, ping_timeout=CONSTANTS.WS_HEARTBEAT_TIME_INTERVAL)
+                await ws.connect(ws_url=f"{CONSTANTS.WSS_URL.format(self._domain)}{account_path}",
+                                 ping_timeout=CONSTANTS.WS_HEARTBEAT_TIME_INTERVAL)
 
                 async for ws_response in ws.iter_messages():
                     data = ws_response.data
@@ -106,28 +108,27 @@ class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
     async def _get_listen_key(self):
         rest_assistant = await self._get_rest_assistant()
         url = latoken_utils.private_rest_url(path_url=CONSTANTS.LATOKEN_USER_STREAM_PATH_URL, domain=self._domain)
-        request = RESTRequest(method=RESTMethod.POST, url=url, headers=self._auth.header_for_authentication())
+        request = RESTRequest(method=RESTMethod.GET, url=url, is_auth_required=True)
 
-        async with self._throttler.execute_task(limit_id=CONSTANTS.LATOKEN_USER_STREAM_PATH_URL):
+        # async with self._throttler.execute_task(limit_id=CONSTANTS.LATOKEN_USER_STREAM_PATH_URL):
+        async with self._throttler.execute_task(limit_id=CONSTANTS.GLOBAL_RATE_LIMIT):
             response: RESTResponse = await rest_assistant.call(request=request)
 
             if response.status != 200:
                 raise IOError(f"Error fetching user stream listen key. Response: {response}")
             data: Dict[str, str] = await response.json()
-            return data["listenKey"]
+            return data["id"]
 
-    async def _ping_listen_key(self) -> bool:
+    async def _ping_listen_key(self) -> bool:  # possibly can be skipped
         rest_assistant = await self._get_rest_assistant()
         url = latoken_utils.private_rest_url(path_url=CONSTANTS.LATOKEN_USER_STREAM_PATH_URL, domain=self._domain)
-        request = RESTRequest(method=RESTMethod.PUT, url=url,
-                              headers=self._auth.header_for_authentication(),
-                              params={"listenKey": self._current_listen_key})
+        request = RESTRequest(method=RESTMethod.GET, url=url, is_auth_required=True)
 
         async with self._throttler.execute_task(limit_id=CONSTANTS.LATOKEN_USER_STREAM_PATH_URL):
             response: RESTResponse = await rest_assistant.call(request=request)
 
-            data: Tuple[str, any] = await response.json()
-            if "code" in data:
+            data: Dict[str, str] = await response.json()
+            if "id" not in data:
                 self.logger().warning(f"Failed to refresh the listen key {self._current_listen_key}: {data}")
                 return False
             return True
@@ -144,12 +145,12 @@ class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
 
                 if now - self._last_listen_key_ping_ts >= self.LISTEN_KEY_KEEP_ALIVE_INTERVAL:
                     success: bool = await self._ping_listen_key()
-                    if not success:
-                        self.logger().error("Error occurred renewing listen key ...")
-                        break
-                    else:
+                    if success:
                         self.logger().info(f"Refreshed listen key {self._current_listen_key}.")
                         self._last_listen_key_ping_ts = int(time.time())
+                    else:
+                        self.logger().error("Error occurred renewing listen key ...")
+                        break
                 else:
                     await self._sleep(self.LISTEN_KEY_KEEP_ALIVE_INTERVAL)
         finally:
