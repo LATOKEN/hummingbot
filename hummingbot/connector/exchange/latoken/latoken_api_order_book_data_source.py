@@ -215,8 +215,8 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         :param trading_pair: the trading pair for which the order book has to be retrieved
         :return: a local copy of the current order book in the exchange
         """
-        snapshot: Dict[str, Any] = await self.get_snapshot(trading_pair, 1000)
-        snapshot_timestamp: float = time.time()
+        snapshot: Dict[str, Any] = await self.get_snapshot(trading_pair)
+        snapshot_timestamp: int = time.time_ns()
         snapshot_msg: OrderBookMessage = LatokenOrderBook.snapshot_message_from_exchange(
             snapshot,
             snapshot_timestamp,

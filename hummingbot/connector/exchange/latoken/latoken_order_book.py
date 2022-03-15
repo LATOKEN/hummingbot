@@ -13,7 +13,7 @@ class LatokenOrderBook(OrderBook):
     @classmethod
     def snapshot_message_from_exchange(cls,
                                        msg: Dict[str, any],
-                                       timestamp: float,
+                                       timestamp: int,
                                        metadata: Optional[Dict] = None) -> OrderBookMessage:
         """
         Creates a snapshot message with the order book snapshot message
@@ -24,12 +24,22 @@ class LatokenOrderBook(OrderBook):
         """
         if metadata:
             msg.update(metadata)
-        return OrderBookMessage(OrderBookMessageType.SNAPSHOT, {
-            # "trading_pair": msg["trading_pair"],
-            # "update_id": msg["lastUpdateId"],
-            "bids": msg["bid"],
-            "asks": msg["ask"]
-        }, timestamp=timestamp)
+
+        ask_book = msg.pop("ask")  # need list of tuples for processing correctly in orderbook
+        ask_list = []
+        for ask_row in ask_book:
+            ask_list.append((ask_row['price'], ask_row['quantity']))
+        msg["asks"] = ask_list
+
+        bid_book = msg.pop("bid")  # need list of tuples for processing correctly in orderbook
+        bid_list = []
+        for bid_row in bid_book:
+            bid_list.append((bid_row['price'], bid_row['quantity']))
+        msg["bids"] = bid_list
+
+        msg["update_id"] = timestamp  # ts in nanosecond
+
+        return OrderBookMessage(OrderBookMessageType.SNAPSHOT, msg, timestamp=timestamp / (10 ** 9))  # need float ts
 
     @classmethod
     def diff_message_from_exchange(cls,
@@ -48,7 +58,7 @@ class LatokenOrderBook(OrderBook):
         return OrderBookMessage(OrderBookMessageType.DIFF, {
             "trading_pair": msg["trading_pair"],
             # "first_update_id": msg["U"],
-            # "update_id": msg["u"],
+            # "update_id": timestamp,
             "bids": msg["bid"],
             "asks": msg["ask"]
         }, timestamp=timestamp)
