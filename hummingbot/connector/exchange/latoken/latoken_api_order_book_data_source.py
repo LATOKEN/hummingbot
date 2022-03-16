@@ -197,7 +197,8 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
             domain=domain,
             api_factory=api_factory,
             throttler=throttler)
-        return symbol_map[symbol]
+
+        return symbol_map.get(symbol, "")
 
     @staticmethod
     async def fetch_trading_pairs(domain="com") -> List[str]:
@@ -447,7 +448,8 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         local_api_factory = api_factory or build_api_factory()
         rest_assistant = await local_api_factory.get_rest_assistant()
         local_throttler = throttler or cls._get_throttler_instance()
-        import asyncio
+        # it might be overkill to request everything,
+        # but it is also supposed to demonstrate the full mapping
         ticker_list, currency_list, pair_list = await asyncio.gather(
             cls._get_data(domain, rest_assistant, local_throttler, CONSTANTS.TICKER_PATH_URL),
             cls._get_data(domain, rest_assistant, local_throttler, CONSTANTS.CURRENCY_PATH_URL),
@@ -457,13 +459,21 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         # pair_dict = {f"{pair['baseCurrency']}/{pair['quoteCurrency']}": pair for pair in pair_list}
         currency_dict = {currency["id"]: currency for currency in currency_list}
 
+        # import json
+        # with open('data.json', 'w') as f:
+        #     json.dump(currency_list, f)
+
         for pt in pair_list:
             key = f"{pt['baseCurrency']}/{pt['quoteCurrency']}"
             is_valid = key in ticker_dict
             pt["is_valid"] = is_valid
             pt["id"] = ticker_dict[key] if is_valid else {"id": key}
-            pt["baseCurrency"] = currency_dict[pt["baseCurrency"]]
-            pt["quoteCurrency"] = currency_dict[pt["quoteCurrency"]]
+            base_id = pt["baseCurrency"]
+            if base_id in currency_dict:
+                pt["baseCurrency"] = currency_dict[base_id]
+            quote_id = pt["quoteCurrency"]
+            if quote_id in currency_dict:
+                pt["quoteCurrency"] = currency_dict[quote_id]
 
         for pair in filter(latoken_utils.is_exchange_information_valid, pair_list):
             mapping[f"{pair['id']['baseCurrency']}/{pair['id']['quoteCurrency']}"] = pair["id"]["symbol"].replace('/',

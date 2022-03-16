@@ -23,11 +23,12 @@ SERVER_TIME_PATH_URL = "/time"
 # Private API endpoints or BinanceClient function
 ACCOUNTS_PATH_URL = "/auth/account"
 MY_TRADES_PATH_URL = "/trade"
+TRADES_FOR_PAIR_PATH_URL = "/trade/pair"
 ORDER_PATH_URL = "/order"
 ORDER_PLACE_PATH_URL = "/order/place"
 ORDER_CANCEL_PATH_URL = "/order/cancel"
 GET_ORDER_PATH_URL = "/order/getOrder"
-LATOKEN_USER_STREAM_PATH_URL = "/user'"  # https://api.latoken.com/doc/ws/#section/Accounts
+LATOKEN_USER_STREAM_PATH_URL = "/auth/user"  # https://api.latoken.com/doc/ws/#section/Accounts
 
 WS_HEARTBEAT_TIME_INTERVAL = 30
 #

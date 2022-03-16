@@ -17,6 +17,7 @@ from hummingbot.connector.client_order_tracker import ClientOrderTracker
 from hummingbot.connector.exchange_base import ExchangeBase
 from hummingbot.connector.exchange.latoken import latoken_utils
 from hummingbot.connector.exchange.latoken.latoken_api_order_book_data_source import LatokenAPIOrderBookDataSource
+from hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source import LatokenAPIUserStreamDataSource
 from hummingbot.connector.exchange.latoken.latoken_auth import LatokenAuth
 from hummingbot.connector.exchange.latoken.latoken_order_book_tracker import LatokenOrderBookTracker
 from hummingbot.connector.exchange.latoken.latoken_user_stream_tracker import LatokenUserStreamTracker
@@ -86,7 +87,10 @@ class LatokenExchange(ExchangeBase):
             domain=domain,
             api_factory=self._api_factory,
             throttler=self._throttler)
-        self._user_stream_tracker = LatokenUserStreamTracker(auth=self._auth, domain=domain, throttler=self._throttler)
+        data_source = LatokenAPIUserStreamDataSource(
+            auth=self._auth, domain=self._domain, api_factory=self._api_factory, throttler=self._throttler)
+        self._user_stream_tracker = LatokenUserStreamTracker(
+            auth=self._auth, domain=domain, data_source=data_source, throttler=self._throttler)
         self._ev_loop = asyncio.get_event_loop()
         self._poll_notifier = asyncio.Event()
         self._last_timestamp = 0
@@ -675,11 +679,16 @@ class LatokenExchange(ExchangeBase):
         retval = []
         for rule in filter(latoken_utils.is_pair_valid, pairs_list):
             try:
+                symbol = f"{rule['baseCurrency']}/{rule['quoteCurrency']}"
                 trading_pair = await LatokenAPIOrderBookDataSource.trading_pair_associated_to_exchange_symbol(
-                    symbol=f"{rule['baseCurrency']}/{rule['quoteCurrency']}",
+                    symbol=symbol,
                     domain=self._domain,
                     api_factory=self._api_factory,
                     throttler=self._throttler)
+
+                if not trading_pair:
+                    self.logger().warning(f"latoken_exchange:_format_trading_rules could not find {symbol} probably because one of the currencies is in non active state/non spot etc")
+                    continue
 
                 min_order_size = Decimal(rule["minOrderQuantity"])
                 tick_size = rule["priceTick"]
@@ -794,7 +803,7 @@ class LatokenExchange(ExchangeBase):
                 }
                 tasks.append(self._api_request(
                     method=RESTMethod.GET,
-                    path_url=f"{CONSTANTS.MY_TRADES_PATH_URL}/{base_quote}",
+                    path_url=f"{CONSTANTS.TRADES_FOR_PAIR_PATH_URL}/{base_quote}",
                     params=params,
                     is_auth_required=True))
 

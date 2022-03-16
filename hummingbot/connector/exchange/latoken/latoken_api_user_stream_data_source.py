@@ -73,7 +73,7 @@ class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
         connection listens to all balance events and order updates provided by the exchange, and stores them in the
         output queue
         """
-        ws = None
+        client = None
         while True:
             try:
                 self._manage_listen_key_task = safe_ensure_future(self._manage_listen_key_task_loop())
@@ -81,21 +81,25 @@ class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
                 path_params = {'user': str(self._current_listen_key)}
                 account_path = CONSTANTS.ACCOUNT_STREAM.format(**path_params)
 
-                ws: WSAssistant = await self._get_ws_assistant()
-                await ws.connect(ws_url=f"{CONSTANTS.WSS_URL.format(self._domain)}{account_path}",
-                                 ping_timeout=CONSTANTS.WS_HEARTBEAT_TIME_INTERVAL)
+                client: WSAssistant = await self._get_ws_assistant()
+                await client.connect(
+                    ws_url=f"{CONSTANTS.WSS_URL.format(self._domain)}{account_path}",
+                    ping_timeout=CONSTANTS.WS_HEARTBEAT_TIME_INTERVAL)
 
-                async for ws_response in ws.iter_messages():
-                    data = ws_response.data
-                    if len(data) > 0:
-                        output.put_nowait(data)
+                while True:
+                    self.logger().warning("listen_for_user_stream::LatokenAPIUserStreamDataSource websocket needs to be implemented")
+                    await self._sleep(5)
+                # async for ws_response in client.iter_messages():
+                #     data = ws_response.data
+                #     if len(data) > 0:
+                #         output.put_nowait(data)
             except asyncio.CancelledError:
                 raise
             except Exception:
                 self.logger().exception("Unexpected error while listening to user stream. Retrying after 5 seconds...")
             finally:
                 # Make sure no background task is leaked.
-                ws and await ws.disconnect()
+                client and await client.disconnect()
                 self._manage_listen_key_task and self._manage_listen_key_task.cancel()
                 self._current_listen_key = None
                 self._listen_key_initialized_event.clear()
@@ -106,13 +110,13 @@ class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
         return AsyncThrottler(CONSTANTS.RATE_LIMITS)
 
     async def _get_listen_key(self):
-        rest_assistant = await self._get_rest_assistant()
         url = latoken_utils.private_rest_url(path_url=CONSTANTS.LATOKEN_USER_STREAM_PATH_URL, domain=self._domain)
-        request = RESTRequest(method=RESTMethod.GET, url=url, is_auth_required=True)
-
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+        request = RESTRequest(method=RESTMethod.GET, url=url, headers=headers, is_auth_required=True)
+        client = await self._get_rest_assistant()
         # async with self._throttler.execute_task(limit_id=CONSTANTS.LATOKEN_USER_STREAM_PATH_URL):
         async with self._throttler.execute_task(limit_id=CONSTANTS.GLOBAL_RATE_LIMIT):
-            response: RESTResponse = await rest_assistant.call(request=request)
+            response: RESTResponse = await client.call(request)
 
             if response.status != 200:
                 raise IOError(f"Error fetching user stream listen key. Response: {response}")
@@ -120,10 +124,9 @@ class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
             return data["id"]
 
     async def _ping_listen_key(self) -> bool:  # possibly can be skipped
-        rest_assistant = await self._get_rest_assistant()
         url = latoken_utils.private_rest_url(path_url=CONSTANTS.LATOKEN_USER_STREAM_PATH_URL, domain=self._domain)
         request = RESTRequest(method=RESTMethod.GET, url=url, is_auth_required=True)
-
+        rest_assistant = await self._get_rest_assistant()
         async with self._throttler.execute_task(limit_id=CONSTANTS.LATOKEN_USER_STREAM_PATH_URL):
             response: RESTResponse = await rest_assistant.call(request=request)
 

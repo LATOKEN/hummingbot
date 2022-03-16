@@ -18,11 +18,12 @@ from hummingbot.logger import HummingbotLogger
 class LatokenUserStreamTracker(UserStreamTracker):
     _logger: Optional[HummingbotLogger] = None
 
-    def __init__(self, auth: LatokenAuth, domain: str = "com", throttler: Optional[AsyncThrottler] = None):
+    def __init__(self, auth: LatokenAuth, data_source: Optional[UserStreamTrackerDataSource],
+                 domain: str = "com", throttler: Optional[AsyncThrottler] = None):
         super().__init__()
         self._auth: LatokenAuth = auth
         self._ev_loop: asyncio.events.AbstractEventLoop = asyncio.get_event_loop()
-        self._data_source: Optional[UserStreamTrackerDataSource] = None
+        self._data_source: Optional[UserStreamTrackerDataSource] = data_source
         self._user_stream_tracking_task: Optional[asyncio.Task] = None
         self._domain = domain
         self._throttler = throttler
@@ -41,7 +42,8 @@ class LatokenUserStreamTracker(UserStreamTracker):
         :return: the user stream instance that is listening to user updates from the server using the private channel
         """
         if not self._data_source:
-            self._data_source = LatokenAPIUserStreamDataSource(auth=self._auth, domain=self._domain, throttler=self._throttler)
+            self._data_source = LatokenAPIUserStreamDataSource(
+                auth=self._auth, domain=self._domain, throttler=self._throttler)
         return self._data_source
 
     async def start(self):
