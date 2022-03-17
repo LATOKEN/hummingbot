@@ -811,8 +811,7 @@ class LatokenExchange(ExchangeBase):
             results = await safe_gather(*tasks, return_exceptions=True)
 
             for trades, trading_pair in zip(results, trading_pairs):
-
-                if isinstance(trades, Exception):
+                if isinstance(trades, Exception):  # for latoken please verify if url has auth first
                     self.logger().network(
                         f"Error fetching trades update for the order {trading_pair}: {trades}.",
                         app_warning_msg=f"Failed to fetch trade update for {trading_pair}."

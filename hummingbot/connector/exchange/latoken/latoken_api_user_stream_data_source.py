@@ -86,13 +86,16 @@ class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
                     ws_url=f"{CONSTANTS.WSS_URL.format(self._domain)}{account_path}",
                     ping_timeout=CONSTANTS.WS_HEARTBEAT_TIME_INTERVAL)
 
-                while True:
-                    self.logger().warning("listen_for_user_stream::LatokenAPIUserStreamDataSource websocket needs to be implemented")
-                    await self._sleep(5)
+                # TODO fix websocket
                 # async for ws_response in client.iter_messages():
                 #     data = ws_response.data
                 #     if len(data) > 0:
                 #         output.put_nowait(data)
+
+                while True:
+                    self.logger().warning("listen_for_user_stream::LatokenAPIUserStreamDataSource websocket needs to be implemented")
+                    await self._sleep(5)
+
             except asyncio.CancelledError:
                 raise
             except Exception:

@@ -23,7 +23,7 @@ SERVER_TIME_PATH_URL = "/time"
 # Private API endpoints or BinanceClient function
 ACCOUNTS_PATH_URL = "/auth/account"
 MY_TRADES_PATH_URL = "/trade"
-TRADES_FOR_PAIR_PATH_URL = "/trade/pair"
+TRADES_FOR_PAIR_PATH_URL = "/auth/trade/pair"
 ORDER_PATH_URL = "/order"
 ORDER_PLACE_PATH_URL = "/order/place"
 ORDER_CANCEL_PATH_URL = "/order/cancel"
@@ -101,7 +101,8 @@ RATE_LIMITS = [
     RateLimit(limit_id=CURRENCY_PATH_URL, limit=5, time_interval=ONE_SECOND),
     RateLimit(limit_id=PAIR_PATH_URL, limit=5, time_interval=ONE_SECOND),
     RateLimit(limit_id=BOOK_PATH_URL, limit=5, time_interval=ONE_SECOND),
-    RateLimit(limit_id=MY_TRADES_PATH_URL, limit=5, time_interval=ONE_SECOND)
+    RateLimit(limit_id=MY_TRADES_PATH_URL, limit=5, time_interval=ONE_SECOND),
+    RateLimit(limit_id=TRADES_FOR_PAIR_PATH_URL, limit=5, time_interval=ONE_SECOND),
     # RateLimit(limit_id=REQUEST_WEIGHT, limit=1200, time_interval=ONE_MINUTE),
     # RateLimit(limit_id=ORDERS, limit=10, time_interval=ONE_SECOND),
     # RateLimit(limit_id=ORDERS_24HR, limit=100000, time_interval=ONE_DAY),
