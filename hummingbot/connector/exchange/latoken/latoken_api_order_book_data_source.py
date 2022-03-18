@@ -12,10 +12,11 @@ from typing import (
     Optional,
 )
 
+# import stomper
 from bidict import bidict
 
 import hummingbot.connector.exchange.latoken.latoken_constants as CONSTANTS
-from hummingbot.connector.exchange.latoken import latoken_utils
+from hummingbot.connector.exchange.latoken.latoken_utils import (public_rest_url, get_data, create_full_mapping, is_exchange_information_valid)
 from hummingbot.connector.exchange.latoken.latoken_order_book import LatokenOrderBook
 from hummingbot.connector.utils import build_api_factory
 from hummingbot.core.api_throttler.async_throttler import AsyncThrottler
@@ -104,7 +105,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         rest_assistant = await local_api_factory.get_rest_assistant()
         throttler = LatokenAPIOrderBookDataSource._get_throttler_instance()
 
-        url = latoken_utils.public_rest_url(path_url=CONSTANTS.TICKER_PATH_URL, domain=domain)
+        url = public_rest_url(path_url=CONSTANTS.TICKER_PATH_URL, domain=domain)
         request = RESTRequest(method=RESTMethod.GET, url=url)
 
         async with throttler.execute_task(limit_id=CONSTANTS.TICKER_PATH_URL):
@@ -198,7 +199,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
             api_factory=api_factory,
             throttler=throttler)
 
-        return symbol_map.get(symbol, "")
+        return symbol_map[symbol]
 
     @staticmethod
     async def fetch_trading_pairs(domain="com") -> List[str]:
@@ -293,7 +294,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
                 for trading_pair in self._trading_pairs:
                     try:
                         snapshot: Dict[str, Any] = await self.get_snapshot(trading_pair=trading_pair)
-                        snapshot_timestamp: float = time.time()
+                        snapshot_timestamp: int = time.time_ns()
                         snapshot_msg: OrderBookMessage = LatokenOrderBook.snapshot_message_from_exchange(
                             snapshot,
                             snapshot_timestamp,
@@ -369,7 +370,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
             throttler=self._throttler)
 
         path_url = f"{CONSTANTS.BOOK_PATH_URL}/{symbol}"
-        url = latoken_utils.public_rest_url(path_url=path_url, domain=self._domain)
+        url = public_rest_url(path_url=path_url, domain=self._domain)
         request = RESTRequest(method=RESTMethod.GET, url=url, params=params)
         # async with self._throttler.execute_task(limit_id=path_url):
         async with self._throttler.execute_task(limit_id=CONSTANTS.GLOBAL_RATE_LIMIT):
@@ -419,7 +420,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
                                      rest_assistant: RESTAssistant,
                                      throttler: AsyncThrottler) -> float:
 
-        url = latoken_utils.public_rest_url(path_url=CONSTANTS.TICKER_PATH_URL, domain=domain)
+        url = public_rest_url(path_url=CONSTANTS.TICKER_PATH_URL, domain=domain)
         symbol = await cls.exchange_symbol_associated_to_pair(
             trading_pair=trading_pair,
             domain=domain,
@@ -451,50 +452,16 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         # it might be overkill to request everything,
         # but it is also supposed to demonstrate the full mapping
         ticker_list, currency_list, pair_list = await asyncio.gather(
-            cls._get_data(domain, rest_assistant, local_throttler, CONSTANTS.TICKER_PATH_URL),
-            cls._get_data(domain, rest_assistant, local_throttler, CONSTANTS.CURRENCY_PATH_URL),
-            cls._get_data(domain, rest_assistant, local_throttler, CONSTANTS.PAIR_PATH_URL))
+            get_data(cls.logger(), domain, rest_assistant, local_throttler, CONSTANTS.TICKER_PATH_URL),
+            get_data(cls.logger(), domain, rest_assistant, local_throttler, CONSTANTS.CURRENCY_PATH_URL),
+            get_data(cls.logger(), domain, rest_assistant, local_throttler, CONSTANTS.PAIR_PATH_URL))
 
-        ticker_dict = {f"{ticker['baseCurrency']}/{ticker['quoteCurrency']}": ticker for ticker in ticker_list}
-        # pair_dict = {f"{pair['baseCurrency']}/{pair['quoteCurrency']}": pair for pair in pair_list}
-        currency_dict = {currency["id"]: currency for currency in currency_list}
+        full_mapping = create_full_mapping(ticker_list, currency_list, pair_list)
 
-        # import json
-        # with open('data.json', 'w') as f:
-        #     json.dump(currency_list, f)
-
-        for pt in pair_list:
-            key = f"{pt['baseCurrency']}/{pt['quoteCurrency']}"
-            is_valid = key in ticker_dict
-            pt["is_valid"] = is_valid
-            pt["id"] = ticker_dict[key] if is_valid else {"id": key}
-            base_id = pt["baseCurrency"]
-            if base_id in currency_dict:
-                pt["baseCurrency"] = currency_dict[base_id]
-            quote_id = pt["quoteCurrency"]
-            if quote_id in currency_dict:
-                pt["quoteCurrency"] = currency_dict[quote_id]
-
-        for pair in filter(latoken_utils.is_exchange_information_valid, pair_list):
+        for pair in filter(is_exchange_information_valid, full_mapping):
             mapping[f"{pair['id']['baseCurrency']}/{pair['id']['quoteCurrency']}"] = pair["id"]["symbol"].replace('/',
                                                                                                                   '-')
         cls._trading_pair_symbol_map[domain] = mapping
-
-    @classmethod
-    async def _get_data(cls, domain, rest_assistant, local_throttler, path_url) -> list:
-        data = []
-        url = latoken_utils.public_rest_url(path_url=path_url, domain=domain)
-        request = RESTRequest(method=RESTMethod.GET, url=url)
-
-        try:
-            async with local_throttler.execute_task(limit_id=path_url):
-                response: RESTResponse = await rest_assistant.call(request=request)
-                if response.status == 200:
-                    data.extend(await response.json())
-        except Exception as ex:
-            cls.logger().error(f"There was an error requesting {path_url} ({str(ex)})")
-
-        return data
 
     async def _get_rest_assistant(self) -> RESTAssistant:
         if self._rest_assistant is None:

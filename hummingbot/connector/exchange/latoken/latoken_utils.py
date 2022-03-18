@@ -3,15 +3,65 @@ import socket
 from typing import Any, Dict
 
 import hummingbot.connector.exchange.latoken.latoken_constants as CONSTANTS
-
+from hummingbot.core.web_assistant.connections.data_types import (
+    RESTMethod,
+    RESTRequest,
+    RESTResponse,
+    # WSRequest,
+)
 from hummingbot.client.config.config_methods import using_exchange
 from hummingbot.client.config.config_var import ConfigVar
 from hummingbot.core.utils.tracking_nonce import get_tracking_nonce
 
-
 CENTRALIZED = True
 EXAMPLE_PAIR = "LA-USDT"
 DEFAULT_FEES = [0.1, 0.1]
+
+
+async def get_data(logger, domain, rest_assistant, local_throttler, path_url) -> list:
+    url = public_rest_url(path_url=path_url, domain=domain)
+    request = RESTRequest(method=RESTMethod.GET, url=url)
+
+    data = []
+    try:
+        async with local_throttler.execute_task(limit_id=path_url):
+            response: RESTResponse = await rest_assistant.call(request=request)
+            if response.status == 200:
+                data.extend(await response.json())
+    except Exception as ex:
+        logger.error(f"There was an error requesting {path_url} ({str(ex)})")
+
+    return data
+
+
+def create_full_mapping(ticker_list, currency_list, pair_list):
+    ticker_dict = {f"{ticker['baseCurrency']}/{ticker['quoteCurrency']}": ticker for ticker in ticker_list}
+    # pair_dict = {f"{pair['baseCurrency']}/{pair['quoteCurrency']}": pair for pair in pair_list}
+    currency_dict = {currency["id"]: currency for currency in currency_list}
+
+    # import json
+    # with open('data.json', 'w') as f:a
+    #     json.dump(currency_list, f)
+
+    # self.logger().warning(json.dumps(currency_list))
+
+    for pt in pair_list:
+        key = f"{pt['baseCurrency']}/{pt['quoteCurrency']}"
+        is_valid = key in ticker_dict
+        pt["is_valid"] = is_valid
+        pt["id"] = ticker_dict[key] if is_valid else {"id": key}
+        base_id = pt["baseCurrency"]
+        if base_id in currency_dict:
+            pt["baseCurrency"] = currency_dict[base_id]
+        quote_id = pt["quoteCurrency"]
+        if quote_id in currency_dict:
+            pt["quoteCurrency"] = currency_dict[quote_id]
+
+    return pair_list
+
+
+def get_book_side(book):
+    return tuple((row['price'], row['quantity']) for row in book)
 
 
 def get_new_client_order_id(is_buy: bool, trading_pair: str) -> str:
@@ -39,13 +89,13 @@ def is_exchange_information_valid(pair_data: Dict[str, Any]) -> bool:
     # pair_details = pair_data["id"]
     pair_base = pair_data["baseCurrency"]
     pair_quote = pair_data["quoteCurrency"]
-    return pair_data["is_valid"] and pair_data["status"] == 'PAIR_STATUS_ACTIVE' \
-        and pair_base["status"] == 'CURRENCY_STATUS_ACTIVE' and pair_base["type"] == 'CURRENCY_TYPE_CRYPTO' \
-        and pair_quote["status"] == 'CURRENCY_STATUS_ACTIVE' and pair_quote["type"] == 'CURRENCY_TYPE_CRYPTO'
+    return pair_data["is_valid"] and pair_data["status"] == 'PAIR_STATUS_ACTIVE' and \
+        pair_base["status"] == 'CURRENCY_STATUS_ACTIVE' and pair_base["type"] == 'CURRENCY_TYPE_CRYPTO' and \
+        pair_quote["status"] == 'CURRENCY_STATUS_ACTIVE' and pair_quote["type"] == 'CURRENCY_TYPE_CRYPTO'
 
 
-def is_pair_valid(pair_data: Dict[str, Any]) -> bool:
-    return pair_data["status"] == 'PAIR_STATUS_ACTIVE'
+# def is_pair_valid(pair_data: Dict[str, Any]) -> bool:
+#     return pair_data["status"] == 'PAIR_STATUS_ACTIVE'
 
 
 def public_rest_url(path_url: str, domain: str = "com") -> str:

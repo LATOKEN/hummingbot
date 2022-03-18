@@ -52,10 +52,7 @@ class LatokenOrderBookTracker(OrderBookTracker):
 
     @property
     def exchange_name(self) -> str:
-        if self._domain == "com":
-            return "latoken"
-        else:
-            return f"latoken_{self._domain}"
+        return "latoken" if self._domain == "com" else f"latoken_{self._domain}"
 
     def start(self):
         """
@@ -137,10 +134,7 @@ class LatokenOrderBookTracker(OrderBookTracker):
                 saved_messages: Deque[OrderBookMessage] = self._saved_message_queues[trading_pair]
 
                 # Process saved messages first if there are any
-                if len(saved_messages) > 0:
-                    message = saved_messages.popleft()
-                else:
-                    message = await message_queue.get()
+                message = saved_messages.popleft() if len(saved_messages) > 0 else await message_queue.get()
 
                 if message.type is OrderBookMessageType.DIFF:
                     order_book.apply_diffs(message.bids, message.asks, message.update_id)

@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-
+# to avoid confusion the url's in this file are only used for unit testing, for live values check latoken_constants
 # https://github.com/LATOKEN/latoken-api-v2-python-client/blob/main/latoken/client.py
 AUTH_PART = "/v2/auth"
 # https://api.latoken.com/doc/v2/

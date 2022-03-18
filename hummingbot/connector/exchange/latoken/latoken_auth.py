@@ -80,5 +80,21 @@ class LatokenAuth(AuthBase):
         request.payload = dict(request.payload).update(headers)  # not sure about this line
         return request  # pass-through
 
+    async def stomp_authenticate(self) -> dict:
+        # following should be OK for websocket header
+
+        timestamp = str(int(float(time()) * 1000))
+        signature = hmac.new(
+            self.secret_key.encode("utf8"),
+            timestamp.encode('ascii'),
+            hashlib.sha512
+        )
+
+        return{
+            "X-LA-APIKEY": self.api_key,
+            "X-LA-SIGNATURE": signature.hexdigest(),
+            "X-LA-DIGEST": 'HMAC-SHA512',
+            "X-LA-SIGDATA": timestamp}
+
     def generate_auth_payload(self, param):
         pass

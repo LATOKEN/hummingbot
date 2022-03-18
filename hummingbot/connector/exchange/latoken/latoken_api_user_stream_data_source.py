@@ -1,5 +1,7 @@
 import asyncio
 import logging
+import stomper
+import json
 import time
 
 from typing import (
@@ -18,16 +20,16 @@ from hummingbot.core.utils.async_utils import safe_ensure_future
 from hummingbot.core.web_assistant.connections.data_types import (
     RESTMethod,
     RESTRequest,
-    RESTResponse,
+    RESTResponse  # , WSRequest,
 )
 from hummingbot.core.web_assistant.rest_assistant import RESTAssistant
 from hummingbot.core.web_assistant.web_assistants_factory import WebAssistantsFactory
 from hummingbot.core.web_assistant.ws_assistant import WSAssistant
 from hummingbot.logger import HummingbotLogger
+import websocket
 
 
 class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
-
     LISTEN_KEY_KEEP_ALIVE_INTERVAL = 1800  # Recommended to Ping/Update listen key to keep connection alive
     HEARTBEAT_TIME_INTERVAL = 30.0
 
@@ -73,7 +75,7 @@ class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
         connection listens to all balance events and order updates provided by the exchange, and stores them in the
         output queue
         """
-        client = None
+        ws = None
         while True:
             try:
                 self._manage_listen_key_task = safe_ensure_future(self._manage_listen_key_task_loop())
@@ -81,28 +83,62 @@ class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
                 path_params = {'user': str(self._current_listen_key)}
                 account_path = CONSTANTS.ACCOUNT_STREAM.format(**path_params)
 
-                client: WSAssistant = await self._get_ws_assistant()
-                await client.connect(
-                    ws_url=f"{CONSTANTS.WSS_URL.format(self._domain)}{account_path}",
-                    ping_timeout=CONSTANTS.WS_HEARTBEAT_TIME_INTERVAL)
+                # client: WSAssistant = await self._get_ws_assistant()
+                # await client.connect(
+                #     ws_url=f"{CONSTANTS.WSS_URL.format(self._domain)}",
+                #     ping_timeout=CONSTANTS.WS_HEARTBEAT_TIME_INTERVAL)
 
-                # TODO fix websocket
+                ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+
+                msg_out = stomper.Frame()
+                msg_out.cmd = "CONNECT"
+                msg_out.headers.update({
+                    "accept-version": "1.1",
+                    "heart-beat": "0,0"
+                })
+
+                auth_header = await self._auth.stomp_authenticate()
+                msg_out.headers.update(auth_header)
+
+                ws.send(msg_out.pack())
+                ws.recv()
+                subscribe_id_account = 0
+                msg_subscribe = stomper.subscribe(account_path, subscribe_id_account)
+                ws.send(msg_subscribe)
+
+                # TODO review to integrate websocket.create_connection to client: WSAssistant = await self._get_ws_assistant()
+                # async def pop_task():
+                #     while True:
+                #         message = ws.recv()
+                #         message_unpacked = stomper.unpack_frame(message.decode())
+                #         output.put_nowait(message_unpacked)
+                # # task = asyncio.Task(pop_task())
+                # await pop_task()
+
+                msg_in = ws.recv()
+                msg_in_unpacked = stomper.unpack_frame(msg_in.decode())
+                if msg_in_unpacked['cmd'] == "MESSAGE":
+                    body = json.loads(msg_in_unpacked["body"])
+                    # I think body["nonce"] has subscrition id
+                    if body["nonce"] == subscribe_id_account:
+                        output.put_nowait(body["payload"])
+
                 # async for ws_response in client.iter_messages():
                 #     data = ws_response.data
                 #     if len(data) > 0:
                 #         output.put_nowait(data)
 
-                while True:
-                    self.logger().warning("listen_for_user_stream::LatokenAPIUserStreamDataSource websocket needs to be implemented")
-                    await self._sleep(5)
-
+                # while True:
+                #     self.logger().warning("listen_for_user_stream::LatokenAPIUserStreamDataSource websocket needs to be implemented")
+                #     await self._sleep(5)
             except asyncio.CancelledError:
                 raise
             except Exception:
                 self.logger().exception("Unexpected error while listening to user stream. Retrying after 5 seconds...")
             finally:
                 # Make sure no background task is leaked.
-                client and await client.disconnect()
+                # client and await client.disconnect()
+                ws and ws.abort()
                 self._manage_listen_key_task and self._manage_listen_key_task.cancel()
                 self._current_listen_key = None
                 self._listen_key_initialized_event.clear()

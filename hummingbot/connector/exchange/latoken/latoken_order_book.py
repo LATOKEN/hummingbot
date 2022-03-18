@@ -6,14 +6,10 @@ from hummingbot.core.data_type.order_book_message import (
     OrderBookMessage,
     OrderBookMessageType
 )
+from hummingbot.connector.exchange.latoken.latoken_utils import get_book_side
 
 
 class LatokenOrderBook(OrderBook):
-
-    @classmethod
-    def _get_book_side(cls, book):
-        return tuple((row['price'], row['quantity']) for row in book)
-
     @classmethod
     def snapshot_message_from_exchange(cls,
                                        msg: Dict[str, any],
@@ -29,9 +25,12 @@ class LatokenOrderBook(OrderBook):
         if metadata:
             msg.update(metadata)
 
-        msg["asks"] = cls._get_book_side(msg.pop("ask"))
-        msg["bids"] = cls._get_book_side(msg.pop("bid"))
+        msg["asks"] = get_book_side(msg.pop("ask"))
+        msg["bids"] = get_book_side(msg.pop("bid"))
         msg["update_id"] = timestamp  # ts in nanosecond
+
+        # tuple(sorted([('abc', 121), ('abc', 231), ('abc', 148), ('abc', 221)],
+        #        key=lambda x: x[1])) # not sure asks or bids need to be presorted by price
 
         return OrderBookMessage(OrderBookMessageType.SNAPSHOT, msg, timestamp=timestamp / (10 ** 9))  # need float ts
 
