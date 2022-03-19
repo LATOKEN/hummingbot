@@ -12,6 +12,7 @@ class RESTConnection:
             url=request.url,
             params=request.params,
             data=request.data,
+            json=request.json,
             headers=request.headers,
         )
 

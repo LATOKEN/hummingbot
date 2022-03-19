@@ -114,7 +114,7 @@ class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
                 #         output.put_nowait(message_unpacked)
                 # # task = asyncio.Task(pop_task())
                 # await pop_task()
-
+                # while True:
                 msg_in = ws.recv()
                 msg_in_unpacked = stomper.unpack_frame(msg_in.decode())
                 if msg_in_unpacked['cmd'] == "MESSAGE":

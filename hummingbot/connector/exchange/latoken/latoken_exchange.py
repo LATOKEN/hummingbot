@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import time
+import datetime
 
 from decimal import Decimal
 from typing import (
@@ -184,7 +185,7 @@ class LatokenExchange(ExchangeBase):
         return OrderType[latoken_type]
 
     def supported_order_types(self):
-        return [OrderType.LIMIT, OrderType.LIMIT_MAKER]
+        return [OrderType.LIMIT]
 
     async def start_network(self):
         """
@@ -504,22 +505,27 @@ class LatokenExchange(ExchangeBase):
             api_factory=self._api_factory,
             throttler=self._throttler)
 
-        base, quote = symbol.split('-')
+        if type_str == OrderType.LIMIT_MAKER.name:
+            self.logger().info('latoken_echange::_create_order ' + 'LIMIT_MAKER order not supported by Latoken, using LIMIT instead')
+
+        base, quote = symbol.split('/')
         api_params = {'baseCurrency': base,
                       'quoteCurrency': quote,
                       "side": side_str,
                       "clientOrderId": order_id,
                       "quantity": amount_str,
-                      "type": type_str,
-                      "price": price_str}
-        if order_type == OrderType.LIMIT:
+                      "type": OrderType.LIMIT.name if type_str == OrderType.LIMIT_MAKER.name else type_str,
+                      # TODO review latoken only supports limit and market not maker_limit
+                      "price": price_str,
+                      "timestamp": int(datetime.datetime.now().timestamp() * 1000)}
+        if api_params["type"] == OrderType.LIMIT.name:
             api_params['condition'] = CONSTANTS.TIME_IN_FORCE_GTC
 
         try:
             order_result = await self._api_request(
                 method=RESTMethod.POST,
                 path_url=CONSTANTS.ORDER_PLACE_PATH_URL,
-                data=api_params,
+                json=api_params,
                 is_auth_required=True)
 
             exchange_order_id = str(order_result["id"])
@@ -528,7 +534,7 @@ class LatokenExchange(ExchangeBase):
                 client_order_id=order_id,
                 exchange_order_id=exchange_order_id,
                 trading_pair=trading_pair,
-                update_timestamp=int(order_result["timestamp"]),
+                update_timestamp=int(self.current_timestamp * 1e3),  # TODO Latoken does not return exchange update time?
                 new_state=OrderState.OPEN,
             )
             self._order_tracker.process_order_update(order_update)
@@ -565,16 +571,16 @@ class LatokenExchange(ExchangeBase):
                 #     domain=self._domain,
                 #     api_factory=self._api_factory,
                 #     throttler=self._throttler)
-                api_params = {
+                api_json = {
                     "id": order_id,
                 }
                 cancel_result = await self._api_request(
-                    method=RESTMethod.DELETE,
+                    method=RESTMethod.POST,
                     path_url=CONSTANTS.ORDER_CANCEL_PATH_URL,
-                    params=api_params,
+                    json=api_json,
                     is_auth_required=True)
 
-                if cancel_result.get("status") == "CANCELED":
+                if cancel_result.get("status") == "SUCCESS":
                     order_update: OrderUpdate = OrderUpdate(
                         client_order_id=order_id,
                         trading_pair=tracked_order.trading_pair,
@@ -857,10 +863,10 @@ class LatokenExchange(ExchangeBase):
                             client_order_id=tracked_order.client_order_id,
                             exchange_order_id=exchange_order_id,
                             trading_pair=trading_pair,
-                            # fee_asset=trade["commissionAsset"],
+                            # fee_asset=trade["commissionAsset"], #TODO
+                            fill_base_amount=Decimal(trade["quantity"]),
+                            fill_quote_amount=Decimal(trade["cost"]),
                             fee_paid=Decimal(trade["fee"]),
-                            # fill_base_amount=Decimal(trade["filled"]),
-                            # fill_quote_amount=Decimal(trade["quoteQty"]),
                             fill_price=Decimal(trade["price"]),
                             fill_timestamp=int(trade["timestamp"]),
                         )
@@ -874,11 +880,10 @@ class LatokenExchange(ExchangeBase):
                         self.trigger_event(
                             MarketEvent.OrderFilled,
                             OrderFilledEvent(
-                                timestamp=float(trade["time"]) * 1e-3,
+                                timestamp=float(trade["timestamp"]) * 1e-3,
                                 order_id=self._exchange_order_ids.get(str(trade["id"]), None),
                                 trading_pair=trading_pair,
-                                trade_type=TradeType.BUY if trade[
-                                    "direction"] == "TRADE_DIRECTION_BUY" else TradeType.SELL,
+                                trade_type=TradeType.BUY if trade["direction"] == "TRADE_DIRECTION_BUY" else TradeType.SELL,
                                 order_type=OrderType.LIMIT_MAKER if trade["isMakerBuyer"] else OrderType.LIMIT,
                                 price=Decimal(trade["price"]),
                                 amount=Decimal(trade["quantity"]),
@@ -924,10 +929,8 @@ class LatokenExchange(ExchangeBase):
                         f"Error fetching status update for the order {client_order_id}: {order_update}.",
                         app_warning_msg=f"Failed to fetch status update for the order {client_order_id}."
                     )
-                    self._order_not_found_records[client_order_id] = (
-                        self._order_not_found_records.get(client_order_id, 0) + 1)
-                    if (self._order_not_found_records[client_order_id] >=
-                            self.MAX_ORDER_UPDATE_RETRIEVAL_RETRIES_WITH_FAILURES):
+                    self._order_not_found_records[client_order_id] = (self._order_not_found_records.get(client_order_id, 0) + 1)
+                    if (self._order_not_found_records[client_order_id] >= self.MAX_ORDER_UPDATE_RETRIEVAL_RETRIES_WITH_FAILURES):
                         # Wait until the order not found error have repeated a few times before actually treating
                         # it as failed. See: https://github.com/CoinAlpha/hummingbot/issues/601
 
@@ -979,9 +982,7 @@ class LatokenExchange(ExchangeBase):
             balances = await self._api_request(method=RESTMethod.GET, path_url=CONSTANTS.ACCOUNTS_PATH_URL,
                                                is_auth_required=True, params=params)
 
-            balance_to_gather = [self._api_request(method=RESTMethod.GET,
-                                                   path_url=f"{CONSTANTS.CURRENCY_PATH_URL}/{balance['currency']}") for
-                                 balance in balances]
+            balance_to_gather = [self._api_request(method=RESTMethod.GET, path_url=f"{CONSTANTS.CURRENCY_PATH_URL}/{balance['currency']}") for balance in balances]
             # maybe request every currency if len(account_balance) > 5
             currency_lists = await asyncio.gather(*balance_to_gather)
 
@@ -1019,7 +1020,7 @@ class LatokenExchange(ExchangeBase):
                            method: RESTMethod,
                            path_url: str,
                            params: Optional[Dict[str, Any]] = None,
-                           data: Optional[Dict[str, Any]] = None,
+                           json: Optional[Dict[str, Any]] = None,
                            is_auth_required: bool = False) -> Dict[str, Any]:
 
         url = latoken_utils.private_rest_url(path_url, domain=self._domain) if is_auth_required else \
@@ -1028,7 +1029,7 @@ class LatokenExchange(ExchangeBase):
         headers = {
             "Content-Type": "application/json" if method == RESTMethod.POST else "application/x-www-form-urlencoded"}
         request = RESTRequest(
-            method=method, url=url, data=data, params=params, headers=headers, is_auth_required=is_auth_required)
+            method=method, url=url, json=json, params=params, headers=headers, is_auth_required=is_auth_required)
 
         client = await self._get_rest_assistant()
         # async with self._throttler.execute_task(limit_id=path_url):
@@ -1036,8 +1037,8 @@ class LatokenExchange(ExchangeBase):
             response = await client.call(request)
 
             if response.status != 200:
-                data = await response.text()
-                raise IOError(f"Error fetching data from {url}. HTTP status is {response.status} ({data}).")
+                text_data = await response.text()
+                raise IOError(f"Error fetching data from {url}. HTTP status is {response.status} ({text_data}).")
             try:
                 parsed_response = await response.json()
             except Exception:

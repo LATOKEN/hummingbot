@@ -22,12 +22,12 @@ SERVER_TIME_PATH_URL = "/time"
 
 # Private API endpoints or BinanceClient function
 ACCOUNTS_PATH_URL = "/auth/account"
-MY_TRADES_PATH_URL = "/trade"
+# MY_TRADES_PATH_URL = "/trade"
 TRADES_FOR_PAIR_PATH_URL = "/auth/trade/pair"
-ORDER_PATH_URL = "/order"
-ORDER_PLACE_PATH_URL = "/order/place"
-ORDER_CANCEL_PATH_URL = "/order/cancel"
-GET_ORDER_PATH_URL = "/order/getOrder"
+# ORDER_PATH_URL = "/order"
+ORDER_PLACE_PATH_URL = "/auth/order/place"
+ORDER_CANCEL_PATH_URL = "/auth/order/cancel"
+GET_ORDER_PATH_URL = "/auth/order/getOrder"
 LATOKEN_USER_STREAM_PATH_URL = "/auth/user"  # https://api.latoken.com/doc/ws/#section/Accounts
 
 WS_HEARTBEAT_TIME_INTERVAL = 30
@@ -77,11 +77,11 @@ MAX_REQUEST = 5000
 # Order States
 ORDER_STATE = {
     "PENDING": OrderState.PENDING_CREATE,
-    "NEW": OrderState.OPEN,
-    "FILLED": OrderState.FILLED,
+    "ORDER_STATUS_PLACED": OrderState.OPEN,
+    "ORDER_STATUS_CLOSED": OrderState.FILLED,
     "PARTIALLY_FILLED": OrderState.PARTIALLY_FILLED,
     "PENDING_CANCEL": OrderState.OPEN,
-    "CANCELED": OrderState.CANCELLED,
+    "ORDER_STATUS_CANCELLED": OrderState.CANCELLED,
     "REJECTED": OrderState.FAILED,
     "EXPIRED": OrderState.FAILED,
 }
@@ -101,7 +101,7 @@ RATE_LIMITS = [
     RateLimit(limit_id=CURRENCY_PATH_URL, limit=5, time_interval=ONE_SECOND),
     RateLimit(limit_id=PAIR_PATH_URL, limit=5, time_interval=ONE_SECOND),
     RateLimit(limit_id=BOOK_PATH_URL, limit=5, time_interval=ONE_SECOND),
-    RateLimit(limit_id=MY_TRADES_PATH_URL, limit=5, time_interval=ONE_SECOND),
+    # RateLimit(limit_id=MY_TRADES_PATH_URL, limit=5, time_interval=ONE_SECOND),
     RateLimit(limit_id=TRADES_FOR_PAIR_PATH_URL, limit=5, time_interval=ONE_SECOND),
     # RateLimit(limit_id=REQUEST_WEIGHT, limit=1200, time_interval=ONE_MINUTE),
     # RateLimit(limit_id=ORDERS, limit=10, time_interval=ONE_SECOND),
