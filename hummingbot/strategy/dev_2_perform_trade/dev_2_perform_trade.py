@@ -138,11 +138,8 @@ class PerformTradeStrategy(StrategyPyBase):
                 new_price = self._exchange.get_mid_price(self._trading_pair)
             new_price = self._last_own_trade_price
 
-        if self._is_buy:
-            new_price = (Decimal('1') - self._spread) * new_price
-        else:
-            new_price = (Decimal('1') + self._spread) * new_price
-        return new_price
+        spread = -self._spread if self._is_buy else self._spread
+        return (Decimal('1') + spread) * new_price
 
     def _cancel_active_order(self):
         """

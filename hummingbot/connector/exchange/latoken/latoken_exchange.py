@@ -380,7 +380,7 @@ class LatokenExchange(ExchangeBase):
         function are ignore except order_type. Use OrderType.LIMIT_MAKER to specify you want trading fee for
         maker order.
         """
-        is_maker = order_type is OrderType.LIMIT_MAKER
+        is_maker = order_type is OrderType.LIMIT_MAKER  # LIMIT_MAKER not supported by latoken
         return DeductedFromReturnsTradeFee(percent=self.estimate_fee_pct(is_maker))
 
     def buy(self, trading_pair: str, amount: Decimal, order_type: OrderType = OrderType.LIMIT,
@@ -439,7 +439,7 @@ class LatokenExchange(ExchangeBase):
                     if isinstance(cr, Exception):
                         continue
                     if isinstance(cr, dict) and "id" in cr:
-                        client_order_id = cr.get("id")
+                        client_order_id = self._order_tracker.fetch_order(exchange_order_id=cr.get("id")).client_order_id
                         order_id_set.remove(client_order_id)
                         successful_cancellations.append(CancellationResult(client_order_id, True))
         except Exception:
@@ -564,6 +564,13 @@ class LatokenExchange(ExchangeBase):
         :param order_id: the client id of the order to cancel
         """
         tracked_order = self._order_tracker.fetch_tracked_order(order_id)
+        exchange_order_id = tracked_order.exchange_order_id
+
+        if not exchange_order_id:
+            self.logger().exception(f"latoken_exchange::_execture_cancel "
+                                    f"Exchange order id not (yet) registered, can't cancel atm {order_id}, "
+                                    f"order probably not created during this specific hbot run")
+
         if tracked_order is not None:
             try:
                 # symbol = await LatokenAPIOrderBookDataSource.exchange_symbol_associated_to_pair(
@@ -572,7 +579,7 @@ class LatokenExchange(ExchangeBase):
                 #     api_factory=self._api_factory,
                 #     throttler=self._throttler)
                 api_json = {
-                    "id": order_id,
+                    "id": exchange_order_id,  # order_id,
                 }
                 cancel_result = await self._api_request(
                     method=RESTMethod.POST,
@@ -659,29 +666,25 @@ class LatokenExchange(ExchangeBase):
 
     async def _format_trading_rules(self, pairs_list: List[Any]) -> List[TradingRule]:
         """
-        Example:
-        {
-            "symbol": "ETHBTC",
-            "baseAssetPrecision": 8,
-            "quotePrecision": 8,
-            "orderTypes": ["LIMIT", "MARKET"],
-            "filters": [
-                {
-                    "filterType": "PRICE_FILTER",
-                    "minPrice": "0.00000100",
-                    "maxPrice": "100000.00000000",
-                    "tickSize": "0.00000100"
-                }, {
-                    "filterType": "LOT_SIZE",
-                    "minQty": "0.00100000",
-                    "maxQty": "100000.00000000",
-                    "stepSize": "0.00100000"
-                }, {
-                    "filterType": "MIN_NOTIONAL",
-                    "minNotional": "0.00100000"
-                }
-            ]
-        }
+        Example: https://api.latoken.com/doc/v2/#tag/Pair
+        [
+            {
+            "id": "263d5e99-1413-47e4-9215-ce4f5dec3556",
+            "status": "PAIR_STATUS_ACTIVE",
+            "baseCurrency": "6ae140a9-8e75-4413-b157-8dd95c711b23",
+            "quoteCurrency": "23fa548b-f887-4f48-9b9b-7dd2c7de5ed0",
+            "priceTick": "0.010000000",
+            "priceDecimals": 2,
+            "quantityTick": "0.010000000",
+            "quantityDecimals": 2,
+            "costDisplayDecimals": 3,
+            "created": 1571333313871,
+            "minOrderQuantity": "0",
+            "maxOrderCostUsd": "999999999999999999",
+            "minOrderCostUsd": "0",
+            "externalSymbol": ""
+            }
+        ]
         """
         retval = []
         for rule in filter(latoken_utils.is_exchange_information_valid, pairs_list):
@@ -913,7 +916,7 @@ class LatokenExchange(ExchangeBase):
             tasks = [self._api_request(
                 method=RESTMethod.GET,
                 path_url=f"{CONSTANTS.GET_ORDER_PATH_URL}/{tracked_order.exchange_order_id}",
-                is_auth_required=True) for tracked_order in tracked_orders]
+                is_auth_required=True) for tracked_order in tracked_orders if tracked_order.exchange_order_id]
 
             self.logger().debug(f"Polling for order status updates of {len(tasks)} orders.")
             results = await safe_gather(*tasks, return_exceptions=True)
@@ -930,10 +933,9 @@ class LatokenExchange(ExchangeBase):
                         app_warning_msg=f"Failed to fetch status update for the order {client_order_id}."
                     )
                     self._order_not_found_records[client_order_id] = (self._order_not_found_records.get(client_order_id, 0) + 1)
-                    if (self._order_not_found_records[client_order_id] >= self.MAX_ORDER_UPDATE_RETRIEVAL_RETRIES_WITH_FAILURES):
+                    if self._order_not_found_records[client_order_id] >= self.MAX_ORDER_UPDATE_RETRIEVAL_RETRIES_WITH_FAILURES:
                         # Wait until the order not found error have repeated a few times before actually treating
                         # it as failed. See: https://github.com/CoinAlpha/hummingbot/issues/601
-
                         order_update: OrderUpdate = OrderUpdate(
                             client_order_id=client_order_id,
                             trading_pair=tracked_order.trading_pair,

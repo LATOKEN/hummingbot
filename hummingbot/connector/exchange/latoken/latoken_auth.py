@@ -25,8 +25,6 @@ class LatokenAuth(AuthBase):
         if request.method == RESTMethod.POST:
             request_params = self.add_auth_to_params(params=request.json)
             request.json = dict(request_params)
-            # request.data = str(dict(request_params)).encode("utf8")
-            # request.data = str(dict(request_params)).encode('ascii')
         else:
             request_params = self.add_auth_to_params(params=request.params)
             request.params = request_params
