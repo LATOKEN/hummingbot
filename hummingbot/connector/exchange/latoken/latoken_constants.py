@@ -6,6 +6,8 @@ HBOT_ORDER_ID_PREFIX = "latoken-hbot"  # not sure how to interpret this for lato
 # Base URL
 REST_URL = "https://api.latoken.{}"
 WSS_URL = "wss://api.latoken.{}/stomp"
+DOMAIN = "com"
+
 
 PUBLIC_API_VERSION = "/v2"
 PRIVATE_API_VERSION = "/v2"

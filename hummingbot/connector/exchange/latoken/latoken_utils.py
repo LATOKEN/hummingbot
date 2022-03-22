@@ -98,7 +98,7 @@ def is_exchange_information_valid(pair_data: Dict[str, Any]) -> bool:
 #     return pair_data["status"] == 'PAIR_STATUS_ACTIVE'
 
 
-def public_rest_url(path_url: str, domain: str = "com") -> str:
+def public_rest_url(path_url: str, domain: str = CONSTANTS.DOMAIN) -> str:
     """
     Creates a full URL for provided public REST endpoint
     :param path_url: a public REST endpoint
@@ -108,7 +108,7 @@ def public_rest_url(path_url: str, domain: str = "com") -> str:
     return CONSTANTS.REST_URL.format(domain) + CONSTANTS.PUBLIC_API_VERSION + path_url
 
 
-def private_rest_url(path_url: str, domain: str = "com") -> str:
+def private_rest_url(path_url: str, domain: str = CONSTANTS.DOMAIN) -> str:
     """
     Creates a full URL for provided private REST endpoint
     :param path_url: a private REST endpoint
