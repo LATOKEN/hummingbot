@@ -924,7 +924,7 @@ class LatokenExchange(ExchangeBase):
                 client_order_id = tracked_order.client_order_id
 
                 # If the order has already been cancelled or has failed do nothing
-                if client_order_id not in self.in_flight_orders:
+                if client_order_id not in self.in_flight_orders:  # TODO should we reach this with pending create?
                     continue
 
                 if isinstance(order_update, Exception):
