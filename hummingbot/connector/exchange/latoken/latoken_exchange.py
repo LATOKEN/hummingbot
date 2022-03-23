@@ -506,7 +506,7 @@ class LatokenExchange(ExchangeBase):
             throttler=self._throttler)
 
         if type_str == OrderType.LIMIT_MAKER.name:
-            self.logger().info('latoken_echange::_create_order ' + 'LIMIT_MAKER order not supported by Latoken, using LIMIT instead')
+            self.logger().info('_create_order ' + 'LIMIT_MAKER order not supported by Latoken, using LIMIT instead')
 
         base, quote = symbol.split('/')
         api_params = {'baseCurrency': base,
@@ -528,17 +528,19 @@ class LatokenExchange(ExchangeBase):
                 json=api_params,
                 is_auth_required=True)
 
-            exchange_order_id = str(order_result["id"])
+            if order_result["status"] == "SUCCESS":
+                exchange_order_id = str(order_result["id"])
 
-            order_update: OrderUpdate = OrderUpdate(
-                client_order_id=order_id,
-                exchange_order_id=exchange_order_id,
-                trading_pair=trading_pair,
-                update_timestamp=int(self.current_timestamp * 1e3),  # TODO Latoken does not return exchange update time?
-                new_state=OrderState.OPEN,
-            )
-            self._order_tracker.process_order_update(order_update)
-
+                order_update: OrderUpdate = OrderUpdate(
+                    client_order_id=order_id,
+                    exchange_order_id=exchange_order_id,
+                    trading_pair=trading_pair,
+                    update_timestamp=int(self.current_timestamp * 1e3),  # TODO Latoken does not return exchange update time?
+                    new_state=OrderState.OPEN,
+                )
+                self._order_tracker.process_order_update(order_update)
+            else:
+                raise ValueError("Place order failed, no SUCCESS message")
         except asyncio.CancelledError:
             raise
         except Exception as e:
@@ -567,7 +569,7 @@ class LatokenExchange(ExchangeBase):
         exchange_order_id = tracked_order.exchange_order_id
 
         if not exchange_order_id:
-            self.logger().exception(f"latoken_exchange::_execute_cancel "
+            self.logger().exception(f"_execute_cancel "
                                     f"Exchange order id not (yet) registered, can't cancel atm {order_id}, "
                                     f"order probably not created during this specific hbot run")
 
@@ -588,10 +590,16 @@ class LatokenExchange(ExchangeBase):
                     is_auth_required=True)
 
                 if cancel_result.get("status") == "SUCCESS":
+                    if self.current_timestamp != self.current_timestamp:  # TODO check why ts is float nan?!
+                        self.logger().warning("_execute_cancel canceling while timestamp not available, probably canceling while exitinig or before starting new strategy, not sure if intended")
+                        order_update_timestamp = int(time.time() * 1e3)
+                    else:
+                        order_update_timestamp = int(self.current_timestamp * 1e3)
+
                     order_update: OrderUpdate = OrderUpdate(
                         client_order_id=order_id,
                         trading_pair=tracked_order.trading_pair,
-                        update_timestamp=int(self.current_timestamp * 1e3),
+                        update_timestamp=order_update_timestamp,
                         new_state=OrderState.CANCELLED,
                     )
                     # if self.current_timestamp == self.current_timestamp:  # float is nan check
@@ -599,6 +607,19 @@ class LatokenExchange(ExchangeBase):
                     # else:
                     #     self.logger().error("latoken_exchange::_execture_cancel:: issue here, to be fixed")
                     self._order_tracker.process_order_update(order_update)
+                # TODO NOT SURE about this for now
+                # else:
+                #     order_update: OrderUpdate = OrderUpdate(
+                #         client_order_id=order_id,
+                #         trading_pair=tracked_order.trading_pair,
+                #         update_timestamp=int(self.current_timestamp * 1e3),
+                #         new_state=OrderState.,
+                #     )
+                #     # if self.current_timestamp == self.current_timestamp:  # float is nan check
+                #     #     order_update.update_timestamp=int(self.current_timestamp * 1e3)
+                #     # else:
+                #     #     self.logger().error("latoken_exchange::_execture_cancel:: issue here, to be fixed")
+                #     self._order_tracker.process_order_update(order_update)
                 return cancel_result
 
             except asyncio.CancelledError:
