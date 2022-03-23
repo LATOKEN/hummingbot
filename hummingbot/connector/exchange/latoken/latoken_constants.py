@@ -5,8 +5,12 @@ HBOT_ORDER_ID_PREFIX = "latoken-hbot"  # not sure how to interpret this for lato
 
 # Base URL
 REST_URL = "https://backoffice-qa-equity.dev3.nekotal.{}"
-WSS_URL = "wss://api.latoken.{}/stomp"
+WSS_URL = "wss://backoffice-qa-equity.dev3.nekotal.{}/stomp"
 DOMAIN = "tech"
+
+# REST_URL = "https://api.latoken.{}"
+# WSS_URL = "wss://api.latoken.{}/stomp"
+# DOMAIN = "com"
 
 
 PUBLIC_API_VERSION = "/v2"
