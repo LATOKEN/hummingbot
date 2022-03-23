@@ -4,9 +4,9 @@ from hummingbot.core.data_type.in_flight_order import OrderState
 HBOT_ORDER_ID_PREFIX = "latoken-hbot"  # not sure how to interpret this for latoken
 
 # Base URL
-REST_URL = "https://api.latoken.{}"
+REST_URL = "https://backoffice-qa-equity.dev3.nekotal.{}"
 WSS_URL = "wss://api.latoken.{}/stomp"
-DOMAIN = "com"
+DOMAIN = "tech"
 
 
 PUBLIC_API_VERSION = "/v2"

@@ -70,7 +70,7 @@ class LatokenExchange(ExchangeBase):
                  latoken_api_secret: str,
                  trading_pairs: Optional[List[str]] = None,
                  trading_required: bool = True,
-                 domain="com"
+                 domain=CONSTANTS.DOMAIN
                  ):
         self._domain = domain
         self._latoken_time_synchronizer = TimeSynchronizer()
@@ -567,7 +567,7 @@ class LatokenExchange(ExchangeBase):
         exchange_order_id = tracked_order.exchange_order_id
 
         if not exchange_order_id:
-            self.logger().exception(f"latoken_exchange::_execture_cancel "
+            self.logger().exception(f"latoken_exchange::_execute_cancel "
                                     f"Exchange order id not (yet) registered, can't cancel atm {order_id}, "
                                     f"order probably not created during this specific hbot run")
 
@@ -594,6 +594,10 @@ class LatokenExchange(ExchangeBase):
                         update_timestamp=int(self.current_timestamp * 1e3),
                         new_state=OrderState.CANCELLED,
                     )
+                    # if self.current_timestamp == self.current_timestamp:  # float is nan check
+                    #     order_update.update_timestamp=int(self.current_timestamp * 1e3)
+                    # else:
+                    #     self.logger().error("latoken_exchange::_execture_cancel:: issue here, to be fixed")
                     self._order_tracker.process_order_update(order_update)
                 return cancel_result
 

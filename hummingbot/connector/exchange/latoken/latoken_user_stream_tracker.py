@@ -13,13 +13,14 @@ from hummingbot.core.utils.async_utils import (
     safe_gather,
 )
 from hummingbot.logger import HummingbotLogger
+import hummingbot.connector.exchange.latoken.latoken_constants as CONSTANTS
 
 
 class LatokenUserStreamTracker(UserStreamTracker):
     _logger: Optional[HummingbotLogger] = None
 
     def __init__(self, auth: LatokenAuth, data_source: Optional[UserStreamTrackerDataSource],
-                 domain: str = "com", throttler: Optional[AsyncThrottler] = None):
+                 domain: str = CONSTANTS.DOMAIN, throttler: Optional[AsyncThrottler] = None):
         super().__init__()
         self._auth: LatokenAuth = auth
         self._ev_loop: asyncio.events.AbstractEventLoop = asyncio.get_event_loop()

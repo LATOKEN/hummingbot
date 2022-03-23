@@ -37,7 +37,7 @@ class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
 
     def __init__(self,
                  auth: LatokenAuth,
-                 domain: str = "com",
+                 domain: str = CONSTANTS.DOMAIN,
                  api_factory: Optional[WebAssistantsFactory] = None,
                  throttler: Optional[AsyncThrottler] = None):
         super().__init__()
