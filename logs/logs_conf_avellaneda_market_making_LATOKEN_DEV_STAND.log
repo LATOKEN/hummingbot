@@ -1,0 +1,375 @@
+2022-03-24 08:12:15,929 - 41887 - hummingbot.client.hummingbot_application - INFO - start command initiated.
+2022-03-24 08:12:16,203 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - INFO - Network status has changed to NetworkStatus.CONNECTED. Starting networking...
+2022-03-24 08:12:16,289 - 41887 - hummingbot.connector.exchange.latoken.latoken_order_book_tracker - INFO - Initialized order book for LA-USDT. 1/1 completed.
+2022-03-24 08:12:16,423 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_order_book_data_source - INFO - Subscribed to public order book and trade channels...
+2022-03-24 08:12:18,514 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:12:18,515 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:12:20,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:20,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:20,015 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:21,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:21,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:21,011 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:22,000 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:22,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:22,014 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:23,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:23,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:23,017 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:23,544 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:12:23,544 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:12:24,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:24,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:24,011 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:25,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:25,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:25,014 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:26,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:26,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:26,009 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:27,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:27,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:27,024 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:28,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:28,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:28,017 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:28,582 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:12:28,583 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:12:29,003 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:29,003 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:29,012 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:30,008 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:30,008 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:30,021 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:31,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:31,003 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:31,012 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:32,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:32,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:32,012 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:33,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:33,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:33,015 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:33,617 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:12:33,619 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:12:34,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:34,003 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:34,019 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:35,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:35,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:35,010 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:36,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:36,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:36,011 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:37,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:37,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:37,011 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:38,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:38,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:38,016 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:38,658 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:12:38,659 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:12:39,000 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:39,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:39,015 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:40,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:40,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:40,011 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:41,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:41,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:41,019 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:42,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:42,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:42,016 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:43,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:43,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:43,030 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:43,692 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:12:43,693 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:12:44,000 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:44,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:44,013 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:45,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:45,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:45,017 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:46,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:46,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:46,015 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:47,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:47,003 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:47,021 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:48,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:48,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:48,013 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:48,730 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:12:48,730 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:12:49,014 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:49,015 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:49,036 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:50,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:50,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:50,017 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:51,000 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:51,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:51,015 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:52,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:52,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:52,017 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:53,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:53,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:53,013 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:53,761 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:12:53,762 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:12:54,013 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:54,014 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:54,031 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:55,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:55,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:55,017 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:56,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:56,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:56,017 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:57,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:57,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:57,016 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:58,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:58,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:58,016 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:12:58,794 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:12:58,795 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:12:59,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:12:59,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:12:59,033 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:00,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:00,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:00,016 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:01,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:01,003 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:01,016 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:02,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:02,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:02,018 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:03,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:03,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:03,025 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:03,829 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:13:03,830 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:13:04,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:04,003 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:04,024 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:05,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:05,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:05,035 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:06,000 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:06,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:06,010 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:07,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:07,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:07,015 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:08,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:08,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:08,011 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:08,859 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:13:08,860 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:13:09,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:09,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:09,010 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:10,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:10,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:10,013 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:11,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:11,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:11,012 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:12,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:12,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:12,018 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:13,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:13,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:13,013 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:13,889 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:13:13,890 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:13:14,044 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:14,044 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:14,055 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:15,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:15,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:15,010 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:16,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:16,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:16,011 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:17,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:17,003 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:17,015 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:18,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:18,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:18,016 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:18,921 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:13:18,922 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:13:19,118 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:19,119 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:19,136 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:20,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:20,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:20,016 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:21,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:21,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:21,014 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:22,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:22,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:22,014 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:23,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:23,003 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:23,026 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:23,951 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:13:23,952 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:13:24,114 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:24,114 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:24,120 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:25,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:25,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:25,011 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:26,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:26,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:26,010 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:27,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:27,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:27,014 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:28,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:28,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:28,011 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:28,985 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:13:28,986 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:13:29,065 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:29,065 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:29,074 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:30,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:30,003 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:30,014 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:31,003 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:31,004 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:31,019 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:32,003 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:32,004 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:32,013 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:33,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:33,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:33,010 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:34,000 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:34,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:34,009 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:34,083 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:13:34,083 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:13:35,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:35,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:35,014 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:36,003 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:36,003 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:36,014 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:37,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:37,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:37,017 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:38,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:38,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:38,013 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:39,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:39,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:39,012 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:39,141 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:13:39,142 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:13:40,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:40,003 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:40,019 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:41,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:41,003 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:41,012 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:42,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:42,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:42,016 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:43,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:43,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:43,011 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:44,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:44,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:44,009 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:44,187 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:13:44,188 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:13:45,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:45,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:45,012 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:46,000 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:13:46,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:13:46,012 - 41887 - hummingbot.strategy.avellaneda_market_making.avellaneda_market_making - INFO - Calculating volatility, estimating order book liquidity ... no change tick
+2022-03-24 08:13:46,967 - 41887 - hummingbot.client.hummingbot_application - INFO - stop command initiated.
+2022-03-24 10:14:21,829 - 41887 - hummingbot.client.hummingbot_application - INFO - stop command initiated.

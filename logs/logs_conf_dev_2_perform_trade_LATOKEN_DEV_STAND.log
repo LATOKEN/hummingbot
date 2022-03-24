@@ -1,0 +1,219 @@
+    2022-03-24 07:59:20,891 - 41887 - hummingbot.client.hummingbot_application - INFO - start command initiated.
+2022-03-24 07:59:21,178 - 41887 - hummingbot.strategy.dev_2_perform_trade.dev_2_perform_trade - WARNING - latoken_tech connector is not ready. Please wait...
+2022-03-24 07:59:21,338 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - INFO - Network status has changed to NetworkStatus.CONNECTED. Starting networking...
+2022-03-24 07:59:21,347 - 41887 - hummingbot.core.api_throttler.async_request_context_base - INFO - API rate limit on global (5 calls per 1s) has almost reached. Limits used is 6 in the last 1 seconds
+2022-03-24 07:59:21,446 - 41887 - hummingbot.connector.exchange.latoken.latoken_order_book_tracker - INFO - Initialized order book for LA-USDT. 1/1 completed.
+2022-03-24 07:59:21,607 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_order_book_data_source - INFO - Subscribed to public order book and trade channels...
+2022-03-24 07:59:22,079 - 41887 - hummingbot.strategy.dev_2_perform_trade.dev_2_perform_trade - WARNING - latoken_tech connector is not ready. Please wait...
+2022-03-24 07:59:23,119 - 41887 - hummingbot.strategy.dev_2_perform_trade.dev_2_perform_trade - WARNING - latoken_tech connector is not ready. Please wait...
+2022-03-24 07:59:23,494 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 07:59:23,496 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 07:59:24,217 - 41887 - hummingbot.strategy.dev_2_perform_trade.dev_2_perform_trade - WARNING - latoken_tech connector is not ready. Please wait...
+2022-03-24 07:59:25,084 - 41887 - hummingbot.strategy.dev_2_perform_trade.dev_2_perform_trade - INFO - latoken_tech is ready. Trading started.
+2022-03-24 07:59:25,085 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 07:59:25,085 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 07:59:25,086 - 41887 - hummingbot.strategy.dev_2_perform_trade.dev_2_perform_trade - INFO - (latoken_tech) Creating a BUY order. Order: 300LA @ NaNUSDT
+2022-03-24 07:59:25,087 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 07:59:32,144 - 41887 - hummingbot.core.utils.async_utils - ERROR - Unhandled error in background task: [<class 'decimal.InvalidOperation'>]
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/core/utils/async_utils.py", line 9, in safe_wrapper
+    return await c
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_exchange.py", line 474, in _create_order
+    amount = self.quantize_order_amount(trading_pair=trading_pair, amount=amount, price=quantize_amount_price)
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_exchange.py", line 354, in quantize_order_amount
+    if notional_size < trading_rule.min_notional_size * Decimal("1.01"):
+decimal.InvalidOperation: [<class 'decimal.InvalidOperation'>]
+2022-03-24 07:59:32,500 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 07:59:32,500 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 07:59:37,580 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 07:59:37,581 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 07:59:42,628 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 07:59:42,629 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 07:59:47,657 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 07:59:47,658 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 07:59:52,755 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 07:59:52,756 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 07:59:55,056 - 41887 - hummingbot.core.api_throttler.async_request_context_base - INFO - API rate limit on global (5 calls per 1s) has almost reached. Limits used is 6 in the last 1 seconds
+2022-03-24 07:59:57,795 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 07:59:57,795 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:00:02,823 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:00:02,824 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:00:07,859 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:00:07,860 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:00:12,889 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:00:12,890 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:00:17,918 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:00:17,919 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:00:23,197 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:00:23,199 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:00:25,047 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:00:25,048 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:00:25,049 - 41887 - hummingbot.strategy.dev_2_perform_trade.dev_2_perform_trade - INFO - (LA-USDT) Cancelling the limit order latoken-hbot-BLAUT6dde1648105165086550. [clock=2022-03-24 07:00:25+00:00]
+2022-03-24 08:00:25,049 - 41887 - hummingbot.strategy.dev_2_perform_trade.dev_2_perform_trade - INFO - (latoken_tech) Creating a BUY order. Order: 300LA @ NaNUSDT
+2022-03-24 08:00:29,880 - 41887 - hummingbot.core.utils.async_utils - ERROR - Unhandled error in background task: 'NoneType' object has no attribute 'exchange_order_id'
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/core/utils/async_utils.py", line 9, in safe_wrapper
+    return await c
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_exchange.py", line 569, in _execute_cancel
+    exchange_order_id = tracked_order.exchange_order_id
+AttributeError: 'NoneType' object has no attribute 'exchange_order_id'
+2022-03-24 08:00:29,882 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:00:32,471 - 41887 - hummingbot.core.utils.async_utils - ERROR - Unhandled error in background task: [<class 'decimal.InvalidOperation'>]
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/core/utils/async_utils.py", line 9, in safe_wrapper
+    return await c
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_exchange.py", line 474, in _create_order
+    amount = self.quantize_order_amount(trading_pair=trading_pair, amount=amount, price=quantize_amount_price)
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_exchange.py", line 354, in quantize_order_amount
+    if notional_size < trading_rule.min_notional_size * Decimal("1.01"):
+decimal.InvalidOperation: [<class 'decimal.InvalidOperation'>]
+2022-03-24 08:00:32,947 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:00:32,949 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:00:32,952 - 41887 - hummingbot.core.api_throttler.async_request_context_base - INFO - API rate limit on global (5 calls per 1s) has almost reached. Limits used is 6 in the last 1 seconds
+2022-03-24 08:00:38,001 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:00:38,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:00:43,038 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:00:43,039 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:00:48,073 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:00:48,074 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:00:53,105 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:00:53,106 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:00:58,137 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:00:58,138 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:01:03,167 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:01:03,168 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:01:05,029 - 41887 - hummingbot.core.api_throttler.async_request_context_base - INFO - API rate limit on global (5 calls per 1s) has almost reached. Limits used is 6 in the last 1 seconds
+2022-03-24 08:01:08,204 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:01:08,205 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:01:13,236 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:01:13,237 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:01:18,267 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:01:18,268 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:01:23,303 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:01:23,304 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:01:25,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Ask orderbook for LA-USDT is empty.
+2022-03-24 08:01:25,002 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:01:25,003 - 41887 - hummingbot.strategy.dev_2_perform_trade.dev_2_perform_trade - INFO - (LA-USDT) Cancelling the limit order latoken-hbot-BLAUT6dde1648105225049840. [clock=2022-03-24 07:01:25+00:00]
+2022-03-24 08:01:25,003 - 41887 - hummingbot.strategy.dev_2_perform_trade.dev_2_perform_trade - INFO - (latoken_tech) Creating a BUY order. Order: 300LA @ NaNUSDT
+2022-03-24 08:01:31,160 - 41887 - hummingbot.core.utils.async_utils - ERROR - Unhandled error in background task: 'NoneType' object has no attribute 'exchange_order_id'
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/core/utils/async_utils.py", line 9, in safe_wrapper
+    return await c
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_exchange.py", line 569, in _execute_cancel
+    exchange_order_id = tracked_order.exchange_order_id
+AttributeError: 'NoneType' object has no attribute 'exchange_order_id'
+2022-03-24 08:01:31,162 - 41887 - hummingbot.connector.exchange.latoken.latoken_exchange - WARNING - Bid orderbook for LA-USDT is empty.
+2022-03-24 08:01:32,836 - 41887 - hummingbot.core.utils.async_utils - ERROR - Unhandled error in background task: [<class 'decimal.InvalidOperation'>]
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/core/utils/async_utils.py", line 9, in safe_wrapper
+    return await c
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_exchange.py", line 474, in _create_order
+    amount = self.quantize_order_amount(trading_pair=trading_pair, amount=amount, price=quantize_amount_price)
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_exchange.py", line 354, in quantize_order_amount
+    if notional_size < trading_rule.min_notional_size * Decimal("1.01"):
+decimal.InvalidOperation: [<class 'decimal.InvalidOperation'>]
+2022-03-24 08:01:33,008 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - INFO - Successfully obtained listen key 2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f
+2022-03-24 08:01:33,009 - 41887 - hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source - ERROR - Unexpected error while listening to user stream. Retrying after 5 seconds...
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/connector/exchange/latoken/latoken_api_user_stream_data_source.py", line 91, in listen_for_user_stream
+    ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+AttributeError: module 'websocket' has no attribute 'create_connection'
+2022-03-24 08:01:35,132 - 41887 - hummingbot.core.api_throttler.async_request_context_base - INFO - API rate limit on global (5 calls per 1s) has almost reached. Limits used is 6 in the last 1 seconds
+2022-03-24 08:01:36,431 - 41887 - hummingbot.client.hummingbot_application - INFO - stop command initiated.
+2022-03-24 08:11:43,753 - 41887 - root - ERROR - "None" is not valid decimal.
+Traceback (most recent call last):
+  File "/home/lts/humming-bot/hummingbot/client/config/config_helpers.py", line 78, in parse_cvar_value
+    return Decimal(str(value))
+decimal.InvalidOperation: [<class 'decimal.ConversionSyntax'>]

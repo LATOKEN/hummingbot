@@ -1024,6 +1024,11 @@ class LatokenExchange(ExchangeBase):
                 self._account_available_balances[asset_name] = free_balance
                 self._account_balances[asset_name] = total_balance
                 remote_asset_names.add(asset_name)
+            has_spot_balances = any(filter(lambda b: b["type"] == "ACCOUNT_TYPE_SPOT", balances))
+            if not balances:
+                self.logger().warning("Fund your latoken account, no balances in your account!")
+            if balances and not has_spot_balances:
+                self.logger().warning("No latoken SPOT balance! Account has balances but no SPOT balance! Transfer to latoken spot account!")
 
             asset_names_to_remove = local_asset_names.difference(remote_asset_names)
             for asset_name in asset_names_to_remove:
