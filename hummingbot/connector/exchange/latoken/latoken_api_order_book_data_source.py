@@ -42,6 +42,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
     TRADE_STREAM_ID = 1
     DIFF_STREAM_ID = 2
     ONE_HOUR = 60 * 60
+    QUARTER_OF_SECOND = .25
 
     _logger: Optional[HummingbotLogger] = None
     _trading_pair_symbol_map: Dict[str, Mapping[str, str]] = {}
@@ -308,7 +309,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
                         self.logger().error(f"Unexpected error fetching order book snapshot for {trading_pair}.",
                                             exc_info=True)
                         await self._sleep(5.0)
-                await self._sleep(self.ONE_HOUR)
+                await self._sleep(self.QUARTER_OF_SECOND)
             except asyncio.CancelledError:
                 raise
             except Exception:

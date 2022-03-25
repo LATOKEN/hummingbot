@@ -76,5 +76,5 @@ gateway.env
 coverage.xml
 
 # Debug console
+/logs
 .debug_console_ssh_host_key
-/logs/logs_hummingbot.log
