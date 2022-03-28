@@ -39,7 +39,7 @@ class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
 
     def __init__(self,
                  auth: LatokenAuth,
-                 domain: str = CONSTANTS.DOMAIN,
+                 domain: str = "com",
                  api_factory: Optional[WebAssistantsFactory] = None,
                  throttler: Optional[AsyncThrottler] = None):
         super().__init__()
@@ -87,7 +87,7 @@ class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
 
                 client: WSAssistant = await self._get_ws_assistant()
                 await client.connect(
-                    ws_url=f"{CONSTANTS.WSS_URL.format(self._domain)}",
+                    ws_url=latoken_utils.ws_url(self._domain),
                     ping_timeout=CONSTANTS.WS_HEARTBEAT_TIME_INTERVAL)
                 # TODO review to integrate websocket.create_connection from python client application to hbot framework
                 # ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))

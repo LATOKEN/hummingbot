@@ -98,24 +98,37 @@ def is_exchange_information_valid(pair_data: Dict[str, Any]) -> bool:
 #     return pair_data["status"] == 'PAIR_STATUS_ACTIVE'
 
 
-def public_rest_url(path_url: str, domain: str = CONSTANTS.DOMAIN) -> str:
+def public_rest_url(path_url: str, domain: str = "com") -> str:
     """
     Creates a full URL for provided public REST endpoint
     :param path_url: a public REST endpoint
     :param domain: the Binance domain to connect to ("com" or "us"). The default value is "com"
     :return: the full URL to the endpoint
     """
-    return CONSTANTS.REST_URL.format(domain) + CONSTANTS.PUBLIC_API_VERSION + path_url
+    endpoint = CONSTANTS.DOMAIN_TO_ENDPOINT[domain]
+    return CONSTANTS.REST_URL.format(endpoint, domain) + CONSTANTS.PUBLIC_API_VERSION + path_url
 
 
-def private_rest_url(path_url: str, domain: str = CONSTANTS.DOMAIN) -> str:
+def private_rest_url(path_url: str, domain: str = "com") -> str:
     """
     Creates a full URL for provided private REST endpoint
     :param path_url: a private REST endpoint
     :param domain: the Binance domain to connect to ("com" or "us"). The default value is "com"
     :return: the full URL to the endpoint
     """
-    return CONSTANTS.REST_URL.format(domain) + CONSTANTS.PRIVATE_API_VERSION + path_url
+    endpoint = CONSTANTS.DOMAIN_TO_ENDPOINT[domain]
+    return CONSTANTS.REST_URL.format(endpoint, domain) + CONSTANTS.PRIVATE_API_VERSION + path_url
+
+
+def ws_url(domain: str = "com") -> str:
+    """
+    Creates a full URL for provided private REST endpoint
+    :param path_url: a private REST endpoint
+    :param domain: the Binance domain to connect to ("com" or "us"). The default value is "com"
+    :return: the full URL to the endpoint
+    """
+    endpoint = CONSTANTS.DOMAIN_TO_ENDPOINT[domain]
+    return CONSTANTS.WSS_URL.format(endpoint, domain)
 
 
 KEYS = {
@@ -132,3 +145,23 @@ KEYS = {
                   is_secure=True,
                   is_connect_key=True),
 }
+
+
+OTHER_DOMAINS = ["latoken_tech"]
+OTHER_DOMAINS_PARAMETER = {"latoken_tech": "tech"}
+OTHER_DOMAINS_EXAMPLE_PAIR = {"latoken_tech": "HBTEST-USDT"}
+OTHER_DOMAINS_DEFAULT_FEES = {"latoken_tech": [0.1, 0.1]}
+OTHER_DOMAINS_KEYS = {"latoken_tech": {
+    "latoken_tech_api_key":
+        ConfigVar(key="latoken_tech_api_key",
+                  prompt="Enter your Latoken Tech API key >>> ",
+                  required_if=using_exchange("latoken_tech"),
+                  is_secure=True,
+                  is_connect_key=True),
+    "latoken_tech_api_secret":
+        ConfigVar(key="latoken_tech_api_secret",
+                  prompt="Enter your Latoken Tech API secret >>> ",
+                  required_if=using_exchange("latoken_tech"),
+                  is_secure=True,
+                  is_connect_key=True),
+}}

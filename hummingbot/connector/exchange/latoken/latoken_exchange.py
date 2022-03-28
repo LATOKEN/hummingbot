@@ -70,7 +70,7 @@ class LatokenExchange(ExchangeBase):
                  latoken_api_secret: str,
                  trading_pairs: Optional[List[str]] = None,
                  trading_required: bool = True,
-                 domain=CONSTANTS.DOMAIN
+                 domain="com"
                  ):
         self._domain = domain
         self._latoken_time_synchronizer = TimeSynchronizer()
@@ -591,7 +591,7 @@ class LatokenExchange(ExchangeBase):
 
                 if cancel_result.get("status") == "SUCCESS":
                     if self.current_timestamp != self.current_timestamp:  # TODO check why ts is float nan?!
-                        self.logger().warning("_execute_cancel canceling while timestamp not available, probably canceling while exitinig or before starting new strategy, not sure if intended")
+                        self.logger().warning("_execute_cancel canceling while timestamp not available, probably canceling while exiting or before starting new strategy, not sure if intended")
                         order_update_timestamp = int(time.time() * 1e3)
                     else:
                         order_update_timestamp = int(self.current_timestamp * 1e3)

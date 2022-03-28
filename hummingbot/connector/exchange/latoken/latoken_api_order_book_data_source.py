@@ -16,7 +16,13 @@ from typing import (
 from bidict import bidict
 
 import hummingbot.connector.exchange.latoken.latoken_constants as CONSTANTS
-from hummingbot.connector.exchange.latoken.latoken_utils import (public_rest_url, get_data, create_full_mapping, is_exchange_information_valid)
+from hummingbot.connector.exchange.latoken.latoken_utils import (
+    public_rest_url,
+    get_data,
+    create_full_mapping,
+    is_exchange_information_valid,
+    ws_url
+)
 from hummingbot.connector.exchange.latoken.latoken_order_book import LatokenOrderBook
 from hummingbot.connector.utils import build_api_factory
 from hummingbot.core.api_throttler.async_throttler import AsyncThrottler
@@ -29,7 +35,7 @@ from hummingbot.core.web_assistant.connections.data_types import (
     RESTMethod,
     RESTRequest,
     RESTResponse,
-    WSRequest,
+    WSRequest
 )
 from hummingbot.core.web_assistant.rest_assistant import RESTAssistant
 from hummingbot.core.web_assistant.web_assistants_factory import WebAssistantsFactory
@@ -41,7 +47,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
     HEARTBEAT_TIME_INTERVAL = 30.0
     TRADE_STREAM_ID = 1
     DIFF_STREAM_ID = 2
-    ONE_HOUR = 60 * 60
+    # ONE_HOUR = 60 * 60
     QUARTER_OF_SECOND = .25
 
     _logger: Optional[HummingbotLogger] = None
@@ -50,7 +56,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
 
     def __init__(self,
                  trading_pairs: List[str],
-                 domain=CONSTANTS.DOMAIN,
+                 domain="com",
                  api_factory: Optional[WebAssistantsFactory] = None,
                  throttler: Optional[AsyncThrottler] = None):
         super().__init__(trading_pairs)
@@ -71,7 +77,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
     @classmethod
     async def get_last_traded_prices(cls,
                                      trading_pairs: List[str],
-                                     domain: str = CONSTANTS.DOMAIN,
+                                     domain: str = "com",
                                      api_factory: Optional[WebAssistantsFactory] = None,
                                      throttler: Optional[AsyncThrottler] = None) -> Dict[str, float]:
         """
@@ -95,7 +101,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
 
     @staticmethod
     @async_ttl_cache(ttl=2, maxsize=1)
-    async def get_all_mid_prices(domain=CONSTANTS.DOMAIN) -> Dict[str, Decimal]:
+    async def get_all_mid_prices(domain="com") -> Dict[str, Decimal]:
         """
         Returns the mid price of all trading pairs, obtaining the information from the exchange. This functionality is
         required by the market price strategy.
@@ -128,7 +134,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         return ret_val
 
     @classmethod
-    def trading_pair_symbol_map_ready(cls, domain: str = CONSTANTS.DOMAIN):
+    def trading_pair_symbol_map_ready(cls, domain: str = "com"):
         """
         Checks if the mapping from exchange symbols to client trading pairs has been initialized
         :param domain: the domain of the exchange being used (either "com" or "us"). Default value is "com"
@@ -139,7 +145,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
     @classmethod
     async def trading_pair_symbol_map(
             cls,
-            domain: str = CONSTANTS.DOMAIN,
+            domain: str = "com",
             api_factory: Optional[WebAssistantsFactory] = None,
             throttler: Optional[AsyncThrottler] = None
     ):
@@ -163,7 +169,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
     @staticmethod
     async def exchange_symbol_associated_to_pair(
             trading_pair: str,
-            domain=CONSTANTS.DOMAIN,
+            domain="com",
             api_factory: Optional[WebAssistantsFactory] = None,
             throttler: Optional[AsyncThrottler] = None,
     ) -> str:
@@ -184,7 +190,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
     @staticmethod
     async def trading_pair_associated_to_exchange_symbol(
             symbol: str,
-            domain=CONSTANTS.DOMAIN,
+            domain="com",
             api_factory: Optional[WebAssistantsFactory] = None,
             throttler: Optional[AsyncThrottler] = None) -> str:
         """
@@ -203,7 +209,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         return symbol_map[symbol]
 
     @staticmethod
-    async def fetch_trading_pairs(domain=CONSTANTS.DOMAIN) -> List[str]:
+    async def fetch_trading_pairs(domain="com") -> List[str]:
         """
         Returns a list of all known trading pairs enabled to operate with
         :param domain: the domain of the exchange being used (either "com" or "us"). Default value is "com"
@@ -325,7 +331,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         while True:
             try:
                 ws: WSAssistant = await self._get_ws_assistant()
-                await ws.connect(ws_url=CONSTANTS.WSS_URL.format(self._domain),
+                await ws.connect(ws_url=ws_url(self._domain),
                                  ping_timeout=CONSTANTS.WS_HEARTBEAT_TIME_INTERVAL)
                 await self._subscribe_channels(ws)
 
@@ -439,7 +445,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
     @classmethod
     async def _init_trading_pair_symbols(
             cls,
-            domain: str = CONSTANTS.DOMAIN,
+            domain: str = "com",
             api_factory: Optional[WebAssistantsFactory] = None,
             throttler: Optional[AsyncThrottler] = None):
         """

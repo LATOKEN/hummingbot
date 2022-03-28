@@ -9,7 +9,6 @@ from typing import (
     Optional
 )
 
-import hummingbot.connector.exchange.latoken.latoken_constants as CONSTANTS
 from hummingbot.connector.exchange.latoken.latoken_api_order_book_data_source import LatokenAPIOrderBookDataSource
 from hummingbot.core.api_throttler.async_throttler import AsyncThrottler
 from hummingbot.core.data_type.order_book import OrderBook
@@ -25,7 +24,7 @@ class LatokenOrderBookTracker(OrderBookTracker):
 
     def __init__(self,
                  trading_pairs: Optional[List[str]] = None,
-                 domain: str = CONSTANTS.DOMAIN,
+                 domain: str = "com",
                  api_factory: Optional[WebAssistantsFactory] = None,
                  throttler: Optional[AsyncThrottler] = None):
         super().__init__(
