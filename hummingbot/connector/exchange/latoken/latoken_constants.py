@@ -94,7 +94,7 @@ ORDER_STATE = {
 DIFF_EVENT_TYPE = "depthUpdate"
 TRADE_EVENT_TYPE = "trade"
 
-GLOBAL_RATE_LIMIT = "global"
+GLOBAL_RATE_LIMIT = "global"  # TODO this needs some review
 
 RATE_LIMITS = [
     # Pools

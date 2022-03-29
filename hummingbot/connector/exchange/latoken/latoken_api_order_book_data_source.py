@@ -94,8 +94,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         local_api_factory = api_factory or build_api_factory()
         rest_assistant = await local_api_factory.get_rest_assistant()
         local_throttler = throttler or cls._get_throttler_instance()
-        tasks = [cls._get_last_traded_price(t_pair, domain, rest_assistant, local_throttler) for t_pair in
-                 trading_pairs]
+        tasks = [cls._get_last_traded_price(t_pair, domain, rest_assistant, local_throttler) for t_pair in trading_pairs]
         results = await safe_gather(*tasks)
         return {t_pair: result for t_pair, result in zip(trading_pairs, results)}
 

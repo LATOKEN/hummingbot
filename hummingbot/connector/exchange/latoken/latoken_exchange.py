@@ -439,7 +439,8 @@ class LatokenExchange(ExchangeBase):
                     if isinstance(cr, Exception):
                         continue
                     if isinstance(cr, dict) and "id" in cr:
-                        client_order_id = self._order_tracker.fetch_order(exchange_order_id=cr.get("id")).client_order_id
+                        client_order_id = self._order_tracker.fetch_order(
+                            exchange_order_id=cr.get("id")).client_order_id
                         order_id_set.remove(client_order_id)
                         successful_cancellations.append(CancellationResult(client_order_id, True))
         except Exception:
@@ -535,7 +536,8 @@ class LatokenExchange(ExchangeBase):
                     client_order_id=order_id,
                     exchange_order_id=exchange_order_id,
                     trading_pair=trading_pair,
-                    update_timestamp=int(self.current_timestamp * 1e3),  # TODO Latoken does not return exchange update time?
+                    update_timestamp=int(self.current_timestamp * 1e3),
+                    # TODO Latoken does not return exchange update time?
                     new_state=OrderState.OPEN,
                 )
                 self._order_tracker.process_order_update(order_update)
@@ -568,18 +570,14 @@ class LatokenExchange(ExchangeBase):
         tracked_order = self._order_tracker.fetch_tracked_order(order_id)
         exchange_order_id = tracked_order.exchange_order_id
 
-        if not exchange_order_id:
-            self.logger().exception(f"_execute_cancel "
-                                    f"Exchange order id not (yet) registered, can't cancel atm {order_id}, "
-                                    f"order probably not created during this specific hbot run")
+        # if not exchange_order_id:
+        #     self.logger().exception(f"_execute_cancel "
+        #                             f"Exchange order id not (yet) registered, can't cancel atm {order_id}, "
+        #                             f"order probably not created during this specific hbot run")
 
         if tracked_order is not None:
             try:
-                # symbol = await LatokenAPIOrderBookDataSource.exchange_symbol_associated_to_pair(
-                #     trading_pair=trading_pair,
-                #     domain=self._domain,
-                #     api_factory=self._api_factory,
-                #     throttler=self._throttler)
+
                 api_json = {
                     "id": exchange_order_id,  # order_id,
                 }
@@ -589,37 +587,24 @@ class LatokenExchange(ExchangeBase):
                     json=api_json,
                     is_auth_required=True)
 
-                if cancel_result.get("status") == "SUCCESS":
-                    if self.current_timestamp != self.current_timestamp:  # TODO check why ts is float nan?!
-                        self.logger().warning("_execute_cancel canceling while timestamp not available, probably canceling while exiting or before starting new strategy, not sure if intended")
-                        order_update_timestamp = int(time.time() * 1e3)
-                    else:
-                        order_update_timestamp = int(self.current_timestamp * 1e3)
+                order_cancel_status = cancel_result.get("status")
+
+                if order_cancel_status == "SUCCESS":
+                    order_update_timestamp = (
+                        time.time() if self.current_timestamp != self.current_timestamp else self.current_timestamp)
+                    update_timestamp = int(order_update_timestamp * 1e3)
 
                     order_update: OrderUpdate = OrderUpdate(
                         client_order_id=order_id,
                         trading_pair=tracked_order.trading_pair,
-                        update_timestamp=order_update_timestamp,
+                        update_timestamp=update_timestamp,
                         new_state=OrderState.CANCELLED,
                     )
-                    # if self.current_timestamp == self.current_timestamp:  # float is nan check
-                    #     order_update.update_timestamp=int(self.current_timestamp * 1e3)
-                    # else:
-                    #     self.logger().error("latoken_exchange::_execture_cancel:: issue here, to be fixed")
+
                     self._order_tracker.process_order_update(order_update)
-                # TODO NOT SURE about this for now
-                # else:
-                #     order_update: OrderUpdate = OrderUpdate(
-                #         client_order_id=order_id,
-                #         trading_pair=tracked_order.trading_pair,
-                #         update_timestamp=int(self.current_timestamp * 1e3),
-                #         new_state=OrderState.,
-                #     )
-                #     # if self.current_timestamp == self.current_timestamp:  # float is nan check
-                #     #     order_update.update_timestamp=int(self.current_timestamp * 1e3)
-                #     # else:
-                #     #     self.logger().error("latoken_exchange::_execture_cancel:: issue here, to be fixed")
-                #     self._order_tracker.process_order_update(order_update)
+                elif order_cancel_status == "FAILURE":
+                    self.logger().error("Order probably already cancelled")
+
                 return cancel_result
 
             except asyncio.CancelledError:
@@ -887,7 +872,7 @@ class LatokenExchange(ExchangeBase):
                         # This is a fill for a tracked order
                         tracked_order = order_by_exchange_id_map[exchange_order_id]
                         trade_update = TradeUpdate(
-                            trade_id=str(trade["id"]),
+                            trade_id=exchange_order_id,
                             client_order_id=tracked_order.client_order_id,
                             exchange_order_id=exchange_order_id,
                             trading_pair=trading_pair,
@@ -899,32 +884,39 @@ class LatokenExchange(ExchangeBase):
                             fill_timestamp=int(trade["timestamp"]),
                         )
                         self._order_tracker.process_trade_update(trade_update)
-                    elif self.is_confirmed_new_order_filled_event(str(trade["id"]), exchange_order_id, trading_pair):
+                    elif self.is_confirmed_new_order_filled_event(exchange_order_id, exchange_order_id, trading_pair):
                         # This is a fill of an order registered in the DB but not tracked any more
                         self._current_trade_fills.add(TradeFillOrderDetails(
                             market=self.display_name,
-                            exchange_trade_id=str(trade["id"]),
+                            exchange_trade_id=exchange_order_id,
                             symbol=trading_pair))
+
+                        if trade["direction"] == "TRADE_DIRECTION_BUY":
+                            trade_type = TradeType.BUY
+                            currency_type = "baseCurrency"
+                        else:
+                            trade_type = TradeType.SELL
+                            currency_type = "quoteCurrency"
+
                         self.trigger_event(
                             MarketEvent.OrderFilled,
                             OrderFilledEvent(
                                 timestamp=float(trade["timestamp"]) * 1e-3,
-                                order_id=self._exchange_order_ids.get(str(trade["id"]), None),
+                                order_id=self._exchange_order_ids.get(exchange_order_id, None),
                                 trading_pair=trading_pair,
-                                trade_type=TradeType.BUY if trade["direction"] == "TRADE_DIRECTION_BUY" else TradeType.SELL,
+                                trade_type=trade_type,
                                 order_type=OrderType.LIMIT_MAKER if trade["isMakerBuyer"] else OrderType.LIMIT,
                                 price=Decimal(trade["price"]),
                                 amount=Decimal(trade["quantity"]),
                                 trade_fee=DeductedFromReturnsTradeFee(
                                     flat_fees=[
                                         TokenAmount(
-                                            trade["baseCurrency" if trade[
-                                                "direction"] == "TRADE_DIRECTION_BUY" else "quoteCurrency"],
+                                            trade[currency_type],
                                             Decimal(trade["fee"])
                                         )
                                     ]
                                 ),
-                                exchange_trade_id=str(trade["id"])
+                                exchange_trade_id=exchange_order_id
                             ))
                         self.logger().info(f"Recreating missing trade in TradeFill: {trade}")
 
@@ -957,8 +949,9 @@ class LatokenExchange(ExchangeBase):
                         f"Error fetching status update for the order {client_order_id}: {order_update}.",
                         app_warning_msg=f"Failed to fetch status update for the order {client_order_id}."
                     )
-                    self._order_not_found_records[client_order_id] = (self._order_not_found_records.get(client_order_id, 0) + 1)
-                    if self._order_not_found_records[client_order_id] >= self.MAX_ORDER_UPDATE_RETRIEVAL_RETRIES_WITH_FAILURES:
+                    id_order_not_found_for_client = self._order_not_found_records.get(client_order_id, 0) + 1
+                    self._order_not_found_records[client_order_id] = id_order_not_found_for_client
+                    if id_order_not_found_for_client >= self.MAX_ORDER_UPDATE_RETRIEVAL_RETRIES_WITH_FAILURES:
                         # Wait until the order not found error have repeated a few times before actually treating
                         # it as failed. See: https://github.com/CoinAlpha/hummingbot/issues/601
                         order_update: OrderUpdate = OrderUpdate(
@@ -1020,7 +1013,7 @@ class LatokenExchange(ExchangeBase):
                 if asset_name is None or balance["type"] != "ACCOUNT_TYPE_SPOT":  # using SPOT only for hbot balances
                     continue
                 free_balance = Decimal(balance["available"])
-                total_balance = Decimal(balance["available"]) + Decimal(balance["blocked"])
+                total_balance = free_balance + Decimal(balance["blocked"])
                 self._account_available_balances[asset_name] = free_balance
                 self._account_balances[asset_name] = total_balance
                 remote_asset_names.add(asset_name)
@@ -1028,7 +1021,8 @@ class LatokenExchange(ExchangeBase):
             if not balances:
                 self.logger().warning("Fund your latoken account, no balances in your account!")
             if balances and not has_spot_balances:
-                self.logger().warning("No latoken SPOT balance! Account has balances but no SPOT balance! Transfer to latoken spot account!")
+                self.logger().warning(
+                    "No latoken SPOT balance! Account has balances but no SPOT balance! Transfer to Latoken SPOT account!")
 
             asset_names_to_remove = local_asset_names.difference(remote_asset_names)
             for asset_name in asset_names_to_remove:
