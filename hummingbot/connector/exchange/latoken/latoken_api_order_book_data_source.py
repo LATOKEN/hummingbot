@@ -1,6 +1,8 @@
 import asyncio
 import logging
 import time
+import stomper
+import json
 
 from collections import defaultdict
 from decimal import Decimal
@@ -12,7 +14,6 @@ from typing import (
     Optional,
 )
 
-# import stomper
 from bidict import bidict
 
 import hummingbot.connector.exchange.latoken.latoken_constants as CONSTANTS
@@ -47,8 +48,8 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
     HEARTBEAT_TIME_INTERVAL = 30.0
     TRADE_STREAM_ID = 1
     DIFF_STREAM_ID = 2
-    # ONE_HOUR = 60 * 60
-    QUARTER_OF_SECOND = .25
+    ONE_HOUR = 60 * 60
+    # QUARTER_OF_SECOND = .25
 
     _logger: Optional[HummingbotLogger] = None
     _trading_pair_symbol_map: Dict[str, Mapping[str, str]] = {}
@@ -225,6 +226,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         """
         snapshot: Dict[str, Any] = await self.get_snapshot(trading_pair)
         snapshot_timestamp: int = time.time_ns()
+
         snapshot_msg: OrderBookMessage = LatokenOrderBook.snapshot_message_from_exchange(
             snapshot,
             snapshot_timestamp,
@@ -243,18 +245,24 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         message_queue = self._message_queue[CONSTANTS.TRADE_EVENT_TYPE]
         while True:
             try:
-                json_msg = await message_queue.get()
+                msg = await message_queue.get()
 
-                if "result" in json_msg:
-                    continue
+                symbol = msg['headers']['destination'].replace('/v1/trade/', '')
+
                 trading_pair = await LatokenAPIOrderBookDataSource.trading_pair_associated_to_exchange_symbol(
-                    symbol=json_msg["s"],
+                    symbol=symbol,
                     domain=self._domain,
                     api_factory=self._api_factory,
                     throttler=self._throttler)
-                trade_msg: OrderBookMessage = LatokenOrderBook.trade_message_from_exchange(
-                    json_msg, {"trading_pair": trading_pair})
-                output.put_nowait(trade_msg)
+
+                body = json.loads(msg["body"])
+                payload = body["payload"]
+                timestamp = time.time_ns()
+                for trade in payload:
+                    meta_data = {"trading_pair": trading_pair, 'body_timestamp': body['timestamp']}
+                    trade_msg: OrderBookMessage = LatokenOrderBook.trade_message_from_exchange(
+                        trade, timestamp, meta_data)
+                    output.put_nowait(trade_msg)
 
             except asyncio.CancelledError:
                 raise
@@ -271,16 +279,19 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         message_queue = self._message_queue[CONSTANTS.DIFF_EVENT_TYPE]
         while True:
             try:
-                json_msg = await message_queue.get()
-                if "result" in json_msg:
-                    continue
+                msg = await message_queue.get()
+                symbol = msg['headers']['destination'].replace('/v1/book/', '')
                 trading_pair = await LatokenAPIOrderBookDataSource.trading_pair_associated_to_exchange_symbol(
-                    symbol=json_msg["s"],
+                    symbol=symbol,
                     domain=self._domain,
                     api_factory=self._api_factory,
                     throttler=self._throttler)
+
+                body = json.loads(msg["body"])
+                payload = body["payload"]
+
                 order_book_message: OrderBookMessage = LatokenOrderBook.diff_message_from_exchange(
-                    json_msg, time.time(), {"trading_pair": trading_pair})
+                    payload, time.time_ns(), {"trading_pair": trading_pair, "timestamp": body["timestamp"]})
                 output.put_nowait(order_book_message)
             except asyncio.CancelledError:
                 raise
@@ -314,7 +325,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
                         self.logger().error(f"Unexpected error fetching order book snapshot for {trading_pair}.",
                                             exc_info=True)
                         await self._sleep(5.0)
-                await self._sleep(self.QUARTER_OF_SECOND)
+                await self._sleep(self.ONE_HOUR)
             except asyncio.CancelledError:
                 raise
             except Exception:
@@ -326,21 +337,35 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         Connects to the trade events and order diffs websocket endpoints and listens to the messages sent by the
         exchange. Each message is stored in its own queue.
         """
-        ws = None
+        client: WSAssistant = None
         while True:
             try:
-                ws: WSAssistant = await self._get_ws_assistant()
-                await ws.connect(ws_url=ws_url(self._domain),
-                                 ping_timeout=CONSTANTS.WS_HEARTBEAT_TIME_INTERVAL)
-                await self._subscribe_channels(ws)
+                client: WSAssistant = await self._get_ws_assistant()
+                await client.connect(ws_url=ws_url(self._domain), ping_timeout=CONSTANTS.WS_HEARTBEAT_TIME_INTERVAL)
 
-                async for ws_response in ws.iter_messages():
-                    data = ws_response.data
-                    if "result" in data:
-                        continue
-                    event_type = data.get("e")
-                    if event_type in [CONSTANTS.DIFF_EVENT_TYPE, CONSTANTS.TRADE_EVENT_TYPE]:
-                        self._message_queue[event_type].put_nowait(data)
+                msg_out = stomper.Frame()
+                msg_out.cmd = "CONNECT"
+                msg_out.headers.update({
+                    "accept-version": "1.1",
+                    "heart-beat": "0,0"
+                })
+                connect_request: WSRequest = WSRequest(payload=msg_out.pack(), is_auth_required=True)
+                await client.send(connect_request)
+                await client.receive()
+                await self._subscribe_channels(client)
+
+                async for ws_response in client.iter_messages():
+                    msg_in = stomper.Frame()
+                    data = msg_in.unpack(ws_response.data.decode())
+
+                    event_type = int(data['headers']['subscription'])
+
+                    if event_type == CONSTANTS.SUBSCRIPTION_ID_BOOKS:
+                        self._message_queue[CONSTANTS.DIFF_EVENT_TYPE].put_nowait(data)
+                    elif event_type == CONSTANTS.SUBSCRIPTION_ID_TRADES:
+                        self._message_queue[CONSTANTS.TRADE_EVENT_TYPE].put_nowait(data)
+                    else:
+                        self.logger().error(f"Unsubscribed id {event_type} packet received {msg_in}")
 
             except asyncio.CancelledError:
                 raise
@@ -351,7 +376,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
                 )
                 await self._sleep(5.0)
             finally:
-                ws and await ws.disconnect()
+                client and await client.disconnect()
 
     async def get_snapshot(
             self,
@@ -388,10 +413,10 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
 
         return data
 
-    async def _subscribe_channels(self, ws: WSAssistant):
+    async def _subscribe_channels(self, client: WSAssistant):
         """
         Subscribes to the trade events and diff orders events through the provided websocket connection.
-        :param ws: the websocket assistant used to connect to the exchange
+        :param client: the websocket assistant used to connect to the exchange
         """
         try:
             for trading_pair in self._trading_pairs:
@@ -400,9 +425,13 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
                     domain=self._domain,
                     api_factory=self._api_factory,
                     throttler=self._throttler)
+
                 path_params = {'symbol': symbol}
-                await ws.subscribe(WSRequest(payload=CONSTANTS.TRADES_STREAM.format(**path_params)))
-                await ws.subscribe(WSRequest(payload=CONSTANTS.BOOK_STREAM.format(**path_params)))
+                msg_subscribe_books = stomper.subscribe(CONSTANTS.BOOK_STREAM.format(**path_params), CONSTANTS.SUBSCRIPTION_ID_BOOKS, ack="auto")
+                msg_subscribe_trades = stomper.subscribe(CONSTANTS.TRADES_STREAM.format(**path_params), CONSTANTS.SUBSCRIPTION_ID_TRADES, ack="auto")
+
+                await client.subscribe(WSRequest(payload=msg_subscribe_books))
+                await client.subscribe(WSRequest(payload=msg_subscribe_trades))
 
             self.logger().info("Subscribed to public order book and trade channels...")
         except asyncio.CancelledError:
@@ -467,7 +496,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         for pair in filter(is_exchange_information_valid, full_mapping):
             mapping[f"{pair['id']['baseCurrency']}/{pair['id']['quoteCurrency']}"] = pair["id"]["symbol"].replace('/',
                                                                                                                   '-')
-        cls._trading_pair_symbol_map[domain] = mapping
+        cls._trading_pair_symbol_map[domain] = mapping  # TODO add uuid to asset map for streaming updates of balances
 
     async def _get_rest_assistant(self) -> RESTAssistant:
         if self._rest_assistant is None:

@@ -1,7 +1,6 @@
 import asyncio
 import logging
-
-# import json
+import stomper
 import time
 
 from typing import (
@@ -21,14 +20,15 @@ from hummingbot.core.web_assistant.connections.data_types import (
     RESTMethod,
     RESTRequest,
     RESTResponse,
-    # WSRequest,
+    WSRequest,
 )
 from hummingbot.core.web_assistant.rest_assistant import RESTAssistant
 from hummingbot.core.web_assistant.web_assistants_factory import WebAssistantsFactory
 from hummingbot.core.web_assistant.ws_assistant import WSAssistant
 from hummingbot.logger import HummingbotLogger
-# import websocket
-# import stomper
+from hummingbot.core.utils.async_utils import (
+    safe_gather,
+)
 
 
 class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
@@ -77,62 +77,47 @@ class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
         connection listens to all balance events and order updates provided by the exchange, and stores them in the
         output queue
         """
-        ws = None
+        client: WSAssistant = None
         while True:
             try:
                 self._manage_listen_key_task = safe_ensure_future(self._manage_listen_key_task_loop())
                 await self._listen_key_initialized_event.wait()
-                # path_params = {'user': str(self._current_listen_key)}
-                # account_path = CONSTANTS.ACCOUNT_STREAM.format(**path_params)
 
                 client: WSAssistant = await self._get_ws_assistant()
                 await client.connect(
                     ws_url=latoken_utils.ws_url(self._domain),
                     ping_timeout=CONSTANTS.WS_HEARTBEAT_TIME_INTERVAL)
-                # TODO review to integrate websocket.create_connection from python client application to hbot framework
-                # ws = websocket.create_connection(CONSTANTS.WSS_URL.format(self._domain))
+                # connect request
+                msg_out = stomper.Frame()
+                msg_out.cmd = "CONNECT"
+                msg_out.headers.update({
+                    "accept-version": "1.1",
+                    "heart-beat": "0,0"
+                })
 
-                # msg_out = stomper.Frame()
-                # msg_out.cmd = "CONNECT"
-                # msg_out.headers.update({
-                #     "accept-version": "1.1",
-                #     "heart-beat": "0,0"
-                # })
+                connect_request: WSRequest = WSRequest(payload=msg_out.pack(), is_auth_required=True)
+                await client.send(connect_request)
+                await client.receive()
+                # subscription request
+                path_params = {'user': str(self._current_listen_key)}
 
-                # auth_header = await self._auth.stomp_authenticate()
-                # msg_out.headers.update(auth_header)
+                msg_subscribe_orders = stomper.subscribe(
+                    CONSTANTS.ORDERS_STREAM.format(**path_params), CONSTANTS.SUBSCRIPTION_ID_ORDERS, ack="auto")
+                msg_subscribe_account = stomper.subscribe(
+                    CONSTANTS.ACCOUNT_STREAM.format(**path_params), CONSTANTS.SUBSCRIPTION_ID_ACCOUNT, ack="auto")
 
-                # ws.send(msg_out.pack())
-                # ws.recv()
-                # subscribe_id_account = 0
-                # msg_subscribe = stomper.subscribe(account_path, subscribe_id_account)
-                # ws.send(msg_subscribe)
+                _ = await safe_gather(
+                    *[client.subscribe(request=WSRequest(payload=msg_subscribe_orders)),
+                      client.subscribe(request=WSRequest(payload=msg_subscribe_account))])
 
-                #
-                # # async def pop_task():
-                # #     while True:
-                # #         message = ws.recv()
-                # #         message_unpacked = stomper.unpack_frame(message.decode())
-                # #         output.put_nowait(message_unpacked)
-                # # # task = asyncio.Task(pop_task())
-                # # await pop_task()
-                # # while True:
-                # msg_in = ws.recv()
-                # msg_in_unpacked = stomper.unpack_frame(msg_in.decode())
-                # if msg_in_unpacked['cmd'] == "MESSAGE":
-                #     body = json.loads(msg_in_unpacked["body"])
-                #     # I think body["nonce"] has subscrition id
-                #     if body["nonce"] == subscribe_id_account:
-                #         output.put_nowait(body["payload"])
-
+                # queue subscription messages
                 async for ws_response in client.iter_messages():
-                    data = ws_response.data
-                    if len(data) > 0:
+                    msg_in = stomper.Frame()
+                    data = msg_in.unpack(ws_response.data.decode())
+                    event_type = int(data['headers']['subscription'])
+                    if event_type == CONSTANTS.SUBSCRIPTION_ID_ACCOUNT or event_type == CONSTANTS.SUBSCRIPTION_ID_ORDERS:
                         output.put_nowait(data)
 
-                # while True:
-                #     self.logger().warning("listen_for_user_stream::LatokenAPIUserStreamDataSource websocket needs to be implemented")
-                #     await self._sleep(5)
             except asyncio.CancelledError:
                 raise
             except Exception:
@@ -140,7 +125,7 @@ class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
             finally:
                 # Make sure no background task is leaked.
                 # client and await client.disconnect()
-                ws and ws.abort()
+                client and await client.disconnect()
                 self._manage_listen_key_task and self._manage_listen_key_task.cancel()
                 self._current_listen_key = None
                 self._listen_key_initialized_event.clear()

@@ -37,7 +37,7 @@ class LatokenOrderBook(OrderBook):
     @classmethod
     def diff_message_from_exchange(cls,
                                    msg: Dict[str, any],
-                                   timestamp: Optional[float] = None,
+                                   timestamp: int,
                                    metadata: Optional[Dict] = None) -> OrderBookMessage:
         """
         Creates a diff message with the changes in the order book received from the exchange
@@ -48,30 +48,35 @@ class LatokenOrderBook(OrderBook):
         """
         if metadata:
             msg.update(metadata)
+
         return OrderBookMessage(OrderBookMessageType.DIFF, {
             "trading_pair": msg["trading_pair"],
-            # "first_update_id": msg["U"],
-            # "update_id": timestamp,
-            "bids": msg["bid"],
-            "asks": msg["ask"]
-        }, timestamp=timestamp)
+            "first_update_id": msg["timestamp"],  # could also use msg['headers']['message-id'] ?
+            "update_id": timestamp,
+            "bids": get_book_side(msg["bid"]),
+            "asks": get_book_side(msg["ask"])
+        }, timestamp=timestamp / (10 ** 9))
 
     @classmethod
-    def trade_message_from_exchange(cls, msg: Dict[str, any], metadata: Optional[Dict] = None):
+    def trade_message_from_exchange(cls,
+                                    msg: Dict[str, any],
+                                    timestamp: int,
+                                    metadata: Optional[Dict] = None):
         """
         Creates a trade message with the information from the trade event sent by the exchange
         :param msg: the trade event details sent by the exchange
+        :param timestamp: the timestamp of the trade
         :param metadata: a dictionary with extra information to add to trade message
         :return: a trade message with the details of the trade as provided by the exchange
         """
         if metadata:
             msg.update(metadata)
-        ts = msg["timestamp"]
+
         return OrderBookMessage(OrderBookMessageType.TRADE, {
-            "trading_pair": f"{msg['baseCurrency']}/{msg['quoteCurrency']}",
+            "trading_pair": msg["trading_pair"],
             "trade_type": float(TradeType.BUY.value) if msg["makerBuyer"] else float(TradeType.SELL.value),
-            "trade_id": msg["id"],
-            "update_id": ts,
+            "trade_id": msg["timestamp"],  # could also use msg['headers']['message-id'] ?
+            "update_id": timestamp,  # do we need body_timestamp here???
             "price": msg["price"],
             "amount": msg["quantity"]
-        }, timestamp=ts * 1e-3)
+        }, timestamp=timestamp / (10 ** 9))

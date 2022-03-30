@@ -8,6 +8,9 @@ from typing import (
 )
 from urllib.parse import urlencode, urlsplit
 from time import time
+
+import stomper
+
 from hummingbot.connector.time_synchronizer import TimeSynchronizer
 from hummingbot.core.web_assistant.auth import AuthBase
 from hummingbot.core.web_assistant.connections.data_types import RESTRequest, RESTMethod, WSRequest
@@ -63,7 +66,6 @@ class LatokenAuth(AuthBase):
         return digest
 
     async def ws_authenticate(self, request: WSRequest) -> WSRequest:
-        # following should be OK for websocket header
 
         timestamp = str(int(float(time()) * 1000))
         signature = hmac.new(
@@ -77,24 +79,27 @@ class LatokenAuth(AuthBase):
                    "X-LA-DIGEST": 'HMAC-SHA512',
                    "X-LA-SIGDATA": timestamp}
 
-        request.payload = dict(request.payload).update(headers)  # not sure about this line
+        payload = stomper.Frame()
+        payload.unpack(request.payload)
+        payload.headers.update(headers)
+        request.payload = payload.pack()
         return request  # pass-through
 
-    async def stomp_authenticate(self) -> dict:
-        # following should be OK for websocket header
-
-        timestamp = str(int(float(time()) * 1000))
-        signature = hmac.new(
-            self.secret_key.encode("utf8"),
-            timestamp.encode('ascii'),
-            hashlib.sha512
-        )
-
-        return{
-            "X-LA-APIKEY": self.api_key,
-            "X-LA-SIGNATURE": signature.hexdigest(),
-            "X-LA-DIGEST": 'HMAC-SHA512',
-            "X-LA-SIGDATA": timestamp}
+    # async def stomp_authenticate(self) -> dict:
+    #     # following should be OK for websocket header
+    #
+    #     timestamp = str(int(float(time()) * 1000))
+    #     signature = hmac.new(
+    #         self.secret_key.encode("utf8"),
+    #         timestamp.encode('ascii'),
+    #         hashlib.sha512
+    #     )
+    #
+    #     return{
+    #         "X-LA-APIKEY": self.api_key,
+    #         "X-LA-SIGNATURE": signature.hexdigest(),
+    #         "X-LA-DIGEST": 'HMAC-SHA512',
+    #         "X-LA-SIGDATA": timestamp}
 
     def generate_auth_payload(self, param):
         pass

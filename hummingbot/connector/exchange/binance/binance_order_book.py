@@ -54,7 +54,10 @@ class BinanceOrderBook(OrderBook):
         }, timestamp=timestamp)
 
     @classmethod
-    def trade_message_from_exchange(cls, msg: Dict[str, any], metadata: Optional[Dict] = None):
+    def trade_message_from_exchange(cls,
+                                    msg: Dict[str, any],
+                                    timestamp: Optional[float] = None,
+                                    metadata: Optional[Dict] = None):
         """
         Creates a trade message with the information from the trade event sent by the exchange
         :param msg: the trade event details sent by the exchange

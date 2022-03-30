@@ -245,7 +245,7 @@ class BinanceAPIOrderBookDataSource(OrderBookTrackerDataSource):
                     api_factory=self._api_factory,
                     throttler=self._throttler)
                 trade_msg: OrderBookMessage = BinanceOrderBook.trade_message_from_exchange(
-                    json_msg, {"trading_pair": trading_pair})
+                    json_msg, time.time(), {"trading_pair": trading_pair})
                 output.put_nowait(trade_msg)
 
             except asyncio.CancelledError:
