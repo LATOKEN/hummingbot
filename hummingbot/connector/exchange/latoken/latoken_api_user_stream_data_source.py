@@ -43,6 +43,7 @@ class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
                  api_factory: Optional[WebAssistantsFactory] = None,
                  throttler: Optional[AsyncThrottler] = None):
         super().__init__()
+        self._manage_listen_key_task = None
         self._auth: LatokenAuth = auth
         self._current_listen_key = None
         self._last_recv_time: float = 0
@@ -107,8 +108,8 @@ class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
                     CONSTANTS.ACCOUNT_STREAM.format(**path_params), CONSTANTS.SUBSCRIPTION_ID_ACCOUNT, ack="auto")
 
                 _ = await safe_gather(
-                    *[client.subscribe(request=WSRequest(payload=msg_subscribe_orders)),
-                      client.subscribe(request=WSRequest(payload=msg_subscribe_account))])
+                    client.subscribe(request=WSRequest(payload=msg_subscribe_orders)),
+                    client.subscribe(request=WSRequest(payload=msg_subscribe_account)), return_exceptions=True)
 
                 # queue subscription messages
                 async for ws_response in client.iter_messages():

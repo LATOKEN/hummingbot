@@ -29,6 +29,8 @@ connector_status = {
     'kraken': 'green',
     'kucoin': 'yellow',
     'k2': 'red',
+    'latoken': 'yellow',
+    'latoken_tech': 'yellow',
     'liquid': 'yellow',
     'loopring': 'yellow',
     'mexc': 'yellow',

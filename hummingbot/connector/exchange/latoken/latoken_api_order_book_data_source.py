@@ -456,13 +456,9 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
                                      throttler: AsyncThrottler) -> float:
 
         url = public_rest_url(path_url=CONSTANTS.TICKER_PATH_URL, domain=domain)
-        symbol = await cls.exchange_symbol_associated_to_pair(
-            trading_pair=trading_pair,
-            domain=domain,
-            throttler=throttler)
-        request = RESTRequest(
-            method=RESTMethod.GET,
-            url=f"{url}/{symbol}")  # symbol should be in format base_id/quote_id
+        symbol = await cls.exchange_symbol_associated_to_pair(trading_pair=trading_pair, domain=domain, throttler=throttler)
+        # symbol should be in format base_id/quote_id
+        request = RESTRequest(method=RESTMethod.GET, url=f"{url}/{symbol}")
 
         async with throttler.execute_task(limit_id=CONSTANTS.TICKER_PATH_URL):
             resp: RESTResponse = await rest_assistant.call(request=request)
@@ -486,10 +482,11 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         local_throttler = throttler or cls._get_throttler_instance()
         # it might be overkill to request everything,
         # but it is also supposed to demonstrate the full mapping
-        ticker_list, currency_list, pair_list = await asyncio.gather(
+        ticker_list, currency_list, pair_list = await safe_gather(
             get_data(cls.logger(), domain, rest_assistant, local_throttler, CONSTANTS.TICKER_PATH_URL),
             get_data(cls.logger(), domain, rest_assistant, local_throttler, CONSTANTS.CURRENCY_PATH_URL),
-            get_data(cls.logger(), domain, rest_assistant, local_throttler, CONSTANTS.PAIR_PATH_URL))
+            get_data(cls.logger(), domain, rest_assistant, local_throttler, CONSTANTS.PAIR_PATH_URL),
+            return_exceptions=True)
 
         full_mapping = create_full_mapping(ticker_list, currency_list, pair_list)
 

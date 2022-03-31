@@ -2,6 +2,7 @@ import asyncio
 import logging
 import time
 import datetime
+import math
 import json
 from decimal import Decimal
 from typing import (
@@ -174,6 +175,7 @@ class LatokenExchange(ExchangeBase):
         Returns True if the connector is ready to operate (all connections established with the exchange). If it is
         not ready it returns False.
         """
+        # self.logger().info(self.status_dict)
         return all(self.status_dict.values())
 
     @staticmethod
@@ -344,11 +346,8 @@ class LatokenExchange(ExchangeBase):
         if quantized_amount < trading_rule.min_order_size:
             return s_decimal_0
 
-        if price == s_decimal_0:
-            current_price: Decimal = self.get_price(trading_pair, False)
-            notional_size = current_price * quantized_amount
-        else:
-            notional_size = price * quantized_amount
+        current_price: Decimal = self.get_price(trading_pair, False) if price == s_decimal_0 else price
+        notional_size = current_price * quantized_amount
 
         # Add 1% as a safety factor in case the prices changed while making the order.
         if notional_size < trading_rule.min_notional_size * Decimal("1.01"):
@@ -570,11 +569,6 @@ class LatokenExchange(ExchangeBase):
         tracked_order = self._order_tracker.fetch_tracked_order(order_id)
         exchange_order_id = tracked_order.exchange_order_id
 
-        # if not exchange_order_id:
-        #     self.logger().exception(f"_execute_cancel "
-        #                             f"Exchange order id not (yet) registered, can't cancel atm {order_id}, "
-        #                             f"order probably not created during this specific hbot run")
-
         if tracked_order is not None:
             try:
 
@@ -590,8 +584,13 @@ class LatokenExchange(ExchangeBase):
                 order_cancel_status = cancel_result.get("status")
 
                 if order_cancel_status == "SUCCESS":
-                    order_update_timestamp = (
-                        time.time() if self.current_timestamp != self.current_timestamp else self.current_timestamp)
+
+                    # TODO look at alternavtives like self.ready() self.order_book_tracker.ready()
+                    while math.isnan(self.current_timestamp):  # this is necessary for live trading
+                        self.logger().warning("Cancellation of order sent outside a started live trading strategy")
+                        await asyncio.sleep(1.0)
+
+                    order_update_timestamp = self.current_timestamp
                     update_timestamp = int(order_update_timestamp * 1e3)
 
                     order_update: OrderUpdate = OrderUpdate(
@@ -665,7 +664,7 @@ class LatokenExchange(ExchangeBase):
         ticker_list, currency_list, pair_list = await safe_gather(
             self._api_request(method=RESTMethod.GET, path_url=CONSTANTS.TICKER_PATH_URL),
             self._api_request(method=RESTMethod.GET, path_url=CONSTANTS.CURRENCY_PATH_URL),
-            self._api_request(method=RESTMethod.GET, path_url=CONSTANTS.PAIR_PATH_URL))
+            self._api_request(method=RESTMethod.GET, path_url=CONSTANTS.PAIR_PATH_URL), return_exceptions=True)
 
         pairs = latoken_utils.create_full_mapping(ticker_list, currency_list, pair_list)
         trading_rules_list = await self._format_trading_rules(pairs)
@@ -753,7 +752,7 @@ class LatokenExchange(ExchangeBase):
                             for balance in balances]
 
                         # maybe request every currency if len(account_balance) > 5
-                        currency_lists = await safe_gather(*balance_to_gather)
+                        currency_lists = await safe_gather(*balance_to_gather, return_exceptions=True)
 
                         currencies = {currency["id"]: currency["tag"] for currency in currency_lists}  # TODO make dictionairy for this
 
@@ -783,7 +782,7 @@ class LatokenExchange(ExchangeBase):
                             price = Decimal(order["price"])
                             quantity = Decimal(order["quantity"])
 
-                            if execution_type == "ORDER_STATUS_CLOSED":
+                            if execution_type == "ORDER_STATUS_CLOSED":  # TODO partial fills
                                 tracked_order = self._order_tracker.fetch_order(client_order_id=client_order_id)
                                 if tracked_order is not None:
                                     trade_update = TradeUpdate(
@@ -870,7 +869,7 @@ class LatokenExchange(ExchangeBase):
                     continue
                 for trade in trades:
                     exchange_order_id = str(trade["id"])
-                    fee = Decimal(trade["fee"])
+                    fee = Decimal(trade.get("fee", 0))
                     timestamp = trade["timestamp"]
                     price = Decimal(trade["price"])
                     quantity = Decimal(trade["quantity"])
@@ -1010,7 +1009,7 @@ class LatokenExchange(ExchangeBase):
 
             balance_to_gather = [self._api_request(method=RESTMethod.GET, path_url=f"{CONSTANTS.CURRENCY_PATH_URL}/{balance['currency']}") for balance in balances]
             # maybe request every currency if len(account_balance) > 5
-            currency_lists = await safe_gather(*balance_to_gather)
+            currency_lists = await safe_gather(*balance_to_gather, return_exceptions=True)
 
             currencies = {currency["id"]: currency["tag"] for currency in currency_lists}
 
@@ -1023,9 +1022,10 @@ class LatokenExchange(ExchangeBase):
                 self._account_available_balances[asset_name] = free_balance
                 self._account_balances[asset_name] = total_balance
                 remote_asset_names.add(asset_name)
-            has_spot_balances = any(filter(lambda b: b["type"] == "ACCOUNT_TYPE_SPOT", balances))
+
             if not balances:
                 self.logger().warning("Fund your latoken account, no balances in your account!")
+            has_spot_balances = any(filter(lambda b: b["type"] == "ACCOUNT_TYPE_SPOT", balances))
             if balances and not has_spot_balances:
                 self.logger().warning(
                     "No latoken SPOT balance! Account has balances but no SPOT balance! Transfer to Latoken SPOT account!")
