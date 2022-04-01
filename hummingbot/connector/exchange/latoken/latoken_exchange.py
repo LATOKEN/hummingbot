@@ -32,6 +32,7 @@ from hummingbot.core.data_type.in_flight_order import InFlightOrder, OrderUpdate
 from hummingbot.core.data_type.limit_order import LimitOrder
 from hummingbot.core.data_type.order_book import OrderBook
 from hummingbot.core.data_type.trade_fee import (
+    AddedToCostTradeFee,
     DeductedFromReturnsTradeFee,
     TokenAmount,
     TradeFeeBase,
@@ -379,8 +380,22 @@ class LatokenExchange(ExchangeBase):
         function are ignore except order_type. Use OrderType.LIMIT_MAKER to specify you want trading fee for
         maker order.
         """
-        is_maker = order_type is OrderType.LIMIT_MAKER  # LIMIT_MAKER not supported by latoken
-        return DeductedFromReturnsTradeFee(percent=self.estimate_fee_pct(is_maker))
+        # # is_maker = order_type is OrderType.LIMIT_MAKER  # LIMIT_MAKER not supported by latoken
+        # # fee for user and pair
+        # fee = await self._api_request(
+        #     method=RESTMethod.POST,
+        #     path_url=f"{CONSTANTS.FEES_PATH_URL}/{base_currency}/{quote_currency}",
+        #     is_auth_required=True)
+        #
+        # fee_pct_str = fee["makerFee"] if order_type is OrderType.LIMIT_MAKER or (is_maker is not None and is_maker) else fee["takerFee"]
+        # percent = Decimal(fee_pct_str) if fee['type'] == 'FEE_SCHEME_TYPE_PERCENT_QUOTE' else self.estimate_fee_pct(is_maker)
+        # # "type": "FEE_SCHEME_TYPE_PERCENT_QUOTE","take": "FEE_SCHEME_TAKE_PROPORTION"
+        # return AddedToCostTradeFee(percent=percent) if order_side == TradeType.BUY else DeductedFromReturnsTradeFee(percent=percent)
+        # is_maker = order_type is OrderType.LIMIT_MAKER  # LIMIT_MAKER not supported by latoken
+        # return DeductedFromReturnsTradeFee(percent=self.estimate_fee_pct(is_maker))
+        estimated_fee_pct = self.estimate_fee_pct(is_maker)
+        return AddedToCostTradeFee(percent=estimated_fee_pct) if order_side == TradeType.BUY else DeductedFromReturnsTradeFee(
+            percent=estimated_fee_pct)
 
     def buy(self, trading_pair: str, amount: Decimal, order_type: OrderType = OrderType.LIMIT,
             price: Decimal = s_decimal_NaN, **kwargs) -> str:
@@ -494,7 +509,6 @@ class LatokenExchange(ExchangeBase):
             self._order_tracker.process_order_update(order_update)
             return
 
-        order_result = None
         amount_str = f"{amount:f}"
         price_str = f"{price:f}"
         type_str = LatokenExchange.latoken_order_type(order_type)
@@ -520,7 +534,6 @@ class LatokenExchange(ExchangeBase):
                       "timestamp": int(datetime.datetime.now().timestamp() * 1000)}
         if api_params["type"] == OrderType.LIMIT.name:
             api_params['condition'] = CONSTANTS.TIME_IN_FORCE_GTC
-
         try:
             order_result = await self._api_request(
                 method=RESTMethod.POST,
@@ -582,10 +595,8 @@ class LatokenExchange(ExchangeBase):
                     is_auth_required=True)
 
                 order_cancel_status = cancel_result.get("status")
-
                 if order_cancel_status == "SUCCESS":
-
-                    # TODO look at alternavtives like self.ready() self.order_book_tracker.ready()
+                    # TODO look at alternatives like self.ready() self.order_book_tracker.ready()
                     while math.isnan(self.current_timestamp):  # this is necessary for live trading
                         self.logger().warning("Cancellation of order sent outside a started live trading strategy")
                         await asyncio.sleep(1.0)
@@ -729,6 +740,90 @@ class LatokenExchange(ExchangeBase):
                 self.logger().exception(f"Error parsing the trading pair rule {rule}. Skipping.")
         return retval
 
+    async def process_account_balance_update(self, balances):
+        remote_asset_names = set()
+
+        balance_to_gather = [
+            self._api_request(
+                method=RESTMethod.GET, path_url=f"{CONSTANTS.CURRENCY_PATH_URL}/{balance['currency']}")
+            for balance in balances]
+
+        # maybe request every currency if len(account_balance) > 5
+        currency_lists = await safe_gather(*balance_to_gather, return_exceptions=True)
+
+        currencies = {currency["id"]: currency["tag"] for currency in currency_lists}  # TODO make dictionairy for this
+
+        for balance in balances:
+            asset_name = currencies[balance["currency"]]
+            if asset_name is None or balance["type"] != "ACCOUNT_TYPE_SPOT":
+                continue
+            free_balance = Decimal(balance["available"])
+            total_balance = free_balance + Decimal(balance["blocked"])
+            self._account_available_balances[asset_name] = free_balance
+            self._account_balances[asset_name] = total_balance
+            remote_asset_names.add(asset_name)
+
+        return remote_asset_names
+
+    def refresh_account_balances(self, remote_asset_names, balances):
+        ''' use this for rest call and not ws because ws does not send entire account balance'''
+        local_asset_names = set(self._account_balances.keys())
+        if not balances:
+            self.logger().warning("Fund your latoken account, no balances in your account!")
+        has_spot_balances = any(filter(lambda b: b["type"] == "ACCOUNT_TYPE_SPOT", balances))
+        if balances and not has_spot_balances:
+            self.logger().warning(
+                "No latoken SPOT balance! Account has balances but no SPOT balance! Transfer to Latoken SPOT account!")
+        # clean-up balances that are not present anymore
+        asset_names_to_remove = local_asset_names.difference(remote_asset_names)
+        for asset_name in asset_names_to_remove:
+            del self._account_available_balances[asset_name]
+            del self._account_balances[asset_name]
+
+    def process_order_update_ws(self, order):
+        client_order_id = order['clientOrderId']
+
+        change_type = order['changeType']
+        status = order['status']
+        quantity = Decimal(order["quantity"])
+        filled = Decimal(order['filled'])
+        delta_filled = Decimal(order['deltaFilled'])
+
+        state = latoken_utils.get_order_status_ws(change_type, status, quantity, filled, delta_filled)
+        if state is None:
+            return
+
+        trade_id = order["id"]
+        timestamp = order["timestamp"]
+
+        if state == OrderState.FILLED or state == OrderState.PARTIALLY_FILLED:
+            tracked_order = self._order_tracker.fetch_order(client_order_id=client_order_id)
+            if tracked_order is not None:
+                trade_update = TradeUpdate(
+                    trade_id=trade_id,
+                    client_order_id=client_order_id,
+                    exchange_order_id=tracked_order.exchange_order_id,
+                    fee_asset=order['quoteCurrency'],
+                    fee_paid=Decimal(order.get("fee", 0)),  # or '0'
+                    fill_base_amount=delta_filled,
+                    fill_quote_amount=Decimal(order["cost"]) / delta_filled,
+                    fill_price=Decimal(order["price"]),
+                    fill_timestamp=int(timestamp),
+                )
+                self._order_tracker.process_trade_update(trade_update)
+
+        tracked_order = self.in_flight_orders.get(client_order_id)
+
+        if tracked_order is not None:
+            order_update = OrderUpdate(
+                trading_pair=tracked_order.trading_pair,
+                update_timestamp=timestamp,
+                new_state=state,
+                client_order_id=client_order_id,
+                exchange_order_id=tracked_order.exchange_order_id,
+            )
+            self._order_tracker.process_order_update(order_update=order_update)
+
     async def _user_stream_event_listener(self):
         """
         This functions runs in background continuously processing the events received from the exchange by the user
@@ -743,72 +838,12 @@ class LatokenExchange(ExchangeBase):
                     subscription_id = int(event_message['headers']['subscription'])
                     body = json.loads(event_message["body"])
                     if subscription_id == CONSTANTS.SUBSCRIPTION_ID_ACCOUNT:
-
-                        balances = body["payload"]
-
-                        balance_to_gather = [
-                            self._api_request(
-                                method=RESTMethod.GET, path_url=f"{CONSTANTS.CURRENCY_PATH_URL}/{balance['currency']}")
-                            for balance in balances]
-
-                        # maybe request every currency if len(account_balance) > 5
-                        currency_lists = await safe_gather(*balance_to_gather, return_exceptions=True)
-
-                        currencies = {currency["id"]: currency["tag"] for currency in currency_lists}  # TODO make dictionairy for this
-
-                        for balance in balances:
-                            asset_name = currencies[balance["currency"]]
-                            if asset_name is None or balance["type"] != "ACCOUNT_TYPE_SPOT":
-                                continue
-                            free_balance = Decimal(balance["available"])
-                            total_balance = free_balance + Decimal(balance["blocked"])
-                            self._account_available_balances[asset_name] = free_balance
-                            self._account_balances[asset_name] = total_balance
-
+                        await self.process_account_balance_update(body["payload"])
                     elif subscription_id == CONSTANTS.SUBSCRIPTION_ID_ORDERS:
-
                         orders = body["payload"]
                         # self.logger().error(str(orders))
                         for order in orders:
-                            execution_type = order['status']
-                            if order['changeType'] == 'ORDER_CHANGE_TYPE_UNCHANGED' and execution_type != "ORDER_STATUS_PLACED":  # hope to add dangling orders with last statement
-                                continue
-                            execution_type = order['status']
-                            client_order_id = order['clientOrderId']
-
-                            trade_id = order["id"]
-                            fee = order.get("fee", Decimal(0))
-                            timestamp = order["timestamp"]
-                            price = Decimal(order["price"])
-                            quantity = Decimal(order["quantity"])
-
-                            if execution_type == "ORDER_STATUS_CLOSED":  # TODO partial fills
-                                tracked_order = self._order_tracker.fetch_order(client_order_id=client_order_id)
-                                if tracked_order is not None:
-                                    trade_update = TradeUpdate(
-                                        trade_id=trade_id,
-                                        client_order_id=client_order_id,
-                                        exchange_order_id=tracked_order.exchange_order_id,
-                                        # fee_asset=event_message["N"],#TODO
-                                        fee_paid=fee,
-                                        fill_base_amount=quantity,
-                                        fill_quote_amount=Decimal(order["cost"]),
-                                        fill_price=price,
-                                        fill_timestamp=int(timestamp),
-                                    )
-                                    self._order_tracker.process_trade_update(trade_update)
-
-                            tracked_order = self.in_flight_orders.get(client_order_id)
-
-                            if tracked_order is not None:
-                                order_update = OrderUpdate(
-                                    trading_pair=tracked_order.trading_pair,
-                                    update_timestamp=timestamp,
-                                    new_state=CONSTANTS.ORDER_STATE[execution_type],
-                                    client_order_id=client_order_id,
-                                    exchange_order_id=tracked_order.exchange_order_id,
-                                )
-                                self._order_tracker.process_order_update(order_update=order_update)
+                            self.process_order_update_ws(order)
 
             except asyncio.CancelledError:
                 raise
@@ -869,19 +904,20 @@ class LatokenExchange(ExchangeBase):
                     continue
                 for trade in trades:
                     exchange_order_id = str(trade["id"])
-                    fee = Decimal(trade.get("fee", 0))
+                    fee = Decimal(trade["fee"])
                     timestamp = trade["timestamp"]
                     price = Decimal(trade["price"])
                     quantity = Decimal(trade["quantity"])
+
                     tracked_order = order_by_exchange_id_map.get(exchange_order_id, None)
-                    if tracked_order:
+                    if tracked_order is not None:
                         # This is a fill for a tracked order
                         trade_update = TradeUpdate(
                             trade_id=exchange_order_id,
                             client_order_id=tracked_order.client_order_id,
                             exchange_order_id=exchange_order_id,
                             trading_pair=trading_pair,
-                            # fee_asset=trade["commissionAsset"], #TODO
+                            fee_asset=trade["quoteCurrency"],
                             fill_base_amount=quantity,
                             fill_quote_amount=Decimal(trade["cost"]),
                             fee_paid=fee,
@@ -910,7 +946,8 @@ class LatokenExchange(ExchangeBase):
                                 order_id=self._exchange_order_ids.get(exchange_order_id, None),
                                 trading_pair=trading_pair,
                                 trade_type=trade_type,
-                                order_type=OrderType.LIMIT,  # OrderType.LIMIT_MAKER if trade["isMakerBuyer"] else OrderType.LIMIT,
+                                order_type=OrderType.LIMIT,
+                                # OrderType.LIMIT_MAKER if trade["isMakerBuyer"] else OrderType.LIMIT,
                                 price=price,
                                 amount=quantity,
                                 trade_fee=DeductedFromReturnsTradeFee(
@@ -966,14 +1003,17 @@ class LatokenExchange(ExchangeBase):
                             new_state=OrderState.FAILED,
                         )
                         self._order_tracker.process_order_update(order_update)
-
                 else:
                     # Update order execution status
-                    new_state = CONSTANTS.ORDER_STATE[order_update["status"]]
+                    status = order_update["status"]
+                    filled = Decimal(order_update["filled"])
+                    quantity = Decimal(order_update["quantity"])
+
+                    new_state = latoken_utils.get_order_status_rest(status=status, filled=filled, quantity=quantity)
 
                     update = OrderUpdate(
                         client_order_id=client_order_id,
-                        exchange_order_id=str(order_update["id"]),
+                        exchange_order_id=order_update["id"],
                         trading_pair=tracked_order.trading_pair,
                         update_timestamp=int(order_update["timestamp"]),
                         new_state=new_state,
@@ -995,9 +1035,6 @@ class LatokenExchange(ExchangeBase):
                 await asyncio.sleep(1.0)
 
     async def _update_balances(self):
-        local_asset_names = set(self._account_balances.keys())
-        remote_asset_names = set()
-
         try:
 
             params = {
@@ -1006,34 +1043,9 @@ class LatokenExchange(ExchangeBase):
 
             balances = await self._api_request(method=RESTMethod.GET, path_url=CONSTANTS.ACCOUNTS_PATH_URL,
                                                is_auth_required=True, params=params)
+            remote_asset_names = await self.process_account_balance_update(balances)
+            self.refresh_account_balances(remote_asset_names, balances)
 
-            balance_to_gather = [self._api_request(method=RESTMethod.GET, path_url=f"{CONSTANTS.CURRENCY_PATH_URL}/{balance['currency']}") for balance in balances]
-            # maybe request every currency if len(account_balance) > 5
-            currency_lists = await safe_gather(*balance_to_gather, return_exceptions=True)
-
-            currencies = {currency["id"]: currency["tag"] for currency in currency_lists}
-
-            for balance in balances:
-                asset_name = currencies.get(balance["currency"])
-                if asset_name is None or balance["type"] != "ACCOUNT_TYPE_SPOT":  # using SPOT only for hbot balances
-                    continue
-                free_balance = Decimal(balance["available"])
-                total_balance = free_balance + Decimal(balance["blocked"])
-                self._account_available_balances[asset_name] = free_balance
-                self._account_balances[asset_name] = total_balance
-                remote_asset_names.add(asset_name)
-
-            if not balances:
-                self.logger().warning("Fund your latoken account, no balances in your account!")
-            has_spot_balances = any(filter(lambda b: b["type"] == "ACCOUNT_TYPE_SPOT", balances))
-            if balances and not has_spot_balances:
-                self.logger().warning(
-                    "No latoken SPOT balance! Account has balances but no SPOT balance! Transfer to Latoken SPOT account!")
-
-            asset_names_to_remove = local_asset_names.difference(remote_asset_names)
-            for asset_name in asset_names_to_remove:
-                del self._account_available_balances[asset_name]
-                del self._account_balances[asset_name]
         except IOError:
             self.logger().exception("Error getting account balances from server")
 

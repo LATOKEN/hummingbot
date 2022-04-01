@@ -121,7 +121,7 @@ class LatokenUserStreamDataSourceUnitTests(unittest.TestCase):
 
     @aioresponses()
     def test_get_listen_key_log_exception(self, mock_api):
-        url = utils.private_rest_url(path_url=CONSTANTS.LATOKEN_USER_STREAM_PATH_URL, domain=self.domain)
+        url = utils.private_rest_url(path_url=CONSTANTS.USER_ID_PATH_URL, domain=self.domain)
         regex_url = re.compile(f"^{url}".replace(".", r"\.").replace("?", r"\?"))
 
         mock_api.post(regex_url, status=400, body=json.dumps(self._error_response()))
@@ -131,7 +131,7 @@ class LatokenUserStreamDataSourceUnitTests(unittest.TestCase):
 
     @aioresponses()
     def test_get_listen_key_successful(self, mock_api):
-        url = utils.private_rest_url(path_url=CONSTANTS.LATOKEN_USER_STREAM_PATH_URL, domain=self.domain)
+        url = utils.private_rest_url(path_url=CONSTANTS.USER_ID_PATH_URL, domain=self.domain)
         regex_url = re.compile(f"^{url}".replace(".", r"\.").replace("?", r"\?"))
 
         mock_response = {
@@ -145,7 +145,7 @@ class LatokenUserStreamDataSourceUnitTests(unittest.TestCase):
 
     @aioresponses()
     def test_ping_listen_key_log_exception(self, mock_api):
-        url = utils.private_rest_url(path_url=CONSTANTS.LATOKEN_USER_STREAM_PATH_URL, domain=self.domain)
+        url = utils.private_rest_url(path_url=CONSTANTS.USER_ID_PATH_URL, domain=self.domain)
         regex_url = re.compile(f"^{url}".replace(".", r"\.").replace("?", r"\?"))
 
         mock_api.put(regex_url, status=400, body=json.dumps(self._error_response()))
@@ -158,7 +158,7 @@ class LatokenUserStreamDataSourceUnitTests(unittest.TestCase):
 
     @aioresponses()
     def test_ping_listen_key_successful(self, mock_api):
-        url = utils.private_rest_url(path_url=CONSTANTS.LATOKEN_USER_STREAM_PATH_URL, domain=self.domain)
+        url = utils.private_rest_url(path_url=CONSTANTS.USER_ID_PATH_URL, domain=self.domain)
         regex_url = re.compile(f"^{url}".replace(".", r"\.").replace("?", r"\?"))
         mock_api.put(regex_url, body=json.dumps({}))
 
@@ -208,7 +208,7 @@ class LatokenUserStreamDataSourceUnitTests(unittest.TestCase):
     @aioresponses()
     @patch("aiohttp.ClientSession.ws_connect", new_callable=AsyncMock)
     def test_listen_for_user_stream_get_listen_key_successful_with_user_update_event(self, mock_api, mock_ws):
-        url = utils.private_rest_url(path_url=CONSTANTS.LATOKEN_USER_STREAM_PATH_URL, domain=self.domain)
+        url = utils.private_rest_url(path_url=CONSTANTS.USER_ID_PATH_URL, domain=self.domain)
         regex_url = re.compile(f"^{url}".replace(".", r"\.").replace("?", r"\?"))
 
         mock_response = {
@@ -230,7 +230,7 @@ class LatokenUserStreamDataSourceUnitTests(unittest.TestCase):
     @aioresponses()
     @patch("aiohttp.ClientSession.ws_connect", new_callable=AsyncMock)
     def test_listen_for_user_stream_does_not_queue_empty_payload(self, mock_api, mock_ws):
-        url = utils.private_rest_url(path_url=CONSTANTS.LATOKEN_USER_STREAM_PATH_URL, domain=self.domain)
+        url = utils.private_rest_url(path_url=CONSTANTS.USER_ID_PATH_URL, domain=self.domain)
         regex_url = re.compile(f"^{url}".replace(".", r"\.").replace("?", r"\?"))
 
         mock_response = {
@@ -253,7 +253,7 @@ class LatokenUserStreamDataSourceUnitTests(unittest.TestCase):
     @aioresponses()
     @patch("aiohttp.ClientSession.ws_connect", new_callable=AsyncMock)
     def test_listen_for_user_stream_connection_failed(self, mock_api, mock_ws):
-        url = utils.private_rest_url(path_url=CONSTANTS.LATOKEN_USER_STREAM_PATH_URL, domain=self.domain)
+        url = utils.private_rest_url(path_url=CONSTANTS.USER_ID_PATH_URL, domain=self.domain)
         regex_url = re.compile(f"^{url}".replace(".", r"\.").replace("?", r"\?"))
 
         mock_response = {
@@ -278,7 +278,7 @@ class LatokenUserStreamDataSourceUnitTests(unittest.TestCase):
     @aioresponses()
     @patch("aiohttp.ClientSession.ws_connect", new_callable=AsyncMock)
     def test_listen_for_user_stream_iter_message_throws_exception(self, mock_api, mock_ws):
-        url = utils.private_rest_url(path_url=CONSTANTS.LATOKEN_USER_STREAM_PATH_URL, domain=self.domain)
+        url = utils.private_rest_url(path_url=CONSTANTS.USER_ID_PATH_URL, domain=self.domain)
         regex_url = re.compile(f"^{url}".replace(".", r"\.").replace("?", r"\?"))
 
         mock_response = {

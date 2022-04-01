@@ -137,7 +137,7 @@ class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
         return AsyncThrottler(CONSTANTS.RATE_LIMITS)
 
     async def _get_listen_key(self):
-        url = latoken_utils.private_rest_url(path_url=CONSTANTS.LATOKEN_USER_STREAM_PATH_URL, domain=self._domain)
+        url = latoken_utils.private_rest_url(path_url=CONSTANTS.USER_ID_PATH_URL, domain=self._domain)
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         request = RESTRequest(method=RESTMethod.GET, url=url, headers=headers, is_auth_required=True)
         client = await self._get_rest_assistant()
@@ -151,10 +151,10 @@ class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
             return data["id"]
 
     async def _ping_listen_key(self) -> bool:  # possibly can be skipped
-        url = latoken_utils.private_rest_url(path_url=CONSTANTS.LATOKEN_USER_STREAM_PATH_URL, domain=self._domain)
+        url = latoken_utils.private_rest_url(path_url=CONSTANTS.USER_ID_PATH_URL, domain=self._domain)
         request = RESTRequest(method=RESTMethod.GET, url=url, is_auth_required=True)
         rest_assistant = await self._get_rest_assistant()
-        async with self._throttler.execute_task(limit_id=CONSTANTS.LATOKEN_USER_STREAM_PATH_URL):
+        async with self._throttler.execute_task(limit_id=CONSTANTS.USER_ID_PATH_URL):
             response: RESTResponse = await rest_assistant.call(request=request)
 
             data: Dict[str, str] = await response.json()

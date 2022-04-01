@@ -1,5 +1,6 @@
 import os
 import socket
+from decimal import Decimal
 from typing import Any, Dict
 
 import hummingbot.connector.exchange.latoken.latoken_constants as CONSTANTS
@@ -12,10 +13,64 @@ from hummingbot.core.web_assistant.connections.data_types import (
 from hummingbot.client.config.config_methods import using_exchange
 from hummingbot.client.config.config_var import ConfigVar
 from hummingbot.core.utils.tracking_nonce import get_tracking_nonce
+from hummingbot.core.data_type.in_flight_order import OrderState
 
 CENTRALIZED = True
 EXAMPLE_PAIR = "LA-USDT"
 DEFAULT_FEES = [0.1, 0.1]
+
+# Order States for REST
+ORDER_STATE = {
+    "PENDING": OrderState.PENDING_CREATE,
+    "ORDER_STATUS_PLACED": OrderState.OPEN,
+    "ORDER_STATUS_CLOSED": OrderState.FILLED,
+    "ORDER_STATUS_FILLED": OrderState.PARTIALLY_FILLED,
+    "PENDING_CANCEL": OrderState.OPEN,
+    "ORDER_STATUS_CANCELLED": OrderState.CANCELLED,
+    "REJECTED": OrderState.FAILED,
+    "EXPIRED": OrderState.FAILED,
+}
+
+
+# Order States for WS
+def get_order_status_ws(change_type: str, status: str, quantity: Decimal, filled: Decimal, delta_filled: Decimal):
+
+    order_state = None  # None is not used to update order in hbot order mgmt
+    if status == "ORDER_STATUS_PLACED":
+        if change_type == 'ORDER_CHANGE_TYPE_PLACED':
+            order_state = OrderState.OPEN
+        elif change_type == "ORDER_CHANGE_TYPE_FILLED" and delta_filled > Decimal(0):
+            order_state = OrderState.FILLED if quantity == filled else OrderState.PARTIALLY_FILLED
+        # elif change_type == 'ORDER_CHANGE_TYPE_UNCHANGED':
+        #     order_state = None
+    # elif status == "ORDER_STATUS_CLOSED":
+    #     if change_type == "ORDER_CHANGE_TYPE_CLOSED" or change_type == "ORDER_CHANGE_TYPE_UNCHANGED":
+    #         order_state = None  # don't handle this for now, this is a confirmation from Latoken for fill
+    elif status == "ORDER_STATUS_CANCELLED":
+        if change_type == 'ORDER_CHANGE_TYPE_PLACED':
+            order_state = OrderState.PENDING_CANCEL
+        if change_type == "ORDER_CHANGE_TYPE_CANCELLED":
+            order_state = OrderState.CANCELLED
+        # elif change_type == 'ORDER_CHANGE_TYPE_UNCHANGED':
+        #     order_state = None
+    elif status == "ORDER_STATUS_REJECTED":
+        if change_type == "ORDER_CHANGE_TYPE_REJECTED":  # TODO review this
+            order_state = OrderState.FAILED
+    elif status == "ORDER_STATUS_NOT_PROCESSED":
+        if change_type == "ORDER_CHANGE_TYPE_REJECTED":  # TODO review this
+            order_state = OrderState.FAILED
+    elif status == "ORDER_STATUS_UNKNOWN":
+        if change_type == "ORDER_CHANGE_TYPE_REJECTED":  # TODO review this
+            order_state = OrderState.FAILED
+
+    return order_state
+
+
+def get_order_status_rest(status: str, filled: Decimal, quantity: Decimal):
+    new_state = ORDER_STATE[status]
+    if new_state == OrderState.FILLED and quantity != filled:
+        new_state = OrderState.PARTIALLY_FILLED
+    return new_state
 
 
 async def get_data(logger, domain, rest_assistant, local_throttler, path_url) -> list:
@@ -85,11 +140,17 @@ def is_exchange_information_valid(pair_data: Dict[str, Any]) -> bool:
     :param pair_data: the exchange information for a trading pair
     :return: True if the trading pair is enabled, False otherwise
     """
-
     # pair_details = pair_data["id"]
     pair_base = pair_data["baseCurrency"]
     pair_quote = pair_data["quoteCurrency"]
+    # try:
+    #     x = pair_data["is_valid"] and pair_data["status"] == 'PAIR_STATUS_ACTIVE' and \
+    #         pair_base["status"] == 'CURRENCY_STATUS_ACTIVE' and pair_base["type"] == 'CURRENCY_TYPE_CRYPTO' and \
+    #         pair_quote["status"] == 'CURRENCY_STATUS_ACTIVE' and pair_quote["type"] == 'CURRENCY_TYPE_CRYPTO'
+    # except:
+    #     print("test")
     return pair_data["is_valid"] and pair_data["status"] == 'PAIR_STATUS_ACTIVE' and \
+        isinstance(pair_base, dict) and isinstance(pair_quote, dict) and \
         pair_base["status"] == 'CURRENCY_STATUS_ACTIVE' and pair_base["type"] == 'CURRENCY_TYPE_CRYPTO' and \
         pair_quote["status"] == 'CURRENCY_STATUS_ACTIVE' and pair_quote["type"] == 'CURRENCY_TYPE_CRYPTO'
 
