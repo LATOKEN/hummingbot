@@ -115,7 +115,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         url = public_rest_url(path_url=CONSTANTS.TICKER_PATH_URL, domain=domain)
         request = RESTRequest(method=RESTMethod.GET, url=url)
 
-        async with throttler.execute_task(limit_id=CONSTANTS.TICKER_PATH_URL):
+        async with throttler.execute_task(limit_id=CONSTANTS.GLOBAL_RATE_LIMIT):
             resp: RESTResponse = await rest_assistant.call(request=request)
             resp_json = await resp.json()
 
@@ -460,7 +460,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         # symbol should be in format base_id/quote_id
         request = RESTRequest(method=RESTMethod.GET, url=f"{url}/{symbol}")
 
-        async with throttler.execute_task(limit_id=CONSTANTS.TICKER_PATH_URL):
+        async with throttler.execute_task(limit_id=CONSTANTS.GLOBAL_RATE_LIMIT):
             resp: RESTResponse = await rest_assistant.call(request=request)
             if resp.status == 200:
                 resp_json = await resp.json()

@@ -4,6 +4,7 @@ import time
 import datetime
 import math
 import json
+import uuid
 from decimal import Decimal
 from typing import (
     Any,
@@ -793,22 +794,23 @@ class LatokenExchange(ExchangeBase):
         if state is None:
             return
 
-        trade_id = order["id"]
+        # trade_id = order["id"]  # this is the exhange_order_id
         timestamp = order["timestamp"]
 
         if state == OrderState.FILLED or state == OrderState.PARTIALLY_FILLED:
             tracked_order = self._order_tracker.fetch_order(client_order_id=client_order_id)
             if tracked_order is not None:
                 trade_update = TradeUpdate(
-                    trade_id=trade_id,
+                    trade_id=f"{timestamp}_{uuid.uuid4()}",  # sth unique to trigger trade update, the order doesn't have anything unique, the id of order contains the exchange id previously assigned by latoken
                     client_order_id=client_order_id,
-                    exchange_order_id=tracked_order.exchange_order_id,
-                    fee_asset=order['quoteCurrency'],
-                    fee_paid=Decimal(order.get("fee", 0)),  # or '0'
-                    fill_base_amount=delta_filled,
-                    fill_quote_amount=Decimal(order["cost"]) / delta_filled,
-                    fill_price=Decimal(order["price"]),
+                    exchange_order_id=tracked_order.exchange_order_id,  # or id in order message
+                    trading_pair=tracked_order.trading_pair,
                     fill_timestamp=int(timestamp),
+                    fill_price=Decimal(order["price"]),
+                    fill_base_amount=delta_filled,
+                    fill_quote_amount=Decimal(order["price"]) * delta_filled,
+                    fee_asset=tracked_order.quote_asset,
+                    fee_paid=Decimal(order.get("fee", 0)),  # or '0'
                 )
                 self._order_tracker.process_trade_update(trade_update)
 
@@ -917,7 +919,7 @@ class LatokenExchange(ExchangeBase):
                             client_order_id=tracked_order.client_order_id,
                             exchange_order_id=exchange_order_id,
                             trading_pair=trading_pair,
-                            fee_asset=trade["quoteCurrency"],
+                            fee_asset=tracked_order.quote_asset,
                             fill_base_amount=quantity,
                             fill_quote_amount=Decimal(trade["cost"]),
                             fee_paid=fee,

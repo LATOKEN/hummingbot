@@ -79,7 +79,7 @@ async def get_data(logger, domain, rest_assistant, local_throttler, path_url) ->
 
     data = []
     try:
-        async with local_throttler.execute_task(limit_id=path_url):
+        async with local_throttler.execute_task(limit_id=CONSTANTS.GLOBAL_RATE_LIMIT):
             response: RESTResponse = await rest_assistant.call(request=request)
             if response.status == 200:
                 data.extend(await response.json())

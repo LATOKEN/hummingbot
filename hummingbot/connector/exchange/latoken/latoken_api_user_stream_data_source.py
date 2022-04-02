@@ -154,7 +154,7 @@ class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
         url = latoken_utils.private_rest_url(path_url=CONSTANTS.USER_ID_PATH_URL, domain=self._domain)
         request = RESTRequest(method=RESTMethod.GET, url=url, is_auth_required=True)
         rest_assistant = await self._get_rest_assistant()
-        async with self._throttler.execute_task(limit_id=CONSTANTS.USER_ID_PATH_URL):
+        async with self._throttler.execute_task(limit_id=CONSTANTS.GLOBAL_RATE_LIMIT):
             response: RESTResponse = await rest_assistant.call(request=request)
 
             data: Dict[str, str] = await response.json()
