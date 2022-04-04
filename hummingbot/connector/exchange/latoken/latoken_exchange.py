@@ -395,7 +395,8 @@ class LatokenExchange(ExchangeBase):
         # is_maker = order_type is OrderType.LIMIT_MAKER  # LIMIT_MAKER not supported by latoken
         # return DeductedFromReturnsTradeFee(percent=self.estimate_fee_pct(is_maker))
         estimated_fee_pct = self.estimate_fee_pct(is_maker)
-        return AddedToCostTradeFee(percent=estimated_fee_pct) if order_side == TradeType.BUY else DeductedFromReturnsTradeFee(
+        return AddedToCostTradeFee(
+            percent=estimated_fee_pct) if order_side == TradeType.BUY else DeductedFromReturnsTradeFee(
             percent=estimated_fee_pct)
 
     def buy(self, trading_pair: str, amount: Decimal, order_type: OrderType = OrderType.LIMIT,
@@ -412,7 +413,7 @@ class LatokenExchange(ExchangeBase):
         safe_ensure_future(self._create_order(TradeType.BUY, new_order_id, trading_pair, amount, order_type, price))
         return new_order_id
 
-    def sell(self, trading_pair: str, amount: Decimal, order_type: OrderType = OrderType.MARKET,
+    def sell(self, trading_pair: str, amount: Decimal, order_type: OrderType = OrderType.LIMIT,
              price: Decimal = s_decimal_NaN, **kwargs) -> str:
         """
         Creates a promise to create a sell order using the parameters.
@@ -530,7 +531,7 @@ class LatokenExchange(ExchangeBase):
                       "clientOrderId": order_id,
                       "quantity": amount_str,
                       "type": OrderType.LIMIT.name if type_str == OrderType.LIMIT_MAKER.name else type_str,
-                      # TODO review latoken only supports limit and market not maker_limit
+                      # TODO review latoken only supports MAKER and MARKET not LIMIT_MAKER
                       "price": price_str,
                       "timestamp": int(datetime.datetime.now().timestamp() * 1000)}
         if api_params["type"] == OrderType.LIMIT.name:
@@ -766,8 +767,8 @@ class LatokenExchange(ExchangeBase):
 
         return remote_asset_names
 
-    def refresh_account_balances(self, remote_asset_names, balances):
-        ''' use this for rest call and not ws because ws does not send entire account balance'''
+    def process_full_account_balances_refresh(self, remote_asset_names, balances):
+        """ use this for rest call and not ws because ws does not send entire account balance list"""
         local_asset_names = set(self._account_balances.keys())
         if not balances:
             self.logger().warning("Fund your latoken account, no balances in your account!")
@@ -794,21 +795,21 @@ class LatokenExchange(ExchangeBase):
         if state is None:
             return
 
-        # trade_id = order["id"]  # this is the exhange_order_id
         timestamp = order["timestamp"]
 
         if state == OrderState.FILLED or state == OrderState.PARTIALLY_FILLED:
             tracked_order = self._order_tracker.fetch_order(client_order_id=client_order_id)
+            price = Decimal(order["price"])
             if tracked_order is not None:
                 trade_update = TradeUpdate(
-                    trade_id=f"{timestamp}_{uuid.uuid4()}",  # sth unique to trigger trade update, the order doesn't have anything unique, the id of order contains the exchange id previously assigned by latoken
+                    trade_id=f"WS_{timestamp}_{tracked_order.trading_pair}_{uuid.uuid4()}",  # sth unique to trigger trade update, the order doesn't have anything unique, the id of order contains the exchange id previously assigned by latoken
                     client_order_id=client_order_id,
-                    exchange_order_id=tracked_order.exchange_order_id,  # or id in order message
+                    exchange_order_id=order["id"],  # or id in order message
                     trading_pair=tracked_order.trading_pair,
                     fill_timestamp=int(timestamp),
-                    fill_price=Decimal(order["price"]),
+                    fill_price=price,
                     fill_base_amount=delta_filled,
-                    fill_quote_amount=Decimal(order["price"]) * delta_filled,
+                    fill_quote_amount=price * delta_filled,
                     fee_asset=tracked_order.quote_asset,
                     fee_paid=Decimal(order.get("fee", 0)),  # or '0'
                 )
@@ -905,7 +906,7 @@ class LatokenExchange(ExchangeBase):
                     )
                     continue
                 for trade in trades:
-                    exchange_order_id = str(trade["id"])
+                    exchange_order_id = trade["id"]
                     fee = Decimal(trade["fee"])
                     timestamp = trade["timestamp"]
                     price = Decimal(trade["price"])
@@ -915,7 +916,7 @@ class LatokenExchange(ExchangeBase):
                     if tracked_order is not None:
                         # This is a fill for a tracked order
                         trade_update = TradeUpdate(
-                            trade_id=exchange_order_id,
+                            trade_id=f"REST_{timestamp}_{tracked_order.trading_pair}_{uuid.uuid4()}",
                             client_order_id=tracked_order.client_order_id,
                             exchange_order_id=exchange_order_id,
                             trading_pair=trading_pair,
@@ -949,7 +950,6 @@ class LatokenExchange(ExchangeBase):
                                 trading_pair=trading_pair,
                                 trade_type=trade_type,
                                 order_type=OrderType.LIMIT,
-                                # OrderType.LIMIT_MAKER if trade["isMakerBuyer"] else OrderType.LIMIT,
                                 price=price,
                                 amount=quantity,
                                 trade_fee=DeductedFromReturnsTradeFee(
@@ -1046,7 +1046,7 @@ class LatokenExchange(ExchangeBase):
             balances = await self._api_request(method=RESTMethod.GET, path_url=CONSTANTS.ACCOUNTS_PATH_URL,
                                                is_auth_required=True, params=params)
             remote_asset_names = await self.process_account_balance_update(balances)
-            self.refresh_account_balances(remote_asset_names, balances)
+            self.process_full_account_balances_refresh(remote_asset_names, balances)
 
         except IOError:
             self.logger().exception("Error getting account balances from server")
