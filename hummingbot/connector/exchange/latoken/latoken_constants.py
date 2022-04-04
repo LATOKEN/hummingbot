@@ -13,7 +13,7 @@ WSS_URL = "wss://{}.{}/stomp"
 PUBLIC_API_VERSION = "/v2"
 PRIVATE_API_VERSION = "/v2"
 
-# Public API endpoints or BinanceClient function
+# Public API endpoints or LatokenClient function
 # TICKER_PRICE_CHANGE_PATH_URL = "/ticker/24hr"
 TICKER_PATH_URL = "/ticker"
 CURRENCY_PATH_URL = "/currency"
@@ -23,7 +23,7 @@ BOOK_PATH_URL = "/book"
 SNAPSHOT_PATH_URL = "/depth"  # todo remove from unit test
 SERVER_TIME_PATH_URL = "/time"
 
-# Private API endpoints or BinanceClient function
+# Private API endpoints or LatokenClient function
 ACCOUNTS_PATH_URL = "/auth/account"
 # MY_TRADES_PATH_URL = "/trade"
 TRADES_FOR_PAIR_PATH_URL = "/auth/trade/pair"
@@ -110,8 +110,6 @@ RATE_LIMITS = [
     #           linked_limits=[(LinkedLimitWeightPair(REQUEST_WEIGHT, 10))]),
     # RateLimit(limit_id=SNAPSHOT_PATH_URL, limit=MAX_REQUEST, time_interval=ONE_MINUTE,
     #           linked_limits=[LinkedLimitWeightPair(REQUEST_WEIGHT, 50)]),
-    # RateLimit(limit_id=BINANCE_USER_STREAM_PATH_URL, limit=MAX_REQUEST, time_interval=ONE_MINUTE,
-    #           linked_limits=[LinkedLimitWeightPair(REQUEST_WEIGHT, 1)]),
     # RateLimit(limit_id=SERVER_TIME_PATH_URL, limit=MAX_REQUEST, time_interval=ONE_MINUTE,
     #           linked_limits=[LinkedLimitWeightPair(REQUEST_WEIGHT, 1)]),
     # RateLimit(limit_id=PING_PATH_URL, limit=MAX_REQUEST, time_interval=ONE_MINUTE,

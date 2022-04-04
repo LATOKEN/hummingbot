@@ -163,7 +163,7 @@ def public_rest_url(path_url: str, domain: str = "com") -> str:
     """
     Creates a full URL for provided public REST endpoint
     :param path_url: a public REST endpoint
-    :param domain: the Binance domain to connect to ("com" or "us"). The default value is "com"
+    :param domain: the Latoken domain to connect to ("com" or "us"). The default value is "com"
     :return: the full URL to the endpoint
     """
     endpoint = CONSTANTS.DOMAIN_TO_ENDPOINT[domain]
@@ -174,7 +174,7 @@ def private_rest_url(path_url: str, domain: str = "com") -> str:
     """
     Creates a full URL for provided private REST endpoint
     :param path_url: a private REST endpoint
-    :param domain: the Binance domain to connect to ("com" or "us"). The default value is "com"
+    :param domain: the Latoken domain to connect to ("com" or "us"). The default value is "com"
     :return: the full URL to the endpoint
     """
     endpoint = CONSTANTS.DOMAIN_TO_ENDPOINT[domain]
@@ -185,7 +185,7 @@ def ws_url(domain: str = "com") -> str:
     """
     Creates a full URL for provided private REST endpoint
     :param path_url: a private REST endpoint
-    :param domain: the Binance domain to connect to ("com" or "us"). The default value is "com"
+    :param domain: the Latoken domain to connect to ("com" or "us"). The default value is "com"
     :return: the full URL to the endpoint
     """
     endpoint = CONSTANTS.DOMAIN_TO_ENDPOINT[domain]
