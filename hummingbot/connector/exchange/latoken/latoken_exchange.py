@@ -232,10 +232,10 @@ class LatokenExchange(ExchangeBase):
         Checks connectivity with the exchange using the API
         """
         try:
-            await self._api_request(
+            _ = await self._api_request(
                 method=RESTMethod.GET,
-                path_url=CONSTANTS.PING_PATH_URL,
-            )
+                path_url=CONSTANTS.PING_PATH_URL)
+
         except asyncio.CancelledError:
             raise
         except Exception:
@@ -352,10 +352,20 @@ class LatokenExchange(ExchangeBase):
         notional_size = current_price * quantized_amount
 
         # Add 1% as a safety factor in case the prices changed while making the order.
-        if notional_size < trading_rule.min_notional_size * Decimal("1.01"):
+        if notional_size < trading_rule.min_notional_size:  # * Decimal("1.01"):
             return s_decimal_0
 
         return quantized_amount
+
+    async def retrieve_fee(self, base_currency, quote_currency, order_type, is_maker):
+        fee = await self._api_request(
+            method=RESTMethod.POST,
+            path_url=f"{CONSTANTS.FEES_PATH_URL}/{base_currency}/{quote_currency}",
+            is_auth_required=True)
+
+        fee_pct_str = fee["makerFee"] if order_type is OrderType.LIMIT_MAKER or (is_maker is not None and is_maker) else fee["takerFee"]
+        percent = Decimal(fee_pct_str) if fee['type'] == 'FEE_SCHEME_TYPE_PERCENT_QUOTE' else self.estimate_fee_pct(is_maker)
+        return percent
 
     def get_fee(self,
                 base_currency: str,
@@ -381,8 +391,10 @@ class LatokenExchange(ExchangeBase):
         function are ignore except order_type. Use OrderType.LIMIT_MAKER to specify you want trading fee for
         maker order.
         """
-        # # is_maker = order_type is OrderType.LIMIT_MAKER  # LIMIT_MAKER not supported by latoken
-        # # fee for user and pair
+        percent = asyncio.run(self.retrieve_fee(base_currency, quote_currency, order_type, is_maker))
+        return AddedToCostTradeFee(percent=percent) if order_side == TradeType.BUY else DeductedFromReturnsTradeFee(percent=percent)
+        # is_maker = order_type is OrderType.LIMIT_MAKER  # LIMIT_MAKER not supported by latoken
+        # fee for user and pair
         # fee = await self._api_request(
         #     method=RESTMethod.POST,
         #     path_url=f"{CONSTANTS.FEES_PATH_URL}/{base_currency}/{quote_currency}",
@@ -390,14 +402,13 @@ class LatokenExchange(ExchangeBase):
         #
         # fee_pct_str = fee["makerFee"] if order_type is OrderType.LIMIT_MAKER or (is_maker is not None and is_maker) else fee["takerFee"]
         # percent = Decimal(fee_pct_str) if fee['type'] == 'FEE_SCHEME_TYPE_PERCENT_QUOTE' else self.estimate_fee_pct(is_maker)
-        # # "type": "FEE_SCHEME_TYPE_PERCENT_QUOTE","take": "FEE_SCHEME_TAKE_PROPORTION"
-        # return AddedToCostTradeFee(percent=percent) if order_side == TradeType.BUY else DeductedFromReturnsTradeFee(percent=percent)
+        # "type": "FEE_SCHEME_TYPE_PERCENT_QUOTE","take": "FEE_SCHEME_TAKE_PROPORTION"
         # is_maker = order_type is OrderType.LIMIT_MAKER  # LIMIT_MAKER not supported by latoken
         # return DeductedFromReturnsTradeFee(percent=self.estimate_fee_pct(is_maker))
-        estimated_fee_pct = self.estimate_fee_pct(is_maker)
-        return AddedToCostTradeFee(
-            percent=estimated_fee_pct) if order_side == TradeType.BUY else DeductedFromReturnsTradeFee(
-            percent=estimated_fee_pct)
+        # estimated_fee_pct = self.estimate_fee_pct(is_maker)
+        # return AddedToCostTradeFee(
+        #     percent=estimated_fee_pct) if order_side == TradeType.BUY else DeductedFromReturnsTradeFee(
+        #     percent=estimated_fee_pct)
 
     def buy(self, trading_pair: str, amount: Decimal, order_type: OrderType = OrderType.LIMIT,
             price: Decimal = s_decimal_NaN, **kwargs) -> str:
@@ -486,21 +497,21 @@ class LatokenExchange(ExchangeBase):
         :param price: the order price
         """
         trading_rule: TradingRule = self._trading_rules[trading_pair]
-        price = self.quantize_order_price(trading_pair, price)
-        quantize_amount_price = Decimal("0") if price.is_nan() else price
-        amount = self.quantize_order_amount(trading_pair=trading_pair, amount=amount, price=quantize_amount_price)
+        quantized_price = self.quantize_order_price(trading_pair, price)
+        quantize_amount_price = Decimal("0") if quantized_price.is_nan() else quantized_price
+        quantized_amount = self.quantize_order_amount(trading_pair=trading_pair, amount=amount, price=quantize_amount_price)
 
         self.start_tracking_order(
             order_id=order_id,
             exchange_order_id=None,
             trading_pair=trading_pair,
             trade_type=trade_type,
-            price=price,
-            amount=amount,
+            price=quantized_price,
+            amount=quantized_amount,
             order_type=order_type)
 
-        if amount < trading_rule.min_order_size:
-            self.logger().warning(f"{trade_type.name.title()} order amount {amount} is lower than the minimum order"
+        if quantized_amount < trading_rule.min_order_size:
+            self.logger().warning(f"{trade_type.name.title()} order amount {quantized_amount} is lower than the minimum order"
                                   f" size {trading_rule.min_order_size}. The order will not be created.")
             order_update: OrderUpdate = OrderUpdate(
                 client_order_id=order_id,
@@ -511,8 +522,8 @@ class LatokenExchange(ExchangeBase):
             self._order_tracker.process_order_update(order_update)
             return
 
-        amount_str = f"{amount:f}"
-        price_str = f"{price:f}"
+        amount_str = f"{quantized_amount:f}"
+        price_str = f"{quantized_price:f}"
         type_str = LatokenExchange.latoken_order_type(order_type)
         side_str = CONSTANTS.SIDE_BUY if trade_type is TradeType.BUY else CONSTANTS.SIDE_SELL
         symbol = await LatokenAPIOrderBookDataSource.exchange_symbol_associated_to_pair(
@@ -562,8 +573,8 @@ class LatokenExchange(ExchangeBase):
         except Exception as e:
             self.logger().network(
                 f"Error submitting {side_str} {type_str} order to Latoken for "
-                f"{amount} {trading_pair} "
-                f"{price}.",
+                f"{quantized_amount} {trading_pair} "
+                f"{quantized_price}.",
                 exc_info=True,
                 app_warning_msg=str(e)
             )
@@ -843,7 +854,6 @@ class LatokenExchange(ExchangeBase):
             try:
                 cmd = event_message.get('cmd', None)
                 if cmd and cmd == 'MESSAGE':
-
                     subscription_id = int(event_message['headers']['subscription'])
                     body = json.loads(event_message["body"])
                     if subscription_id == CONSTANTS.SUBSCRIPTION_ID_ACCOUNT:
@@ -853,7 +863,6 @@ class LatokenExchange(ExchangeBase):
                         # self.logger().error(str(orders))
                         for order in orders:
                             self.process_order_update_ws(order)
-
             except asyncio.CancelledError:
                 raise
             except Exception:
@@ -886,20 +895,15 @@ class LatokenExchange(ExchangeBase):
             trading_pairs = self._order_book_tracker._trading_pairs
             for trading_pair in trading_pairs:
                 base_quote = await LatokenAPIOrderBookDataSource.exchange_symbol_associated_to_pair(
-                    trading_pair=trading_pair,
-                    domain=self._domain,
-                    api_factory=self._api_factory,
-                    throttler=self._throttler)
+                    trading_pair=trading_pair, domain=self._domain, api_factory=self._api_factory, throttler=self._throttler)
 
                 params = {
                     # "from": "time"
                     "limit": "100"
                 }
                 tasks.append(self._api_request(
-                    method=RESTMethod.GET,
-                    path_url=f"{CONSTANTS.TRADES_FOR_PAIR_PATH_URL}/{base_quote}",
-                    params=params,
-                    is_auth_required=True))
+                    method=RESTMethod.GET, path_url=f"{CONSTANTS.TRADES_FOR_PAIR_PATH_URL}/{base_quote}",
+                    params=params, is_auth_required=True))
 
             self.logger().debug(f"Polling for order fills of {len(tasks)} trading pairs.")
             results = await safe_gather(*tasks, return_exceptions=True)
@@ -1049,8 +1053,8 @@ class LatokenExchange(ExchangeBase):
                 'zeros': 'false'
             }  # if not testing this can be set to the default of false
 
-            balances = await self._api_request(method=RESTMethod.GET, path_url=CONSTANTS.ACCOUNTS_PATH_URL,
-                                               is_auth_required=True, params=params)
+            balances = await self._api_request(
+                method=RESTMethod.GET, path_url=CONSTANTS.ACCOUNTS_PATH_URL, is_auth_required=True, params=params)
             remote_asset_names = await self.process_account_balance_update(balances)
             self.process_full_account_balances_refresh(remote_asset_names, balances)
 
@@ -1087,7 +1091,6 @@ class LatokenExchange(ExchangeBase):
         # async with self._throttler.execute_task(limit_id=path_url):
         async with self._throttler.execute_task(limit_id=CONSTANTS.GLOBAL_RATE_LIMIT):
             response = await client.call(request)
-
             if response.status != 200:
                 text_data = await response.text()
                 raise IOError(f"Error fetching data from {url}. HTTP status is {response.status} ({text_data}).")
