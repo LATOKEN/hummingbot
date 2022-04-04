@@ -100,7 +100,7 @@ class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
                 await client.send(connect_request)
                 await client.receive()
                 # subscription request
-                path_params = {'user': str(self._current_listen_key)}
+                path_params = {'user': self._current_listen_key}
 
                 msg_subscribe_orders = stomper.subscribe(
                     CONSTANTS.ORDERS_STREAM.format(**path_params), CONSTANTS.SUBSCRIPTION_ID_ORDERS, ack="auto")

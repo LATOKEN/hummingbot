@@ -727,16 +727,22 @@ class LatokenExchange(ExchangeBase):
                 #     continue
 
                 min_order_size = Decimal(rule["minOrderQuantity"])
-                tick_size = rule["priceTick"]
-                step_size = Decimal(rule["quantityTick"])
-                min_notional = Decimal(rule["minOrderCostUsd"])
+                price_size = Decimal(rule["priceTick"])
+                quantity_tick = Decimal(rule["quantityTick"])
+                min_order_value = Decimal(rule["minOrderCostUsd"])
+                min_order_quantity = Decimal(rule["minOrderQuantity"])
 
                 retval.append(
                     TradingRule(trading_pair,
                                 min_order_size=min_order_size,
-                                min_price_increment=Decimal(tick_size),
-                                min_base_amount_increment=Decimal(step_size),
-                                min_notional_size=Decimal(min_notional)))
+                                min_price_increment=price_size,
+                                min_base_amount_increment=quantity_tick,
+                                min_quote_amount_increment=price_size,
+                                min_notional_size=min_order_quantity,
+                                min_order_value=min_order_value,  # not sure if this is ok when non USD?!?
+                                # max_price_significant_digits=len(rule["maxOrderCostUsd"])
+                                # supports_market_orders = False,
+                                ))
 
             except Exception:
                 self.logger().exception(f"Error parsing the trading pair rule {rule}. Skipping.")
