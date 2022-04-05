@@ -5,6 +5,7 @@ from collections import deque
 from enum import Enum
 import logging
 import pandas as pd
+from decimal import Decimal
 import re
 from typing import (
     Dict,
@@ -296,8 +297,8 @@ class OrderBookTracker(ABC):
                 order_book.apply_trade(OrderBookTradeEvent(
                     trading_pair=trade_message.trading_pair,
                     timestamp=trade_message.timestamp,
-                    price=float(trade_message.content["price"]),
-                    amount=float(trade_message.content["amount"]),
+                    price=Decimal(trade_message.content["price"]),
+                    amount=Decimal(trade_message.content["amount"]),
                     type=TradeType.SELL if
                     trade_message.content["trade_type"] == float(TradeType.SELL.value) else TradeType.BUY
                 ))

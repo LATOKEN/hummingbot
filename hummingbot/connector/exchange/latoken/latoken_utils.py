@@ -84,7 +84,7 @@ async def get_data(logger, domain, rest_assistant, local_throttler, path_url) ->
             if response.status == 200:
                 data.extend(await response.json())
     except Exception as ex:
-        logger.error(f"There was an error requesting {path_url} ({str(ex)})")
+        logger.error(f"There was an error requesting {path_url} ({ex})")
 
     return data
 
@@ -143,12 +143,7 @@ def is_exchange_information_valid(pair_data: Dict[str, Any]) -> bool:
     # pair_details = pair_data["id"]
     pair_base = pair_data["baseCurrency"]
     pair_quote = pair_data["quoteCurrency"]
-    # try:
-    #     x = pair_data["is_valid"] and pair_data["status"] == 'PAIR_STATUS_ACTIVE' and \
-    #         pair_base["status"] == 'CURRENCY_STATUS_ACTIVE' and pair_base["type"] == 'CURRENCY_TYPE_CRYPTO' and \
-    #         pair_quote["status"] == 'CURRENCY_STATUS_ACTIVE' and pair_quote["type"] == 'CURRENCY_TYPE_CRYPTO'
-    # except:
-    #     print("test")
+
     return pair_data["is_valid"] and pair_data["status"] == 'PAIR_STATUS_ACTIVE' and \
         isinstance(pair_base, dict) and isinstance(pair_quote, dict) and \
         pair_base["status"] == 'CURRENCY_STATUS_ACTIVE' and pair_base["type"] == 'CURRENCY_TYPE_CRYPTO' and \

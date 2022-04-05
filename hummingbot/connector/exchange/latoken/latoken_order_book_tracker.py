@@ -130,7 +130,7 @@ class LatokenOrderBookTracker(OrderBookTracker):
 
         while True:
             try:
-                message: OrderBookMessage = None
+                # message: OrderBookMessage = None
                 saved_messages: Deque[OrderBookMessage] = self._saved_message_queues[trading_pair]
 
                 # Process saved messages first if there are any

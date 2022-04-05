@@ -57,14 +57,13 @@ cdef class TradingIntensityIndicator():
         # Higher bids were filled - someone matched them - a determined seller
         # Equal bids - if amount lower - partially filled
         for index, row in _bids_df[_bids_df['price'] >= bid].iterrows():
-            if row['price'] == bid:
-                if bids_df["amount"].iloc[0] < row['amount']:
-                    amount = row['amount'] - bids_df["amount"].iloc[0]
-                    price_level = abs(row['price'] - price_prev)
-                    trades += [{'price_level': price_level, 'amount': amount}]
+            amount, price, price_level = row['amount'], row['price'], abs(price - price_prev)
+            if price == bid:
+                first_bid_amount = bids_df["amount"].iloc[0]
+                if first_bid_amount < amount:
+                    new_amount = amount - first_bid_amount
+                    trades += [{'price_level': price_level, 'amount': new_amount}]
             else:
-                amount = row['amount']
-                price_level = abs(row['price'] - price_prev)
                 trades += [{'price_level': price_level, 'amount': amount}]
 
         # Lower asks were filled - someone matched them - a determined buyer
@@ -109,7 +108,7 @@ cdef class TradingIntensityIndicator():
 
         price_levels = sorted(price_levels, reverse=True)
 
-        for price_level in price_levels:
+        for price_level in price_levels:  # TODO looks like redundant if statement
             if len(lambdas) == 0:
                 lambdas += [trades_consolidated[price_level]]
             else:
@@ -131,6 +130,9 @@ cdef class TradingIntensityIndicator():
             self._alpha = Decimal(str(params[0][0]))
         except (RuntimeError, ValueError) as e:
             pass
+#
+#    def get_trades(self):
+#        return self._trades
 
     def add_sample(self, value: Tuple[pd.DataFrame, pd.DataFrame]):
         bids_df = value[0]

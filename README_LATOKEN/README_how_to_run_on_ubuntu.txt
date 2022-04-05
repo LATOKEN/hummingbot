@@ -21,7 +21,7 @@ wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
 sh Miniconda3-latest-Linux-x86_64.sh
 exec bash
 git clone --branch TRD-3815-latoken-into-hummingbot-integration https://gitlab.nekotal.tech/market-making/quantitative/humming-bot.git
-export hummingbotPath="$(pwd)/humming-bot" && cd $hummingbotPath && ./clean && ./instal
+export hummingbotPath="$(pwd)/humming-bot" && cd $hummingbotPath && ./clean && ./install
 conda activate hummingbot && ./compile
 
 

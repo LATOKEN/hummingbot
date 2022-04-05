@@ -663,12 +663,16 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
 
         price = self.get_price()
         snapshot = self.get_order_book_snapshot()
+
+        # self.logger().warning(f"PRICE: {price} SNAPSHOT: {snapshot} TRADES: {len(self._trading_intensity.get_trades())}")
         self._avg_vol.add_sample(price)
         self._trading_intensity.add_sample(snapshot)
         # Calculate adjustment factor to have 0.01% of inventory resolution
         base_balance = market.get_balance(base_asset)
         quote_balance = market.get_balance(quote_asset)
         inventory_in_base = quote_balance / price + base_balance
+
+        # self.logger().warning(f"PRICE: {price} SNAPSHOT: {snapshot} TRADES: {len(self._trading_intensity.get_trades())}")
 
     def collect_market_variables(self, timestamp: float):
         self.c_collect_market_variables(timestamp)
@@ -824,6 +828,7 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
         return self.c_calculate_inventory()
 
     cdef bint c_is_algorithm_ready(self):
+        # self.logger().warning(f"AVGVOL: {self._avg_vol.is_sampling_buffer_full} TRADEINTENSITY: {self._trading_intensity.is_sampling_buffer_full}")
         return self._avg_vol.is_sampling_buffer_full and self._trading_intensity.is_sampling_buffer_full
 
     cdef bint c_is_algorithm_changed(self):

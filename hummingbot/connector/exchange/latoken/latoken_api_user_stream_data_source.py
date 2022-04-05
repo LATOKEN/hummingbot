@@ -58,9 +58,7 @@ class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
 
     @classmethod
     def logger(cls) -> HummingbotLogger:
-        if cls._bausds_logger is None:
-            cls._bausds_logger = logging.getLogger(__name__)
-        return cls._bausds_logger
+        return logging.getLogger(__name__) if cls._bausds_logger is None else cls._bausds_logger
 
     @property
     def last_recv_time(self) -> float:
@@ -68,9 +66,7 @@ class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
         Returns the time of the last received message
         :return: the timestamp of the last received message in seconds
         """
-        if self._ws_assistant:
-            return self._ws_assistant.last_recv_time
-        return -1
+        return self._ws_assistant.last_recv_time if self._ws_assistant else -1
 
     async def listen_for_user_stream(self, ev_loop: asyncio.AbstractEventLoop, output: asyncio.Queue):
         """
@@ -156,7 +152,6 @@ class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
         rest_assistant = await self._get_rest_assistant()
         async with self._throttler.execute_task(limit_id=CONSTANTS.GLOBAL_RATE_LIMIT):
             response: RESTResponse = await rest_assistant.call(request=request)
-
             data: Dict[str, str] = await response.json()
             if "id" not in data:
                 self.logger().warning(f"Failed to refresh the listen key {self._current_listen_key}: {data}")

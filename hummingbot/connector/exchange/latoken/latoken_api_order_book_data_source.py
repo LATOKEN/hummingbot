@@ -289,9 +289,9 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
 
                 body = json.loads(msg["body"])
                 payload = body["payload"]
-
+                timestamp_ns = time.time_ns()
                 order_book_message: OrderBookMessage = LatokenOrderBook.diff_message_from_exchange(
-                    payload, time.time_ns(), {"trading_pair": trading_pair, "timestamp": body["timestamp"]})
+                    payload, timestamp_ns, {"trading_pair": trading_pair, "timestamp": body["timestamp"]})
                 output.put_nowait(order_book_message)
             except asyncio.CancelledError:
                 raise
@@ -493,7 +493,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         for pair in filter(is_exchange_information_valid, full_mapping):
             mapping[f"{pair['id']['baseCurrency']}/{pair['id']['quoteCurrency']}"] = pair["id"]["symbol"].replace('/',
                                                                                                                   '-')
-        cls._trading_pair_symbol_map[domain] = mapping  # TODO add uuid to asset map for streaming updates of balances
+        cls._trading_pair_symbol_map[domain] = mapping  # TODO add uuid-to-asset map for streaming updates of balances
 
     async def _get_rest_assistant(self) -> RESTAssistant:
         if self._rest_assistant is None:

@@ -2,7 +2,6 @@ import asyncio
 import logging
 import time
 import datetime
-import math
 import json
 import uuid
 from decimal import Decimal
@@ -14,6 +13,7 @@ from typing import (
     Optional,
 )
 from async_timeout import timeout
+from math import isnan
 
 import hummingbot.connector.exchange.latoken.latoken_constants as CONSTANTS
 from hummingbot.connector.client_order_tracker import ClientOrderTracker
@@ -330,8 +330,7 @@ class LatokenExchange(ExchangeBase):
         :param trading_pair: the trading pair to check for market conditions
         :param order_size: the starting point order price
         """
-        trading_rule = self._trading_rules[trading_pair]
-        return trading_rule.min_base_amount_increment
+        return self._trading_rules[trading_pair].min_base_amount_increment
 
     def quantize_order_amount(self, trading_pair: str, amount: Decimal, price: Decimal = s_decimal_0) -> Decimal:
         """
@@ -352,12 +351,12 @@ class LatokenExchange(ExchangeBase):
         notional_size = current_price * quantized_amount
 
         # Add 1% as a safety factor in case the prices changed while making the order.
-        if notional_size < trading_rule.min_notional_size:  # * Decimal("1.01"):
+        if notional_size < trading_rule.min_notional_size * Decimal("1.00"):  # TODO does this make sense? put 1.01 to 1.00
             return s_decimal_0
 
         return quantized_amount
 
-    async def retrieve_fee(self, base_currency, quote_currency, order_type, is_maker):
+    async def retrieve_fee(self, base_currency: str, quote_currency: str, order_type: OrderType, is_maker: Optional[bool]):
         fee = await self._api_request(
             method=RESTMethod.POST,
             path_url=f"{CONSTANTS.FEES_PATH_URL}/{base_currency}/{quote_currency}",
@@ -391,8 +390,8 @@ class LatokenExchange(ExchangeBase):
         function are ignore except order_type. Use OrderType.LIMIT_MAKER to specify you want trading fee for
         maker order.
         """
-        percent = asyncio.run(self.retrieve_fee(base_currency, quote_currency, order_type, is_maker))
-        return AddedToCostTradeFee(percent=percent) if order_side == TradeType.BUY else DeductedFromReturnsTradeFee(percent=percent)
+        # percent = asyncio.run(self.retrieve_fee(base_currency, quote_currency, order_type, is_maker))
+        # return AddedToCostTradeFee(percent=percent) if order_side == TradeType.BUY else DeductedFromReturnsTradeFee(percent=percent)
         # is_maker = order_type is OrderType.LIMIT_MAKER  # LIMIT_MAKER not supported by latoken
         # fee for user and pair
         # fee = await self._api_request(
@@ -405,10 +404,10 @@ class LatokenExchange(ExchangeBase):
         # "type": "FEE_SCHEME_TYPE_PERCENT_QUOTE","take": "FEE_SCHEME_TAKE_PROPORTION"
         # is_maker = order_type is OrderType.LIMIT_MAKER  # LIMIT_MAKER not supported by latoken
         # return DeductedFromReturnsTradeFee(percent=self.estimate_fee_pct(is_maker))
-        # estimated_fee_pct = self.estimate_fee_pct(is_maker)
-        # return AddedToCostTradeFee(
-        #     percent=estimated_fee_pct) if order_side == TradeType.BUY else DeductedFromReturnsTradeFee(
-        #     percent=estimated_fee_pct)
+        estimated_fee_pct = self.estimate_fee_pct(is_maker)
+        return AddedToCostTradeFee(
+            percent=estimated_fee_pct) if order_side == TradeType.BUY else DeductedFromReturnsTradeFee(
+            percent=estimated_fee_pct)
 
     def buy(self, trading_pair: str, amount: Decimal, order_type: OrderType = OrderType.LIMIT,
             price: Decimal = s_decimal_NaN, **kwargs) -> str:
@@ -610,7 +609,7 @@ class LatokenExchange(ExchangeBase):
                 order_cancel_status = cancel_result.get("status")
                 if order_cancel_status == "SUCCESS":
                     # TODO look at alternatives like self.ready() self.order_book_tracker.ready()
-                    while math.isnan(self.current_timestamp):  # this is necessary for live trading
+                    while isnan(self.current_timestamp):  # this is necessary for live trading
                         self.logger().warning("Cancellation of order sent outside a started live trading strategy")
                         await asyncio.sleep(1.0)
 
@@ -719,23 +718,19 @@ class LatokenExchange(ExchangeBase):
             }
         ]
         """
+        # if not trading_pair:
+        #     pair = await self._api_request(method=RESTMethod.GET,
+        #                                    path_url=f"{CONSTANTS.TICKER_PATH_URL}/{symbol}")
+        #     self.logger().warning(
+        #         f"latoken_exchange:_format_trading_rules could not add rule for pair {pair['symbol']} - "
+        #         f"{symbol} probably because one of the currencies is in non active state/non spot etc")
+        #     continue
         retval = []
         for rule in filter(latoken_utils.is_exchange_information_valid, pairs_list):
             try:
                 symbol = f"{rule['id']['baseCurrency']}/{rule['id']['quoteCurrency']}"
                 trading_pair = await LatokenAPIOrderBookDataSource.trading_pair_associated_to_exchange_symbol(
-                    symbol=symbol,
-                    domain=self._domain,
-                    api_factory=self._api_factory,
-                    throttler=self._throttler)
-
-                # if not trading_pair:
-                #     pair = await self._api_request(method=RESTMethod.GET,
-                #                                    path_url=f"{CONSTANTS.TICKER_PATH_URL}/{symbol}")
-                #     self.logger().warning(
-                #         f"latoken_exchange:_format_trading_rules could not add rule for pair {pair['symbol']} - "
-                #         f"{symbol} probably because one of the currencies is in non active state/non spot etc")
-                #     continue
+                    symbol=symbol, domain=self._domain, api_factory=self._api_factory, throttler=self._throttler)
 
                 min_order_size = Decimal(rule["minOrderQuantity"])
                 price_size = Decimal(rule["priceTick"])
@@ -744,17 +739,18 @@ class LatokenExchange(ExchangeBase):
                 min_order_quantity = Decimal(rule["minOrderQuantity"])
 
                 retval.append(
-                    TradingRule(trading_pair,
-                                min_order_size=min_order_size,
-                                min_price_increment=price_size,
-                                min_base_amount_increment=quantity_tick,
-                                min_quote_amount_increment=price_size,
-                                min_notional_size=min_order_quantity,
-                                min_order_value=min_order_value,  # not sure if this is ok when non USD?!?
-                                # max_price_significant_digits=len(rule["maxOrderCostUsd"])
-                                # supports_market_orders = False,
-                                ))
-
+                    TradingRule(
+                        trading_pair,
+                        min_order_size=min_order_size,
+                        min_price_increment=price_size,
+                        min_base_amount_increment=quantity_tick,
+                        min_quote_amount_increment=price_size,
+                        min_notional_size=min_order_quantity,
+                        min_order_value=min_order_value,  # not sure if this is ok when non USD?!?
+                        # max_price_significant_digits=len(rule["maxOrderCostUsd"])
+                        # supports_market_orders = False,
+                    )
+                )
             except Exception:
                 self.logger().exception(f"Error parsing the trading pair rule {rule}. Skipping.")
         return retval
@@ -821,14 +817,14 @@ class LatokenExchange(ExchangeBase):
                 trade_update = TradeUpdate(
                     trade_id=f"WS_{timestamp}_{tracked_order.trading_pair}_{uuid.uuid4()}",  # sth unique to trigger trade update, the order doesn't have anything unique, the id of order contains the exchange id previously assigned by latoken
                     client_order_id=client_order_id,
-                    exchange_order_id=order["id"],  # or id in order message
+                    exchange_order_id=order["id"],
                     trading_pair=tracked_order.trading_pair,
                     fill_timestamp=int(timestamp),
                     fill_price=price,
                     fill_base_amount=delta_filled,
                     fill_quote_amount=price * delta_filled,
                     fee_asset=tracked_order.quote_asset,
-                    fee_paid=Decimal(order.get("fee", 0)),  # or '0'
+                    fee_paid=Decimal(order.get("fee", 0)),  # or get fee
                 )
                 self._order_tracker.process_trade_update(trade_update)
 
@@ -857,11 +853,9 @@ class LatokenExchange(ExchangeBase):
                     subscription_id = int(event_message['headers']['subscription'])
                     body = json.loads(event_message["body"])
                     if subscription_id == CONSTANTS.SUBSCRIPTION_ID_ACCOUNT:
-                        await self.process_account_balance_update(body["payload"])
+                        _ = await self.process_account_balance_update(balances=body["payload"])
                     elif subscription_id == CONSTANTS.SUBSCRIPTION_ID_ORDERS:
-                        orders = body["payload"]
-                        # self.logger().error(str(orders))
-                        for order in orders:
+                        for order in body["payload"]:  # self.logger().error(str(orders))
                             self.process_order_update_ws(order)
             except asyncio.CancelledError:
                 raise
@@ -896,11 +890,7 @@ class LatokenExchange(ExchangeBase):
             for trading_pair in trading_pairs:
                 base_quote = await LatokenAPIOrderBookDataSource.exchange_symbol_associated_to_pair(
                     trading_pair=trading_pair, domain=self._domain, api_factory=self._api_factory, throttler=self._throttler)
-
-                params = {
-                    # "from": "time"
-                    "limit": "100"
-                }
+                params = {"limit": "100"}  # "from": "time"
                 tasks.append(self._api_request(
                     method=RESTMethod.GET, path_url=f"{CONSTANTS.TRADES_FOR_PAIR_PATH_URL}/{base_quote}",
                     params=params, is_auth_required=True))
@@ -962,7 +952,7 @@ class LatokenExchange(ExchangeBase):
                                 order_type=OrderType.LIMIT,
                                 price=price,
                                 amount=quantity,
-                                trade_fee=DeductedFromReturnsTradeFee(
+                                trade_fee=DeductedFromReturnsTradeFee(  # TODO this is not correct for Latoken
                                     flat_fees=[
                                         TokenAmount(
                                             trade[currency_type],
@@ -982,55 +972,58 @@ class LatokenExchange(ExchangeBase):
         current_tick = self.current_timestamp / self.UPDATE_ORDER_STATUS_MIN_INTERVAL
 
         tracked_orders: List[InFlightOrder] = list(self.in_flight_orders.values())
-        if current_tick > last_tick and len(tracked_orders) > 0:
-            # not sure if the exchange order id is always up-to-date on the moment this function is called (?)
-            tasks = [self._api_request(
-                method=RESTMethod.GET,
-                path_url=f"{CONSTANTS.GET_ORDER_PATH_URL}/{tracked_order.exchange_order_id}",
-                is_auth_required=True) for tracked_order in tracked_orders if tracked_order.exchange_order_id]
 
-            self.logger().debug(f"Polling for order status updates of {len(tasks)} orders.")
-            results = await safe_gather(*tasks, return_exceptions=True)
-            for order_update, tracked_order in zip(results, tracked_orders):
-                client_order_id = tracked_order.client_order_id
+        if current_tick <= last_tick or len(tracked_orders) == 0:
+            return
+        # if current_tick > last_tick and len(tracked_orders) > 0:
+        # not sure if the exchange order id is always up-to-date on the moment this function is called (?)
+        tasks = [self._api_request(
+            method=RESTMethod.GET,
+            path_url=f"{CONSTANTS.GET_ORDER_PATH_URL}/{tracked_order.exchange_order_id}",
+            is_auth_required=True) for tracked_order in tracked_orders if tracked_order.exchange_order_id]
 
-                # If the order has already been cancelled or has failed do nothing
-                if client_order_id not in self.in_flight_orders:  # TODO should we reach this with pending create?
-                    continue
+        self.logger().debug(f"Polling for order status updates of {len(tasks)} orders.")
+        results = await safe_gather(*tasks, return_exceptions=True)
+        for order_update, tracked_order in zip(results, tracked_orders):
+            client_order_id = tracked_order.client_order_id
 
-                if isinstance(order_update, Exception):
-                    self.logger().network(
-                        f"Error fetching status update for the order {client_order_id}: {order_update}.",
-                        app_warning_msg=f"Failed to fetch status update for the order {client_order_id}."
-                    )
-                    id_order_not_found_for_client = self._order_not_found_records.get(client_order_id, 0) + 1
-                    self._order_not_found_records[client_order_id] = id_order_not_found_for_client
-                    if id_order_not_found_for_client >= self.MAX_ORDER_UPDATE_RETRIEVAL_RETRIES_WITH_FAILURES:
-                        # Wait until the order not found error have repeated a few times before actually treating
-                        # it as failed. See: https://github.com/CoinAlpha/hummingbot/issues/601
-                        order_update: OrderUpdate = OrderUpdate(
-                            client_order_id=client_order_id,
-                            trading_pair=tracked_order.trading_pair,
-                            update_timestamp=int(self.current_timestamp * 1e3),
-                            new_state=OrderState.FAILED,
-                        )
-                        self._order_tracker.process_order_update(order_update)
-                else:
-                    # Update order execution status
-                    status = order_update["status"]
-                    filled = Decimal(order_update["filled"])
-                    quantity = Decimal(order_update["quantity"])
+            # If the order has already been cancelled or has failed do nothing
+            if client_order_id not in self.in_flight_orders:  # TODO should we reach this with pending create?
+                continue
 
-                    new_state = latoken_utils.get_order_status_rest(status=status, filled=filled, quantity=quantity)
-
-                    update = OrderUpdate(
+            if isinstance(order_update, Exception):
+                self.logger().network(
+                    f"Error fetching status update for the order {client_order_id}: {order_update}.",
+                    app_warning_msg=f"Failed to fetch status update for the order {client_order_id}."
+                )
+                id_order_not_found_for_client = self._order_not_found_records.get(client_order_id, 0) + 1
+                self._order_not_found_records[client_order_id] = id_order_not_found_for_client
+                if id_order_not_found_for_client >= self.MAX_ORDER_UPDATE_RETRIEVAL_RETRIES_WITH_FAILURES:
+                    # Wait until the order not found error have repeated a few times before actually treating
+                    # it as failed. See: https://github.com/CoinAlpha/hummingbot/issues/601
+                    order_update: OrderUpdate = OrderUpdate(
                         client_order_id=client_order_id,
-                        exchange_order_id=order_update["id"],
                         trading_pair=tracked_order.trading_pair,
-                        update_timestamp=int(order_update["timestamp"]),
-                        new_state=new_state,
+                        update_timestamp=int(self.current_timestamp * 1e3),
+                        new_state=OrderState.FAILED,
                     )
-                    self._order_tracker.process_order_update(update)
+                    self._order_tracker.process_order_update(order_update)
+            else:
+                # Update order execution status
+                status = order_update["status"]
+                filled = Decimal(order_update["filled"])
+                quantity = Decimal(order_update["quantity"])
+
+                new_state = latoken_utils.get_order_status_rest(status=status, filled=filled, quantity=quantity)
+
+                update = OrderUpdate(
+                    client_order_id=client_order_id,
+                    exchange_order_id=order_update["id"],
+                    trading_pair=tracked_order.trading_pair,
+                    update_timestamp=int(order_update["timestamp"]),
+                    new_state=new_state,
+                )
+                self._order_tracker.process_order_update(update)
 
     async def _iter_user_event_queue(self) -> AsyncIterable[Dict[str, any]]:
         while True:
@@ -1048,16 +1041,11 @@ class LatokenExchange(ExchangeBase):
 
     async def _update_balances(self):
         try:
-
-            params = {
-                'zeros': 'false'
-            }  # if not testing this can be set to the default of false
-
+            params = {'zeros': 'false'}  # if not testing this can be set to the default of false
             balances = await self._api_request(
                 method=RESTMethod.GET, path_url=CONSTANTS.ACCOUNTS_PATH_URL, is_auth_required=True, params=params)
             remote_asset_names = await self.process_account_balance_update(balances)
             self.process_full_account_balances_refresh(remote_asset_names, balances)
-
         except IOError:
             self.logger().exception("Error getting account balances from server")
 
