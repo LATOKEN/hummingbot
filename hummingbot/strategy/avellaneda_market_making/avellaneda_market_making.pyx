@@ -609,25 +609,31 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
 
             self.c_collect_market_variables(timestamp)
             if self.c_is_algorithm_ready():
+                self.logger().warning("collect_market_variables - DEBUG 1")
                 if self._create_timestamp <= self._current_timestamp:
                     # Measure order book liquidity
+                    self.logger().warning("collect_market_variables - DEBUG 1.2")
                     self.c_measure_order_book_liquidity()
 
                 self._hanging_orders_tracker.process_tick()
-
+                self.logger().warning("collect_market_variables - DEBUG 1.3")
                 # Needs to be executed at all times to not to have active order leftovers after a trading session ends
                 self.c_cancel_active_orders_on_max_age_limit()
-
+                self.logger().warning("collect_market_variables - DEBUG 1.4")
                 # process_tick() is only called if within a trading timeframe
                 self._execution_state.process_tick(timestamp, self)
-
+                self.logger().warning("collect_market_variables - DEBUG 1.5")
             else:
+                self.logger().warning("collect_market_variables - DEBUG 2.0")
                 # Only if snapshots are different - for trading intensity - a market order happened
                 if self.c_is_algorithm_changed():
+                    self.logger().warning("collect_market_variables - DEBUG 2.1")
                     self._ticks_to_be_ready -= 1
                     if self._ticks_to_be_ready % 5 == 0:
+
                         self.logger().info(f"Calculating volatility, estimating order book liquidity ... {self._ticks_to_be_ready} ticks to fill buffers")
                 else:
+
                     self.logger().info(f"Calculating volatility, estimating order book liquidity ... no change tick")
         finally:
             self._last_timestamp = timestamp
@@ -664,7 +670,7 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
         price = self.get_price()
         snapshot = self.get_order_book_snapshot()
 
-        # self.logger().warning(f"PRICE: {price} SNAPSHOT: {snapshot} TRADES: {len(self._trading_intensity.get_trades())}")
+        self.logger().warning(f"PRICE: {price} SNAPSHOT: {snapshot} TRADES: {len(self._trading_intensity.get_trades())}")
         self._avg_vol.add_sample(price)
         self._trading_intensity.add_sample(snapshot)
         # Calculate adjustment factor to have 0.01% of inventory resolution
@@ -672,7 +678,7 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
         quote_balance = market.get_balance(quote_asset)
         inventory_in_base = quote_balance / price + base_balance
 
-        # self.logger().warning(f"PRICE: {price} SNAPSHOT: {snapshot} TRADES: {len(self._trading_intensity.get_trades())}")
+        self.logger().warning(f"PRICE: {price} SNAPSHOT: {snapshot} TRADES: {len(self._trading_intensity.get_trades())}")
 
     def collect_market_variables(self, timestamp: float):
         self.c_collect_market_variables(timestamp)
@@ -721,9 +727,10 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
         # The amount of stocks owned - q - has to be in relative units, not absolute, because changing the portfolio size shouldn't change the reservation price
         # The reservation price should concern itself only with the strategy performance, i.e. amount of stocks relative to the target
         inventory = Decimal(str(self.c_calculate_inventory()))
-
+        self.logger().warning("c_calculate_reservation_price_and_optimal_spread:: DEBUG 1")
         if inventory == 0:
             return
+        self.logger().warning("c_calculate_reservation_price_and_optimal_spread:: DEBUG 2")
 
         q_target = Decimal(str(self.c_calculate_target_inventory()))
         q = (market.get_balance(self.base_asset) - q_target) / (inventory)
@@ -737,6 +744,7 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
         if all((self._gamma, self._kappa)) and self._alpha != 0 and self._kappa > 0 and vol != 0:
             if self._execution_state.time_left is not None and self._execution_state.closing_time is not None:
                 # Avellaneda-Stoikov for a fixed timespan
+                self.logger().warning("c_calculate_reservation_price_and_optimal_spread:: DEBUG 3")
                 time_left_fraction = Decimal(str(self._execution_state.time_left / self._execution_state.closing_time))
             else:
                 # Avellaneda-Stoikov for an infinite timespan
@@ -746,6 +754,7 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
                 # - the risk factor gets partially cancelled
                 # The proposed solution is to use the same equation as for the constrained timespan but with
                 # a fixed time left
+                self.logger().warning("c_calculate_reservation_price_and_optimal_spread:: DEBUG 4")
                 time_left_fraction = 1
 
             self._reservation_price = price - (q * self._gamma * mid_price_variance * time_left_fraction)
@@ -828,7 +837,7 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
         return self.c_calculate_inventory()
 
     cdef bint c_is_algorithm_ready(self):
-        # self.logger().warning(f"AVGVOL: {self._avg_vol.is_sampling_buffer_full} TRADEINTENSITY: {self._trading_intensity.is_sampling_buffer_full}")
+        self.logger().warning(f"AVGVOL: {self._avg_vol.is_sampling_buffer_full} TRADEINTENSITY: {self._trading_intensity.is_sampling_buffer_full}")
         return self._avg_vol.is_sampling_buffer_full and self._trading_intensity.is_sampling_buffer_full
 
     cdef bint c_is_algorithm_changed(self):
@@ -841,8 +850,8 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
         return self.c_is_algorithm_changed()
 
     def _get_level_spreads(self):
-        level_step = ((self._optimal_spread / 2) / 100) * self._level_distances
-
+        #level_step = ((self._optimal_spread / 2) / 100) * self._level_distances
+        level_step = (self._optimal_spread / 2)  * self._level_distances / 100
         bid_level_spreads = [i * level_step for i in range(self._order_levels)]
         ask_level_spreads = [i * level_step for i in range(self._order_levels)]
 
@@ -1212,13 +1221,17 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
         """
         Cancels active non hanging orders if they are older than max age limit
         """
+        self.logger().warning(f"c_cancel_active_orders_on_max_age_limit:: DEBUG 6")
         cdef:
             list active_orders = self.active_non_hanging_orders
         for order in active_orders:
             if order_age(order) > self._max_order_age:
+                self.logger().warning(f"c_cancel_active_orders_on_max_age_limit:: DEBUG 6.1 Cancelling {order.client_order_id}")
                 self.c_cancel_order(self._market_info, order.client_order_id)
 
     cdef c_cancel_active_orders(self, object proposal):
+        self.logger().warning(f"c_cancel_active_orders_on_max_age_limit:: DEBUG 7")
+
         if self._cancel_timestamp > self._current_timestamp:
             return
 
@@ -1243,6 +1256,7 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
             for order in self.active_non_hanging_orders:
                 # If is about to be added to hanging_orders then don't cancel
                 if not self._hanging_orders_tracker.is_potential_hanging_order(order):
+                    self.logger().warning(f"c_cancel_active_orders_on_max_age_limit:: DEBUG 7.1 Cancelling {order.client_order_id}")
                     self.c_cancel_order(self._market_info, order.client_order_id)
         else:
             self.c_set_timers()
