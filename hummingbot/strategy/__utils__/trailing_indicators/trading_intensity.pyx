@@ -140,8 +140,6 @@ cdef class TradingIntensityIndicator():
             self.logger().warning(f"c_estimate_intensity:: DEBUG 5.0.2 params=\n{params}")
             self._kappa = Decimal(str(params[0][1]))
             self._alpha = Decimal(str(params[0][0]))
-
-
         except (RuntimeError, ValueError) as e:
             self.logger().warning(f"c_estimate_intensity:: DEBUG 5.2 kappa={self._kappa} alpha={self._alpha}")
             pass

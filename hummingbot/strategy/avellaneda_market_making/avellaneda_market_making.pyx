@@ -147,6 +147,7 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
         self._is_debug = is_debug
         try:
             if self._is_debug:
+                self.logger().warning(f"Avellaneda strategy csv output: {os.getcwd()}")
                 os.unlink(self._debug_csv_path)
         except FileNotFoundError:
             pass
@@ -640,12 +641,15 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
 
     def process_tick(self, timestamp: float):
         proposal = None
+        self.logger().warning(f"process_tick DEBUG 1")
         # Trading is allowed
         if self._create_timestamp <= self._current_timestamp:
+            self.logger().warning(f"process_tick DEBUG 1.1")
             # 1. Calculate reservation price and optimal spread from gamma, alpha, kappa and volatility
             self.c_calculate_reservation_price_and_optimal_spread()
             # 2. Check if calculated prices make sense
             if self._optimal_bid > 0 and self._optimal_ask > 0:
+                self.logger().warning(f"process_tick DEBUG 1.2")
                 # 3. Create base order proposals
                 proposal = self.c_create_base_proposal()
                 # 4. Apply functions that modify orders amount
@@ -654,11 +658,15 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
                 self.c_apply_order_price_modifiers(proposal)
                 # 6. Apply budget constraint, i.e. can't buy/sell more than what you have.
                 self.c_apply_budget_constraint(proposal)
-
+                self.logger().warning(f"process_tick DEBUG 1.25")
                 self.c_cancel_active_orders(proposal)
+                self.logger().warning(f"process_tick DEBUG 1.26")
+
 
         if self.c_to_create_orders(proposal):
+            self.logger().warning(f"process_tick DEBUG 1.3 proposal={proposal}")
             self.c_execute_orders_proposal(proposal)
+            self.logger().warning(f"process_tick DEBUG 1.3")
 
         if self._is_debug:
             self.dump_debug_variables()
@@ -862,8 +870,10 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
             ExchangeBase market = self._market_info.market
             list buys = []
             list sells = []
+        self.logger().warning(f"_create_proposal_based_on_order_override DEBUG 1")
         reference_price = self.get_price()
         for key, value in self._order_override.items():
+            # value[0] is the way 'buy/sell', value[1] is the price and value[2] is the quantity
             if str(value[0]) in ["buy", "sell"]:
                 list_to_be_appended = buys if str(value[0]) == "buy" else sells
                 size = Decimal(str(value[2]))
@@ -887,15 +897,23 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
             list sells = []
         bid_level_spreads, ask_level_spreads = self._get_level_spreads()
         size = market.c_quantize_order_amount(self.trading_pair, self._order_amount)
+        self.logger().warning(f'_create_proposal_based_on_order_levels:: DEBUG 1 self._order_amount={self._order_amount} size={size}')
         if size > 0:
+            self.logger().warning(f'_create_proposal_based_on_order_levels:: DEBUG 1.1 self._order_levels={self._order_levels}')
+
             for level in range(self._order_levels):
+            
                 bid_price = market.c_quantize_order_price(self.trading_pair,
                                                           self._optimal_bid - Decimal(str(bid_level_spreads[level])))
+                self.logger().warning(f'_create_proposal_based_on_order_levels:: DEBUG 1.2 level={level} bid_price={bid_price} self.optimal_bid={self.optimal_bid} bid_level_spreads[level]={bid_level_spreads[level]} ')
                 ask_price = market.c_quantize_order_price(self.trading_pair,
                                                           self._optimal_ask + Decimal(str(ask_level_spreads[level])))
-
+                self.logger().warning(f'_create_proposal_based_on_order_levels:: DEBUG 1.3 level={level} ask_price={ask_price} self.optimal_ask={self.optimal_ask} ask_level_spreads[level]={ask_level_spreads[level]} ')
+                
                 buys.append(PriceSize(bid_price, size))
                 sells.append(PriceSize(ask_price, size))
+        # if len(buys) != self._order_levels or len(sells) != self._order_levels:
+        self.logger().warning(f"_create_proposal_based_on_order_levels DEBUG 1.4 len(buys)={len(buys)} len(sell)={len(sells)}")
         return buys, sells
 
     def create_proposal_based_on_order_levels(self):
@@ -925,13 +943,15 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
             ExchangeBase market = self._market_info.market
             list buys = []
             list sells = []
-
+        self.logger().warning(f'c_create_base_proposal DEBUG 1')
         if self._order_override is not None and len(self._order_override) > 0:
             # If order_override is set, it will override order_levels
             buys, sells = self._create_proposal_based_on_order_override()
         elif self._order_levels > 0:
             # Simple order levels
+            self.logger().warning(f'c_create_base_proposal DEBUG 1.1')
             buys, sells = self._create_proposal_based_on_order_levels()
+            self.logger().warning(f'c_create_base_proposal DEBUG 1.2 len(buys)={len(buys)} len(sells)={len(sells)}')
         else:
             # No order levels nor order_overrides. Just 1 bid and 1 ask order
             buys, sells = self._create_basic_proposal()
@@ -1230,18 +1250,23 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
                 self.c_cancel_order(self._market_info, order.client_order_id)
 
     cdef c_cancel_active_orders(self, object proposal):
-        self.logger().warning(f"c_cancel_active_orders_on_max_age_limit:: DEBUG 7")
+        self.logger().warning(f"c_cancel_active_orders:: DEBUG 1")
 
         if self._cancel_timestamp > self._current_timestamp:
+            self.logger().warning(f"c_cancel_active_orders:: DEBUG 1.1")
             return
 
         cdef:
             list active_buy_prices = []
             list active_sells = []
             bint to_defer_canceling = False
+        # self.logger().warning(f"c_cancel_active_orders:: DEBUG 2")
         if len(self.active_non_hanging_orders) == 0:
+            self.logger().warning(f"c_cancel_active_orders:: DEBUG 2.1")
             return
+
         if proposal is not None:
+            self.logger().warning(f"c_cancel_active_orders:: DEBUG 3")
             active_buy_prices = [Decimal(str(o.price)) for o in self.active_non_hanging_orders if o.is_buy]
             active_sell_prices = [Decimal(str(o.price)) for o in self.active_non_hanging_orders if not o.is_buy]
             proposal_buys = [buy.price for buy in proposal.buys]
@@ -1249,14 +1274,17 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
 
             if self.c_is_within_tolerance(active_buy_prices, proposal_buys) and \
                     self.c_is_within_tolerance(active_sell_prices, proposal_sells):
+                self.logger().warning(f"c_cancel_active_orders:: DEBUG 3.1")
                 to_defer_canceling = True
-
+        self.logger().warning(f"c_cancel_active_orders:: DEBUG 4")
         if not to_defer_canceling:
+            self.logger().warning(f"c_cancel_active_orders:: DEBUG 4.1")
             self._hanging_orders_tracker.update_strategy_orders_with_equivalent_orders()
             for order in self.active_non_hanging_orders:
                 # If is about to be added to hanging_orders then don't cancel
+                self.logger().warning(f"c_cancel_active_orders:: DEBUG 4.2")
                 if not self._hanging_orders_tracker.is_potential_hanging_order(order):
-                    self.logger().warning(f"c_cancel_active_orders_on_max_age_limit:: DEBUG 7.1 Cancelling {order.client_order_id}")
+                    self.logger().warning(f"c_cancel_active_orders:: DEBUG 4.3 Cancelling {order.client_order_id}")
                     self.c_cancel_order(self._market_info, order.client_order_id)
         else:
             self.c_set_timers()

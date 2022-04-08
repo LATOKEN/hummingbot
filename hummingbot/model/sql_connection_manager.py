@@ -87,7 +87,7 @@ class SQLConnectionManager:
                  connection_type: SQLConnectionType,
                  db_path: Optional[str] = None,
                  db_name: Optional[str] = None,
-                 called_from_migrator = False):
+                 called_from_migrator=False):
         db_path = self.create_db_path(db_path, db_name)
         self.db_path = db_path
 

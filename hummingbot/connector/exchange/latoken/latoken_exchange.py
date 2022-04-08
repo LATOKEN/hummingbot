@@ -669,7 +669,7 @@ class LatokenExchange(ExchangeBase):
         Updates the trading rules by requesting the latest definitions from the exchange.
         Executes regularly every 30 minutes
         """
-        while True:
+        while True:  # TODO add fees retrieval for get_fee
             try:
                 await safe_gather(
                     self._update_trading_rules(),
