@@ -596,7 +596,6 @@ class LatokenExchange(ExchangeBase):
 
         if tracked_order is not None:
             try:
-
                 api_json = {
                     "id": exchange_order_id,  # order_id,
                 }
@@ -733,7 +732,7 @@ class LatokenExchange(ExchangeBase):
                     symbol=symbol, domain=self._domain, api_factory=self._api_factory, throttler=self._throttler)
 
                 min_order_size = Decimal(rule["minOrderQuantity"])
-                price_size = Decimal(rule["priceTick"])
+                price_tick = Decimal(rule["priceTick"])
                 quantity_tick = Decimal(rule["quantityTick"])
                 min_order_value = Decimal(rule["minOrderCostUsd"])
                 min_order_quantity = Decimal(rule["minOrderQuantity"])
@@ -742,9 +741,9 @@ class LatokenExchange(ExchangeBase):
                     TradingRule(
                         trading_pair,
                         min_order_size=min_order_size,
-                        min_price_increment=price_size,
+                        min_price_increment=price_tick,
                         min_base_amount_increment=quantity_tick,
-                        min_quote_amount_increment=price_size,
+                        min_quote_amount_increment=price_tick,
                         min_notional_size=min_order_quantity,
                         min_order_value=min_order_value,  # not sure if this is ok when non USD?!?
                         # max_price_significant_digits=len(rule["maxOrderCostUsd"])

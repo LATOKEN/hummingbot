@@ -400,12 +400,16 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
     @property
     def active_orders(self) -> List[LimitOrder]:
         if self._market_info not in self.market_info_to_active_orders:
+            self.logger().warning(f"active_orders : nil")
             return []
+        self.logger().warning(f"active_orders : DEBUG 1 self._market_info={self._market_info}")
+        self.logger().warning(f"active_orders : DEBUG 1.1 self.market_info_to_active_orders[self._market_info]={self.market_info_to_active_orders[self._market_info]}")
         return self.market_info_to_active_orders[self._market_info]
 
     @property
     def active_non_hanging_orders(self) -> List[LimitOrder]:
         orders = [o for o in self.active_orders if not self._hanging_orders_tracker.is_order_id_in_hanging_orders(o.client_order_id)]
+        self.logger().warning(f"active_non_hanging_orders : DEBUG 1 orders={orders}")
         return orders
 
     @property
@@ -610,25 +614,25 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
 
             self.c_collect_market_variables(timestamp)
             if self.c_is_algorithm_ready():
-                self.logger().warning("collect_market_variables - DEBUG 1")
+                self.logger().warning("c_tick - DEBUG 1")
                 if self._create_timestamp <= self._current_timestamp:
                     # Measure order book liquidity
-                    self.logger().warning("collect_market_variables - DEBUG 1.2")
+                    self.logger().warning("c_tick - DEBUG 1.2")
                     self.c_measure_order_book_liquidity()
 
                 self._hanging_orders_tracker.process_tick()
-                self.logger().warning("collect_market_variables - DEBUG 1.3")
+                self.logger().warning("c_tick - DEBUG 1.3")
                 # Needs to be executed at all times to not to have active order leftovers after a trading session ends
                 self.c_cancel_active_orders_on_max_age_limit()
-                self.logger().warning("collect_market_variables - DEBUG 1.4")
+                self.logger().warning("c_tick - DEBUG 1.4")
                 # process_tick() is only called if within a trading timeframe
-                self._execution_state.process_tick(timestamp, self)
-                self.logger().warning("collect_market_variables - DEBUG 1.5")
+                self._execution_state.process_tick(timestamp, self) # Suspicious non-cancellation
+                self.logger().warning("c_tick - DEBUG 1.5")
             else:
-                self.logger().warning("collect_market_variables - DEBUG 2.0")
+                self.logger().warning("c_tick - DEBUG 2.0")
                 # Only if snapshots are different - for trading intensity - a market order happened
                 if self.c_is_algorithm_changed():
-                    self.logger().warning("collect_market_variables - DEBUG 2.1")
+                    self.logger().warning("c_tick - DEBUG 2.1")
                     self._ticks_to_be_ready -= 1
                     if self._ticks_to_be_ready % 5 == 0:
 
@@ -651,9 +655,9 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
             if self._optimal_bid > 0 and self._optimal_ask > 0:
                 self.logger().warning(f"process_tick DEBUG 1.2")
                 # 3. Create base order proposals
-                proposal = self.c_create_base_proposal()
+                proposal = self.c_create_base_proposal() # At this stage, the proposal has the correct length 
                 # 4. Apply functions that modify orders amount
-                self.c_apply_order_amount_eta_transformation(proposal)
+                self.c_apply_order_amount_eta_transformation(proposal) # Being studied
                 # 5. Apply functions that modify orders price
                 self.c_apply_order_price_modifiers(proposal)
                 # 6. Apply budget constraint, i.e. can't buy/sell more than what you have.
@@ -663,6 +667,7 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
                 self.logger().warning(f"process_tick DEBUG 1.26")
 
 
+        # At this stage, the proposal is already wrong
         if self.c_to_create_orders(proposal):
             self.logger().warning(f"process_tick DEBUG 1.3 proposal={proposal}")
             self.c_execute_orders_proposal(proposal)
@@ -741,7 +746,9 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
         self.logger().warning("c_calculate_reservation_price_and_optimal_spread:: DEBUG 2")
 
         q_target = Decimal(str(self.c_calculate_target_inventory()))
+
         q = (market.get_balance(self.base_asset) - q_target) / (inventory)
+        self.logger().debug("c_calculate_reservation_price_and_optimal_spread:: DEBUG 2.1 : q_target={q_target}, q={q}, inventory={inventory}")
         # Volatility has to be in absolute values (prices) because in calculation of reservation price it's not multiplied by the current price, therefore
         # it can't be a percentage. The result of the multiplication has to be an absolute price value because it's being subtracted from the current price
         vol = self.get_volatility()
@@ -752,8 +759,9 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
         if all((self._gamma, self._kappa)) and self._alpha != 0 and self._kappa > 0 and vol != 0:
             if self._execution_state.time_left is not None and self._execution_state.closing_time is not None:
                 # Avellaneda-Stoikov for a fixed timespan
-                self.logger().warning("c_calculate_reservation_price_and_optimal_spread:: DEBUG 3")
                 time_left_fraction = Decimal(str(self._execution_state.time_left / self._execution_state.closing_time))
+                if self._is_debug:
+                    self.logger().info("c_calculate_reservation_price_and_optimal_spread:: DEBUG 3 : time_left_fraction={time_left_fraction}")
             else:
                 # Avellaneda-Stoikov for an infinite timespan
                 # The equations in the paper for this contain a few mistakes
@@ -762,7 +770,8 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
                 # - the risk factor gets partially cancelled
                 # The proposed solution is to use the same equation as for the constrained timespan but with
                 # a fixed time left
-                self.logger().warning("c_calculate_reservation_price_and_optimal_spread:: DEBUG 4")
+                if self._is_debug:
+                    self.logger().info("c_calculate_reservation_price_and_optimal_spread:: DEBUG 4: time_left_fraction={time_left_fraction}")
                 time_left_fraction = 1
 
             self._reservation_price = price - (q * self._gamma * mid_price_variance * time_left_fraction)
@@ -1014,10 +1023,14 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
 
         base_balance, quote_balance = self.adjusted_available_balance_for_orders_budget_constrain()
 
-        for buy in proposal.buys:
+        self.logger().warning(f"c_apply_budget_constraint: DEBUG 1.0 : base_balance={base_balance}, quote_balance={quote_balance}")
+        self.logger().warning(f"c_apply_budget_constraint: DEBUG 1.0 : proposal.buys={proposal.buys}, proposal.sells={proposal.sells}")
+        for i, buy in enumerate(proposal.buys):
+        # for buy in proposal.buys:
             buy_fee = market.c_get_fee(self.base_asset, self.quote_asset, OrderType.LIMIT, TradeType.BUY,
                                        buy.size, buy.price)
             quote_size = buy.size * buy.price * (Decimal(1) + buy_fee.percent)
+            self.logger().warning(f"c_apply_budget_constraint: BUY : DEBUG 1.1 i={i}")
 
             # Adjust buy order size to use remaining balance if less than the order amount
             if quote_balance < quote_size:
@@ -1025,27 +1038,38 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
                 adjusted_amount = market.c_quantize_order_amount(self.trading_pair, adjusted_amount)
                 buy.size = adjusted_amount
                 quote_balance = s_decimal_zero
+                self.logger().warning(f"c_apply_budget_constraint: BUY : DEBUG 1.2 : adjusted_amount={adjusted_amount}, buy.size={buy.size}, quote_balance={quote_balance}")
+
             elif quote_balance == s_decimal_zero:
                 buy.size = s_decimal_zero
+                self.logger().warning(f"c_apply_budget_constraint: BUY : DEBUG 1.3 : buy.size={buy.size}")
             else:
                 quote_balance -= quote_size
+                self.logger().warning(f"c_apply_budget_constraint: BUY : DEBUG 1.4 : quote_balance={quote_balance}")
 
         proposal.buys = [o for o in proposal.buys if o.size > 0]
+        self.logger().warning(f"c_apply_budget_constraint: DEBUG 1.5 BUY : proposal.buys={proposal.buys}")
 
-        for sell in proposal.sells:
+        for i, sell in enumerate(proposal.sells):
+        # for sell in proposal.sells:
             base_size = sell.size
 
+            self.logger().warning(f"c_apply_budget_constraint: SELL : DEBUG 2.1 i={i}")
             # Adjust sell order size to use remaining balance if less than the order amount
             if base_balance < base_size:
                 adjusted_amount = market.c_quantize_order_amount(self.trading_pair, base_balance)
                 sell.size = adjusted_amount
                 base_balance = s_decimal_zero
+                self.logger().warning(f"c_apply_budget_constraint: SELL : DEBUG 2.2 : adjusted_amount={adjusted_amount}, sell.size={sell.size}, base_balance={base_balance}")
             elif base_balance == s_decimal_zero:
                 sell.size = s_decimal_zero
+                self.logger().warning(f"c_apply_budget_constraint: SELL : DEBUG 2.3 : sell.size={sell.size}")
             else:
                 base_balance -= base_size
+                self.logger().warning(f"c_apply_budget_constraint: SELL: DEBUG 2.4 : base_balance={base_balance}")
 
         proposal.sells = [o for o in proposal.sells if o.size > 0]
+        self.logger().warning(f"c_apply_budget_constraint: DEBUG 2.5 SELL: proposal.sells={proposal.sells}")
 
     def apply_budget_constraint(self, proposal: Proposal):
         return self.c_apply_budget_constraint(proposal)
@@ -1135,6 +1159,8 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
                     for i, proposed in enumerate(proposal.sells):
                         proposal.sells[i].size = market.c_quantize_order_amount(trading_pair, proposal.sells[i].size * Decimal.exp(self._eta * q))
                     proposal.sells = [o for o in proposal.sells if o.size > 0]
+            if self._is_debug:
+                self.logger().warning(f"c_apply_order_amount_eta_transformation : DEBUG 1 : proposal={proposal}")
 
     def apply_order_amount_eta_transformation(self, proposal: Proposal):
         self.c_apply_order_amount_eta_transformation(proposal)
@@ -1241,19 +1267,21 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
         """
         Cancels active non hanging orders if they are older than max age limit
         """
-        self.logger().warning(f"c_cancel_active_orders_on_max_age_limit:: DEBUG 6")
+        self.logger().warning(f"c_cancel_active_orders_on_max_age_limit:: DEBUG 1")
         cdef:
             list active_orders = self.active_non_hanging_orders
+        self.logger().warning(f"c_cancel_active_orders_on_max_age_limit:: DEBUG 1.1 active_orders={active_orders}")
         for order in active_orders:
             if order_age(order) > self._max_order_age:
-                self.logger().warning(f"c_cancel_active_orders_on_max_age_limit:: DEBUG 6.1 Cancelling {order.client_order_id}")
+                self.logger().warning(f"c_cancel_active_orders_on_max_age_limit:: DEBUG 1.2 Cancelling order.client_order_id={order.client_order_id}")
                 self.c_cancel_order(self._market_info, order.client_order_id)
 
     cdef c_cancel_active_orders(self, object proposal):
-        self.logger().warning(f"c_cancel_active_orders:: DEBUG 1")
+        self.logger().warning(f"c_cancel_active_orders:: DEBUG 1, proposal={proposal}")
+        self.logger().warning(f"c_cancel_active_orders:: DEBUG 1.1, self._cancel_timestamp={self._cancel_timestamp}, self._current_timestamp={self._current_timestamp}")
 
         if self._cancel_timestamp > self._current_timestamp:
-            self.logger().warning(f"c_cancel_active_orders:: DEBUG 1.1")
+            self.logger().warning(f"c_cancel_active_orders:: DEBUG 1.3 : return")
             return
 
         cdef:
@@ -1261,6 +1289,7 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
             list active_sells = []
             bint to_defer_canceling = False
         # self.logger().warning(f"c_cancel_active_orders:: DEBUG 2")
+        self.logger().warning(f"c_cancel_active_orders:: DEBUG 2.0 self.active_non_hanging_orders={self.active_non_hanging_orders}")
         if len(self.active_non_hanging_orders) == 0:
             self.logger().warning(f"c_cancel_active_orders:: DEBUG 2.1")
             return
@@ -1271,6 +1300,7 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
             active_sell_prices = [Decimal(str(o.price)) for o in self.active_non_hanging_orders if not o.is_buy]
             proposal_buys = [buy.price for buy in proposal.buys]
             proposal_sells = [sell.price for sell in proposal.sells]
+            self.logger().warning(f"c_cancel_active_orders:: DEBUG 3.01, \nproposal_buys=\n{proposal_buys}, \nproposal_sells=\n{proposal_sells}")
 
             if self.c_is_within_tolerance(active_buy_prices, proposal_buys) and \
                     self.c_is_within_tolerance(active_sell_prices, proposal_sells):
@@ -1279,14 +1309,19 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
         self.logger().warning(f"c_cancel_active_orders:: DEBUG 4")
         if not to_defer_canceling:
             self.logger().warning(f"c_cancel_active_orders:: DEBUG 4.1")
-            self._hanging_orders_tracker.update_strategy_orders_with_equivalent_orders()
+            dummy = self._hanging_orders_tracker.update_strategy_orders_with_equivalent_orders()
+            self.logger().warning(f"c_cancel_active_orders:: DEBUG 4.15 dummy={dummy}")
+
             for order in self.active_non_hanging_orders:
                 # If is about to be added to hanging_orders then don't cancel
                 self.logger().warning(f"c_cancel_active_orders:: DEBUG 4.2")
                 if not self._hanging_orders_tracker.is_potential_hanging_order(order):
-                    self.logger().warning(f"c_cancel_active_orders:: DEBUG 4.3 Cancelling {order.client_order_id}")
+                    self.logger().warning(f"c_cancel_active_orders:: DEBUG 4.3 Cancelling order={order}")
+                    self.logger().warning(f"c_cancel_active_orders:: DEBUG 4.31 Cancelling order.client_order_id={order.client_order_id}")
                     self.c_cancel_order(self._market_info, order.client_order_id)
+                    self.logger().warning(f"c_cancel_active_orders:: DEBUG 4.32 Cancelled self._market_info={self._market_info} ")
         else:
+            self.logger().warning(f"c_cancel_active_orders:: DEBUG 5.0 self.c_set_timers()")
             self.c_set_timers()
 
     def cancel_active_orders(self, proposal: Proposal = None):
@@ -1295,6 +1330,8 @@ cdef class AvellanedaMarketMakingStrategy(StrategyBase):
     cdef bint c_to_create_orders(self, object proposal):
         non_hanging_orders_non_cancelled = [o for o in self.active_non_hanging_orders if not
                                             self._hanging_orders_tracker.is_potential_hanging_order(o)]
+        self.logger().warning(f"cancel_active_orders:: DEBUG 1.0 non_hanging_orders_non_cancelled={non_hanging_orders_non_cancelled} ")
+        self.logger().warning(f"cancel_active_orders:: DEBUG 1.1 self.active_non_hanging_orders={self.active_non_hanging_orders} ")
 
         return (self._create_timestamp < self._current_timestamp
                 and (not self._should_wait_order_cancel_confirmation or

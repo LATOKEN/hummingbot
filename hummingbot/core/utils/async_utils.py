@@ -8,9 +8,11 @@ async def safe_wrapper(c):
     try:
         return await c
     except asyncio.CancelledError:
+        logging.getLogger(__name__).error(f"safe_wrapper : CANCELLATION ERROR {c}", exc_info=True)
         raise
     except Exception as e:
-        logging.getLogger(__name__).error(f"Unhandled error in background task: {str(e)}", exc_info=True)
+        logging.getLogger(__name__).error(f"safe_wrapper : CANCELLATION ERROR {c}", exc_info=True)
+        logging.getLogger(__name__).error(f"Unhandled error in background task: {e}", exc_info=True)
 
 
 def safe_ensure_future(coro, *args, **kwargs):

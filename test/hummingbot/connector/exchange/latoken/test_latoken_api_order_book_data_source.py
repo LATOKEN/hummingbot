@@ -201,7 +201,7 @@ class LatokenAPIOrderBookDataSourceUnitTests(unittest.TestCase):
         mock_response: List[Dict[str, Any]] = [
             {
                 # Truncated Response
-                "symbol": self.ex_trading_pair,
+                "symbol": self.trading_pair,
                 "bestBid": "99",
                 "bestAsk": "101",
             },

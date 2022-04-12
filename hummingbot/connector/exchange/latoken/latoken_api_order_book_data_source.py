@@ -49,6 +49,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
     TRADE_STREAM_ID = 1
     DIFF_STREAM_ID = 2
     ONE_HOUR = 60 * 60
+    SNAPSHOT_LIMIT_SIZE = 100
     # QUARTER_OF_SECOND = .25
 
     _logger: Optional[HummingbotLogger] = None
@@ -381,7 +382,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
     async def get_snapshot(
             self,
             trading_pair: str,
-            limit: int = 1000) -> Dict[str, Any]:
+            limit: int = SNAPSHOT_LIMIT_SIZE) -> Dict[str, Any]:
         """
         Retrieves a copy of the full order book from the exchange, for a particular trading pair.
         :param trading_pair: the trading pair for which the order book will be retrieved
