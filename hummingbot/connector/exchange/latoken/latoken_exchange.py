@@ -2,7 +2,7 @@ import asyncio
 import logging
 import time
 import datetime
-import json
+import ujson
 import uuid
 from decimal import Decimal
 from typing import (
@@ -850,7 +850,7 @@ class LatokenExchange(ExchangeBase):
                 cmd = event_message.get('cmd', None)
                 if cmd and cmd == 'MESSAGE':
                     subscription_id = int(event_message['headers']['subscription'])
-                    body = json.loads(event_message["body"])
+                    body = ujson.loads(event_message["body"])
                     if subscription_id == CONSTANTS.SUBSCRIPTION_ID_ACCOUNT:
                         _ = await self.process_account_balance_update(balances=body["payload"])
                     elif subscription_id == CONSTANTS.SUBSCRIPTION_ID_ORDERS:

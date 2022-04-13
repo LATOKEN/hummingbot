@@ -2,7 +2,7 @@ import asyncio
 import logging
 import time
 import stomper
-import json
+import ujson
 
 from collections import defaultdict
 from decimal import Decimal
@@ -256,7 +256,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
                     api_factory=self._api_factory,
                     throttler=self._throttler)
 
-                body = json.loads(msg["body"])
+                body = ujson.loads(msg["body"])
                 payload = body["payload"]
                 timestamp = time.time_ns()
                 for trade in payload:
@@ -288,7 +288,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
                     api_factory=self._api_factory,
                     throttler=self._throttler)
 
-                body = json.loads(msg["body"])
+                body = ujson.loads(msg["body"])
                 payload = body["payload"]
                 timestamp_ns = time.time_ns()
                 order_book_message: OrderBookMessage = LatokenOrderBook.diff_message_from_exchange(
