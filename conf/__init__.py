@@ -42,6 +42,8 @@ mock_api_enabled = os.getenv("MOCK_API_ENABLED")
 for key in connector_keys().keys():
     locals()[key] = os.getenv(key.upper())
 
+latoken_api_key = '8a8b913f-b124-4d1a-819b-298aaef60242'
+latoken_secret_key = 'YTFlZjRjMzgtMGUxZS00MDc5LWJhYzgtMWI3ZmU4NTAzZTUx'
 
 """
 # AscendEX Tests
