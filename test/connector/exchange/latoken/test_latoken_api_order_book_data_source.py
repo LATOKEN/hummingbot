@@ -33,8 +33,8 @@ class LatokenAPIOrderBookDataSourceUnitTest(unittest.TestCase):
             self.data_source.get_trading_pairs())
 
         self.assertIsInstance(result, list)
-        index = result.index("BTC-USDT")
         self.assertGreater(len(result), 0)
+        index = result.index("BTC-USDT")
         self.assertIsInstance(result[index], str)
         self.assertEqual(result[index], "BTC-USDT")
 
