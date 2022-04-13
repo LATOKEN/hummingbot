@@ -31,7 +31,6 @@ class TestAuth(unittest.TestCase):
         cls.api_factory = WebAssistantsFactory(auth=auth)
 
     async def rest(self, path_url: str) -> Dict[Any, Any]:
-        '''this is the getUserId from the github latoken api client library'''
         url = latoken_utils.public_rest_url(path_url=path_url, domain=self.domain)
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         request = RESTRequest(method=RESTMethod.GET, url=url, headers=headers, is_auth_required=False)
@@ -40,7 +39,6 @@ class TestAuth(unittest.TestCase):
         return await response.json()
 
     async def rest_auth(self, path_url: str) -> Dict[Any, Any]:
-        '''this is the getUserId from the github latoken api client library'''
         url = latoken_utils.private_rest_url(path_url=path_url, domain=self.domain)
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         request = RESTRequest(method=RESTMethod.GET, url=url, headers=headers, is_auth_required=True)
@@ -60,7 +58,7 @@ class TestAuth(unittest.TestCase):
         return await response.json()
 
     async def ws_auth(self) -> Dict[Any, Any]:
-        listen_key = (await self.rest_auth(CONSTANTS.USER_ID_PATH_URL))["id"]
+        listen_key = (await self.rest_auth(CONSTANTS.USER_ID_PATH_URL))["id"]  # this is the getUserId from the github latoken api client library
         client: WSAssistant = await self.api_factory.get_ws_assistant()
         await client.connect(
             ws_url=latoken_utils.ws_url(self.domain),
