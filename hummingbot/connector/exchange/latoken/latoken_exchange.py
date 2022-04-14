@@ -358,7 +358,7 @@ class LatokenExchange(ExchangeBase):
 
     async def retrieve_fee(self, base_currency: str, quote_currency: str, order_type: OrderType, is_maker: Optional[bool]):
         fee = await self._api_request(
-            method=RESTMethod.POST,
+            method=RESTMethod.GET,
             path_url=f"{CONSTANTS.FEES_PATH_URL}/{base_currency}/{quote_currency}",
             is_auth_required=True)
 
