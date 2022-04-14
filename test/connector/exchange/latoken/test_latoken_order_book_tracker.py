@@ -5,7 +5,7 @@ from os.path import join, realpath
 import sys
 from hummingbot.core.event.event_logger import EventLogger
 from hummingbot.core.event.events import OrderBookEvent, OrderBookTradeEvent, TradeType
-
+from decimal import Decimal
 import asyncio
 import logging
 from typing import Dict, Optional, List
@@ -100,8 +100,8 @@ class LatokenOrderBookTrackerUnitTest(unittest.TestCase):
             self.assertTrue(type(ob_trade_event) == OrderBookTradeEvent)
             self.assertTrue(ob_trade_event.trading_pair in self.trading_pairs)
             self.assertTrue(type(ob_trade_event.timestamp) in [float, int])
-            self.assertTrue(type(ob_trade_event.amount) == float)
-            self.assertTrue(type(ob_trade_event.price) == float)
+            self.assertTrue(type(ob_trade_event.amount) in [Decimal, float])
+            self.assertTrue(type(ob_trade_event.price) in [Decimal, float])
             self.assertTrue(type(ob_trade_event.type) == TradeType)
             # Bittrex datetime is in epoch milliseconds
             self.assertTrue(math.ceil(math.log10(ob_trade_event.timestamp)) == 10)
