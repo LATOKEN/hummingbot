@@ -12,7 +12,7 @@ class LatokenUserStreamTrackerUnitTest(unittest.TestCase):
     def setUpClass(cls):
         cls.ev_loop: asyncio.BaseEventLoop = asyncio.get_event_loop()
         cls.latoken_auth = LatokenAuth(conf.latoken_api_key, conf.latoken_secret_key)
-        cls.trading_pair = ["ETHUSD"]  # Using V3 convention since OrderBook is built using V3
+        cls.trading_pair = ["ETHUSDT"]
         cls.user_stream_tracker: LatokenUserStreamTracker = LatokenUserStreamTracker(
             latoken_auth=cls.latoken_auth, trading_pairs=cls.trading_pair)
         cls.user_stream_tracker_task: asyncio.Task = asyncio.ensure_future(

@@ -390,8 +390,8 @@ class LatokenExchange(ExchangeBase):
         function are ignore except order_type. Use OrderType.LIMIT_MAKER to specify you want trading fee for
         maker order.
         """
-        # percent = asyncio.run(self.retrieve_fee(base_currency, quote_currency, order_type, is_maker))
-        # return AddedToCostTradeFee(percent=percent) if order_side == TradeType.BUY else DeductedFromReturnsTradeFee(percent=percent)
+        percent = self._ev_loop.run_until_complete(self.retrieve_fee(base_currency, quote_currency, order_type, is_maker))
+        return AddedToCostTradeFee(percent=percent) if order_side == TradeType.BUY else DeductedFromReturnsTradeFee(percent=percent)
         # is_maker = order_type is OrderType.LIMIT_MAKER  # LIMIT_MAKER not supported by latoken
         # fee for user and pair
         # fee = await self._api_request(
@@ -404,10 +404,10 @@ class LatokenExchange(ExchangeBase):
         # "type": "FEE_SCHEME_TYPE_PERCENT_QUOTE","take": "FEE_SCHEME_TAKE_PROPORTION"
         # is_maker = order_type is OrderType.LIMIT_MAKER  # LIMIT_MAKER not supported by latoken
         # return DeductedFromReturnsTradeFee(percent=self.estimate_fee_pct(is_maker))
-        estimated_fee_pct = self.estimate_fee_pct(is_maker)
-        return AddedToCostTradeFee(
-            percent=estimated_fee_pct) if order_side == TradeType.BUY else DeductedFromReturnsTradeFee(
-            percent=estimated_fee_pct)
+        # estimated_fee_pct = self.estimate_fee_pct(is_maker)
+        # return AddedToCostTradeFee(
+        #     percent=estimated_fee_pct) if order_side == TradeType.BUY else DeductedFromReturnsTradeFee(
+        #     percent=estimated_fee_pct)
 
     def buy(self, trading_pair: str, amount: Decimal, order_type: OrderType = OrderType.LIMIT,
             price: Decimal = s_decimal_NaN, **kwargs) -> str:
@@ -765,11 +765,13 @@ class LatokenExchange(ExchangeBase):
         # maybe request every currency if len(account_balance) > 5
         currency_lists = await safe_gather(*balance_to_gather, return_exceptions=True)
 
-        currencies = {currency["id"]: currency["tag"] for currency in currency_lists}  # TODO make dictionairy for this
+        currencies = {currency["id"]: currency["tag"] for currency in currency_lists if isinstance(currency, dict)}  # TODO make dictionairy for this
 
         for balance in balances:
-            asset_name = currencies[balance["currency"]]
+            asset_name = currencies.get(balance["currency"], None)
             if asset_name is None or balance["type"] != "ACCOUNT_TYPE_SPOT":
+                if asset_name is None:
+                    self.logger().error(f"Could not resolve currency details for balance={balance}")
                 continue
             free_balance = Decimal(balance["available"])
             total_balance = free_balance + Decimal(balance["blocked"])

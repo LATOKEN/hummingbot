@@ -31,6 +31,7 @@ class TestAuth(unittest.TestCase):
         cls.api_factory = WebAssistantsFactory(auth=auth)
 
     async def rest(self, path_url: str) -> Dict[Any, Any]:
+        """REST public request"""
         url = latoken_utils.public_rest_url(path_url=path_url, domain=self.domain)
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         request = RESTRequest(method=RESTMethod.GET, url=url, headers=headers, is_auth_required=False)
@@ -39,6 +40,7 @@ class TestAuth(unittest.TestCase):
         return await response.json()
 
     async def rest_auth(self, path_url: str) -> Dict[Any, Any]:
+        """REST private GET request"""
         url = latoken_utils.private_rest_url(path_url=path_url, domain=self.domain)
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         request = RESTRequest(method=RESTMethod.GET, url=url, headers=headers, is_auth_required=True)
@@ -47,6 +49,7 @@ class TestAuth(unittest.TestCase):
         return await response.json()
 
     async def rest_auth_post(self, json) -> Dict[Any, Any]:
+        """REST private POST request (order placement)"""
         url = latoken_utils.private_rest_url(CONSTANTS.ORDER_PLACE_PATH_URL, domain=self.domain)
         method = RESTMethod.POST
         headers = {
@@ -58,6 +61,7 @@ class TestAuth(unittest.TestCase):
         return await response.json()
 
     async def ws_auth(self) -> Dict[Any, Any]:
+        """ws private (user account balance request)"""
         listen_key = (await self.rest_auth(CONSTANTS.USER_ID_PATH_URL))["id"]  # this is the getUserId from the github latoken api client library
         client: WSAssistant = await self.api_factory.get_ws_assistant()
         await client.connect(
@@ -89,13 +93,8 @@ class TestAuth(unittest.TestCase):
         await client.disconnect()
         return response[0]
 
-    def test_rest_auth(self):
-        result = self.ev_loop.run_until_complete(self.rest_auth(CONSTANTS.USER_ID_PATH_URL))
-        if len(result) == 0 or "id" not in result:
-            print(f"Unexpected response for API call: {result}")
-        assert "id" in result
-
     async def get_tag_by_id(self, trading_pair):
+        """get uuid id for latoken ticker tag"""
         symbol_parts = self.trading_pair.split('-')
         base = symbol_parts[0]
         quote = symbol_parts[1]
@@ -104,6 +103,13 @@ class TestAuth(unittest.TestCase):
         quote_request = await self.rest(f"{CONSTANTS.CURRENCY_PATH_URL}/{quote}")
         quote_id = quote_request['id']
         return base_id, quote_id
+
+    def test_rest_auth(self):
+        """REST private request test, by getting user id required for ws auth"""
+        result = self.ev_loop.run_until_complete(self.rest_auth(CONSTANTS.USER_ID_PATH_URL))
+        if len(result) == 0 or "id" not in result:
+            print(f"Unexpected response for API call: {result}")
+        assert "id" in result
 
     def test_rest_auth_post(self):
         new_order_id = latoken_utils.get_new_client_order_id(is_buy=True, trading_pair=self.trading_pair)

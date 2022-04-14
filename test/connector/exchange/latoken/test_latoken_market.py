@@ -29,7 +29,7 @@ from hummingbot.core.event.events import (
     OrderFilledEvent,
     SellOrderCompletedEvent,
 )
-from hummingbot.core.data_type.trade_fee import AddedToCostTradeFee
+from hummingbot.core.data_type.trade_fee import TradeFeeBase
 from hummingbot.core.utils.async_utils import (
     safe_ensure_future,
     safe_gather,
@@ -45,9 +45,9 @@ sys.path.insert(0, realpath(join(__file__, "../../../../../")))
 logging.basicConfig(level=METRICS_LOG_LEVEL)
 API_KEY = conf.latoken_api_key
 API_SECRET = conf.latoken_secret_key
-trading_pair = "ETH-USD"
-base_asset = trading_pair.split("-")[0]
-quote_asset = trading_pair.split("-")[1]
+trading_pair = "ETH-USDT"
+base_asset, quote_asset = trading_pair.split("-")
+domain = "tech"
 
 
 class LatokenExchangeUnitTest(unittest.TestCase):
@@ -74,7 +74,8 @@ class LatokenExchangeUnitTest(unittest.TestCase):
         cls.market: LatokenExchange = LatokenExchange(
             API_KEY,
             API_SECRET,
-            trading_pairs=[trading_pair]
+            trading_pairs=[trading_pair],
+            domain=domain
         )
         cls.ev_loop: asyncio.BaseEventLoop = asyncio.get_event_loop()
         cls.clock.add_iterator(cls.market)
@@ -88,12 +89,16 @@ class LatokenExchangeUnitTest(unittest.TestCase):
 
     @classmethod
     async def wait_til_ready(cls):
+        print("wait_til_ready:: entered")
         while True:
             now = time.time()
+            print(f"wait_til_ready:: now={now}")
             next_iteration = now // 1.0 + 1
             if cls.market.ready:
+                print(f"wait_til_ready:: cls.market.ready={cls.market.ready}")
                 break
             else:
+                print(f"wait_til_ready:: next_iteration={next_iteration}")
                 await cls._clock.run_til(next_iteration)
             await asyncio.sleep(1.0)
 
@@ -125,12 +130,12 @@ class LatokenExchangeUnitTest(unittest.TestCase):
         return self.ev_loop.run_until_complete(self.run_parallel_async(*tasks))
 
     def test_get_fee(self):
-        limit_fee: AddedToCostTradeFee = self.market.get_fee(base_asset, quote_asset, OrderType.LIMIT,
-                                                             TradeType.BUY, 1, 1)
+        limit_fee: TradeFeeBase = self.market.get_fee(base_asset, quote_asset, OrderType.LIMIT,
+                                                      TradeType.BUY, Decimal("1"), Decimal("1"))
         self.assertGreater(limit_fee.percent, 0)
         self.assertEqual(len(limit_fee.flat_fees), 0)
-        market_fee: AddedToCostTradeFee = self.market.get_fee(base_asset, quote_asset, OrderType.MARKET,
-                                                              TradeType.BUY, 1)
+        market_fee: TradeFeeBase = self.market.get_fee(base_asset, quote_asset, OrderType.MARKET,
+                                                       TradeType.BUY, Decimal("1"))
         self.assertGreater(market_fee.percent, 0)
         self.assertEqual(len(market_fee.flat_fees), 0)
 
@@ -173,13 +178,12 @@ class LatokenExchangeUnitTest(unittest.TestCase):
         self.market_logger.clear()
 
     def test_limit_sell(self):
-        amount: Decimal = Decimal("0.02")
         current_ask_price: Decimal = self.market.get_price(trading_pair, False)
         # for no fill
         ask_price: Decimal = Decimal("1.1") * current_ask_price
         quantize_ask_price: Decimal = self.market.quantize_order_price(trading_pair,
                                                                        ask_price)
-
+        amount: Decimal = Decimal("0.02")
         order_id = self.market.sell(trading_pair, amount, OrderType.LIMIT,
                                     quantize_ask_price)
         # Wait for order creation event
@@ -326,7 +330,8 @@ class LatokenExchangeUnitTest(unittest.TestCase):
             self.market: LatokenExchange = LatokenExchange(
                 API_KEY,
                 API_SECRET,
-                trading_pairs=[trading_pair]
+                trading_pairs=[trading_pair],
+                domain=domain
             )
             for event_tag in self.events:
                 self.market.add_listener(event_tag, self.market_logger)
