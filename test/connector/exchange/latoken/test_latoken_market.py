@@ -89,16 +89,12 @@ class LatokenExchangeUnitTest(unittest.TestCase):
 
     @classmethod
     async def wait_til_ready(cls):
-        print("wait_til_ready:: entered")
         while True:
             now = time.time()
-            print(f"wait_til_ready:: now={now}")
             next_iteration = now // 1.0 + 1
             if cls.market.ready:
-                print(f"wait_til_ready:: cls.market.ready={cls.market.ready}")
                 break
             else:
-                print(f"wait_til_ready:: next_iteration={next_iteration}")
                 await cls._clock.run_til(next_iteration)
             await asyncio.sleep(1.0)
 
@@ -140,9 +136,9 @@ class LatokenExchangeUnitTest(unittest.TestCase):
         self.assertEqual(len(market_fee.flat_fees), 0)
 
     def test_minimum_order_size(self):
-        amount = Decimal("0.001")
+        amount = Decimal("0.0001")
         quantized_amount = self.market.quantize_order_amount(trading_pair, amount)
-        self.assertEqual(quantized_amount, 0)
+        self.assertEqual(quantized_amount, Decimal("0"))
 
     def test_get_balance(self):
         balance = self.market.get_balance(quote_asset)
@@ -209,9 +205,7 @@ class LatokenExchangeUnitTest(unittest.TestCase):
 
         most_top_bid = next(bid_entries)
         bid_price: Decimal = Decimal(most_top_bid.price)
-        quantize_bid_price: Decimal = \
-            self.market.quantize_order_price(trading_pair, bid_price)
-        quantize_bid_price = quantize_bid_price * Decimal("1.1")
+        quantize_bid_price = self.market.quantize_order_price(trading_pair, bid_price) * Decimal("1.1")
 
         order_id = self.market.buy(trading_pair,
                                    quantized_amount,
@@ -249,9 +243,8 @@ class LatokenExchangeUnitTest(unittest.TestCase):
         ask_entries = self.market.order_books[trading_pair].ask_entries()
         most_top_ask = next(ask_entries)
         ask_price: Decimal = Decimal(most_top_ask.price)
-        quantize_ask_price: Decimal = \
-            self.market.quantize_order_price(trading_pair, ask_price)
-        quantize_ask_price = quantize_ask_price * Decimal("0.9")
+
+        quantize_ask_price = self.market.quantize_order_price(trading_pair, ask_price) * Decimal("0.9")
 
         order_id = self.market.sell(trading_pair,
                                     quantized_amount,
@@ -294,7 +287,7 @@ class LatokenExchangeUnitTest(unittest.TestCase):
 
         recorder: MarketsRecorder = MarketsRecorder(sql, [self.market], config_path, strategy_name)
         recorder.start()
-
+        session = sql.get_new_session()
         try:
             self.assertEqual(0, len(self.market.tracking_states))
 
@@ -318,7 +311,7 @@ class LatokenExchangeUnitTest(unittest.TestCase):
             self.assertEqual(order_id, recorded_orders[0].id)
 
             # Verify saved market states
-            saved_market_states: MarketState = recorder.get_market_states(config_path, self.market)
+            saved_market_states: MarketState = recorder.get_market_states(config_path, self.market, session=session)
             self.assertIsNotNone(saved_market_states)
             self.assertIsInstance(saved_market_states.saved_state, dict)
             self.assertGreater(len(saved_market_states.saved_state), 0)
@@ -338,7 +331,8 @@ class LatokenExchangeUnitTest(unittest.TestCase):
             recorder.stop()
             recorder = MarketsRecorder(sql, [self.market], config_path, strategy_name)
             recorder.start()
-            saved_market_states = recorder.get_market_states(config_path, self.market)
+
+            saved_market_states = recorder.get_market_states(config_path, self.market, session=session)
             self.clock.add_iterator(self.market)
             self.assertEqual(0, len(self.market.limit_orders))
             self.assertEqual(0, len(self.market.tracking_states))
@@ -353,13 +347,13 @@ class LatokenExchangeUnitTest(unittest.TestCase):
             order_id = None
             self.assertEqual(0, len(self.market.limit_orders))
             self.assertEqual(0, len(self.market.tracking_states))
-            saved_market_states = recorder.get_market_states(config_path, self.market)
+            saved_market_states = recorder.get_market_states(config_path, self.market, session=session)
             self.assertEqual(0, len(saved_market_states.saved_state))
         finally:
             if order_id is not None:
                 self.market.cancel(trading_pair, order_id)
                 self.run_parallel(self.market_logger.wait_for(OrderCancelledEvent))
-
+            session.close()
             recorder.stop()
             self.setUpClass()
 

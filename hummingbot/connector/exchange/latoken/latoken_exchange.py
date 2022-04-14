@@ -351,7 +351,7 @@ class LatokenExchange(ExchangeBase):
         notional_size = current_price * quantized_amount
 
         # Add 1% as a safety factor in case the prices changed while making the order.
-        if notional_size < trading_rule.min_notional_size * Decimal("1.00"):  # TODO does this make sense? put 1.01 to 1.00
+        if notional_size < trading_rule.min_notional_size * Decimal("1.01"):  # TODO does this make sense? put 1.01 to 1.00
             return s_decimal_0
 
         return quantized_amount
@@ -740,7 +740,7 @@ class LatokenExchange(ExchangeBase):
                 retval.append(
                     TradingRule(
                         trading_pair,
-                        min_order_size=min_order_size,
+                        min_order_size=max(min_order_size, quantity_tick),
                         min_price_increment=price_tick,
                         min_base_amount_increment=quantity_tick,
                         min_quote_amount_increment=price_tick,
