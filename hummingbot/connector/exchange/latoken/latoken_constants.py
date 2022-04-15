@@ -26,7 +26,7 @@ SERVER_TIME_PATH_URL = "/time"
 # Private API endpoints or LatokenClient function
 ACCOUNTS_PATH_URL = "/auth/account"
 # MY_TRADES_PATH_URL = "/trade"
-TRADES_FOR_PAIR_PATH_URL = "/auth/result = {dict: 4} {'message': 'Validation errors', 'error': 'VALIDATION_ERROR', 'errors': {'price': 'numeric value out of bounds (<18 digits>.<18 digits> expected)'}, 'status': 'FAILURE'}trade/pair"
+TRADES_FOR_PAIR_PATH_URL = "/auth/trade/pair"
 # ORDER_PATH_URL = "/order"
 ORDER_PLACE_PATH_URL = "/auth/order/place"
 ORDER_CANCEL_PATH_URL = "/auth/order/cancel"

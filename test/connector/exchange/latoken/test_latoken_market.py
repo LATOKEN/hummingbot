@@ -5,13 +5,14 @@ import os
 import sys
 import time
 import unittest
+import random
 from decimal import Decimal
 from os.path import join, realpath
 from typing import (
     List,
     Optional,
 )
-
+from hummingbot.core.data_type.in_flight_order import OrderState
 import conf
 from hummingbot.core.clock import (
     Clock,
@@ -42,6 +43,7 @@ from hummingbot.model.order import Order
 from hummingbot.model.sql_connection_manager import SQLConnectionManager, SQLConnectionType
 
 sys.path.insert(0, realpath(join(__file__, "../../../../../")))
+# logging.basicConfig(level=logging.DEBUG, stream=sys.stderr)
 logging.basicConfig(level=METRICS_LOG_LEVEL)
 API_KEY = conf.latoken_api_key
 API_SECRET = conf.latoken_secret_key
@@ -201,37 +203,47 @@ class LatokenExchangeUnitTest(unittest.TestCase):
         quantized_amount: Decimal = self.market.quantize_order_amount(trading_pair,
                                                                       amount)
 
-        bid_entries = self.market.order_books[trading_pair].bid_entries()
+        # bid_entries = self.market.order_books[trading_pair].bid_entries()
+        ask_entries = self.market.order_books[trading_pair].ask_entries()
+        # most_top_bid = next(bid_entries)
+        most_top_ask = next(ask_entries)
+        # bid_price: Decimal = Decimal(most_top_bid.price)
+        # quantize_bid_price = self.market.quantize_order_price(trading_pair, bid_price) * Decimal("1.1")
 
-        most_top_bid = next(bid_entries)
-        bid_price: Decimal = Decimal(most_top_bid.price)
-        quantize_bid_price = self.market.quantize_order_price(trading_pair, bid_price) * Decimal("1.1")
+        ask_price: Decimal = Decimal(most_top_ask.price)
+        min_price_increment = self.market.trading_rules[trading_pair].min_price_increment
+        ask_price_to_be_lifted = self.market.quantize_order_price(trading_pair, ask_price - min_price_increment)
 
-        order_id = self.market.buy(trading_pair,
-                                   quantized_amount,
-                                   OrderType.LIMIT,
-                                   quantize_bid_price,
-                                   )
+        order_id_sell = self.market.sell(trading_pair, quantized_amount, OrderType.LIMIT, ask_price_to_be_lifted)
+        print(order_id_sell)
+        _ = self.run_parallel(
+            self.market_logger.wait_for(SellOrderCreatedEvent))
 
-        [order_completed_event] = self.run_parallel(
-            self.market_logger.wait_for(BuyOrderCompletedEvent))
-        order_completed_event: BuyOrderCompletedEvent = order_completed_event
+        order_id_buy = self.market.buy(trading_pair, quantized_amount, OrderType.LIMIT, ask_price_to_be_lifted)
+
+        # [order_completed_event_sell] = self.run_parallel(
+        #     self.market_logger.wait_for(SellOrderCompletedEvent))
+
+        order_completed_event_buy, order_completed_event_sell = self.run_parallel(
+            self.market_logger.wait_for(BuyOrderCompletedEvent), self.market_logger.wait_for(SellOrderCompletedEvent))
+
+        order_completed_event_buy: BuyOrderCompletedEvent = order_completed_event_buy
         trade_events: List[OrderFilledEvent] = [t for t in self.market_logger.event_log
                                                 if isinstance(t, OrderFilledEvent)]
         base_amount_traded: Decimal = sum(t.amount for t in trade_events)
         quote_amount_traded: Decimal = sum(t.amount * t.price for t in trade_events)
 
         self.assertTrue([evt.order_type == OrderType.LIMIT for evt in trade_events])
-        self.assertEqual(order_id, order_completed_event.order_id)
+        self.assertEqual(order_id_buy, order_completed_event_buy.order_id)
         self.assertAlmostEqual(quantized_amount,
-                               order_completed_event.base_asset_amount)
-        self.assertEqual(base_asset, order_completed_event.base_asset)
-        self.assertEqual(quote_asset, order_completed_event.quote_asset)
+                               order_completed_event_buy.base_asset_amount)
+        self.assertEqual(base_asset, order_completed_event_buy.base_asset)
+        self.assertEqual(quote_asset, order_completed_event_buy.quote_asset)
         self.assertAlmostEqual(base_amount_traded,
-                               order_completed_event.base_asset_amount)
+                               order_completed_event_buy.base_asset_amount + order_completed_event_sell.base_asset_amount)
         self.assertAlmostEqual(quote_amount_traded,
-                               order_completed_event.quote_asset_amount)
-        self.assertTrue(any([isinstance(event, BuyOrderCreatedEvent) and event.order_id == order_id
+                               order_completed_event_buy.quote_asset_amount + order_completed_event_sell.quote_asset_amount)
+        self.assertTrue(any([isinstance(event, BuyOrderCreatedEvent) and event.order_id == order_id_buy
                              for event in self.market_logger.event_log]))
         # Reset the logs
         self.market_logger.clear()
@@ -339,7 +351,6 @@ class LatokenExchangeUnitTest(unittest.TestCase):
             self.market.restore_tracking_states(saved_market_states.saved_state)
             self.assertEqual(1, len(self.market.limit_orders))
             self.assertEqual(1, len(self.market.tracking_states))
-
             # Cancel the order and verify that the change is saved.
             self.run_parallel(asyncio.sleep(5.0))
             self.market.cancel(trading_pair, order_id)
@@ -367,9 +378,34 @@ class LatokenExchangeUnitTest(unittest.TestCase):
         quantize_bid_price: Decimal = self.market.quantize_order_price(trading_pair, bid_price * Decimal("0.9"))
         quantize_ask_price: Decimal = self.market.quantize_order_price(trading_pair, ask_price * Decimal("1.1"))
 
-        self.market.buy(trading_pair, quantized_amount, OrderType.LIMIT, quantize_bid_price)
-        self.market.sell(trading_pair, quantized_amount, OrderType.LIMIT, quantize_ask_price)
-        self.run_parallel(asyncio.sleep(5))
-        [cancellation_results] = self.run_parallel(self.market.cancel_all(45))
+        order_ids = []
+        order_count = 100
+        time_out_open_orders = 120
+        time_out_cancellations = 200  # seconds
+        for i in range(order_count):
+            x = self.market.trading_rules[trading_pair].min_price_increment * random.randint(0, 9) * quantize_bid_price
+            print(f"to be fixed {x}")  # TODO fix this
+            order_id_buy = self.market.buy(trading_pair, quantized_amount, OrderType.LIMIT, quantize_bid_price)
+            order_id_sell = self.market.sell(trading_pair, quantized_amount, OrderType.LIMIT, quantize_ask_price)
+            order_ids.append(order_id_buy)
+            order_ids.append(order_id_sell)
+
+        self.run_parallel(asyncio.sleep(time_out_open_orders))
+
+        all_orders_opened = [self.market.in_flight_orders[order_id] for order_id in order_ids]
+        are_all_orders_opened = [order.current_state == OrderState.OPEN for order in all_orders_opened]
+        self.assertTrue(all(are_all_orders_opened))
+        are_all_orders_with_exchange_id = [order.exchange_order_id is not None for order in all_orders_opened]
+        self.assertTrue(all(are_all_orders_with_exchange_id))
+        log = logging.getLogger("test_cancel_all")
+
+        log.debug(f"{time.time()} STARTING TO CANCEL ALL")
+        [cancellation_results] = self.run_parallel(self.market.cancel_all(time_out_cancellations))
+        log.debug(f"{time.time()} CANCELLED ALL (?)")
+        # all_failing_order_ids = [order_id not in self.market.all_orders for order_id in order_ids]
+        # failing_order_ids = [order_id for order_id in order_ids if order_id not in self.market.all_orders]
+        # failing_order_ids = [self.market.all_orders[order_id].exchange_order_id is None for order_id in order_ids]
+        are_all_orders_cancelled = [self.market.all_orders[order_id].current_state == OrderState.CANCELLED for order_id in order_ids]
+        self.assertTrue(all(are_all_orders_cancelled))
         for cr in cancellation_results:
             self.assertEqual(cr.success, True)

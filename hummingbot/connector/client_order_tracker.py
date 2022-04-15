@@ -27,7 +27,8 @@ cot_logger = None
 class ClientOrderTracker:
 
     MAX_CACHE_SIZE = 1000
-    CACHED_ORDER_TTL = 30.0  # seconds
+    # CACHED_ORDER_TTL = 30.0  # seconds
+    CACHED_ORDER_TTL = 120.0  # seconds
     MARKET_EVENTS = [
         MarketEvent.BuyOrderCompleted,
         MarketEvent.SellOrderCompleted,

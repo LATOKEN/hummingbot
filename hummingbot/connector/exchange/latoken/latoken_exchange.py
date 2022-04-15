@@ -76,6 +76,7 @@ class LatokenExchange(ExchangeBase):
                  domain="com"
                  ):
         self._domain = domain
+        self._trading_pairs = trading_pairs
         self._latoken_time_synchronizer = TimeSynchronizer()
         super().__init__()
         self._trading_required = trading_required
@@ -131,6 +132,10 @@ class LatokenExchange(ExchangeBase):
     @property
     def in_flight_orders(self) -> Dict[str, InFlightOrder]:
         return self._order_tracker.active_orders
+
+    @property
+    def all_orders(self) -> Dict[str, InFlightOrder]:
+        return self._order_tracker.all_orders
 
     @property
     def limit_orders(self) -> List[LimitOrder]:
@@ -207,12 +212,6 @@ class LatokenExchange(ExchangeBase):
             self._user_stream_event_listener_task = safe_ensure_future(self._user_stream_event_listener())
 
     async def stop_network(self):
-        """
-        This function is executed when the connector is stopped. It perform a general cleanup and stops all background
-        tasks that require the connection with the exchange to work.
-        """
-        # Reset timestamps and _poll_notifier for status_polling_loop
-        self._last_poll_timestamp = 0
         self._last_timestamp = 0
         self._poll_notifier = asyncio.Event()
 
@@ -351,19 +350,22 @@ class LatokenExchange(ExchangeBase):
         notional_size = current_price * quantized_amount
 
         # Add 1% as a safety factor in case the prices changed while making the order.
-        if notional_size < trading_rule.min_notional_size * Decimal("1.01"):  # TODO does this make sense? put 1.01 to 1.00
+        if notional_size < trading_rule.min_notional_size * Decimal(
+                "1.01"):  # TODO does this make sense? put 1.01 to 1.00
             return s_decimal_0
 
         return quantized_amount
 
-    async def retrieve_fee(self, base_currency: str, quote_currency: str, order_type: OrderType, is_maker: Optional[bool]):
+    async def retrieve_fee(self, base_currency: str, quote_currency: str, order_type: OrderType,
+                           is_maker: Optional[bool]):
         fee = await self._api_request(
             method=RESTMethod.GET,
             path_url=f"{CONSTANTS.FEES_PATH_URL}/{base_currency}/{quote_currency}",
             is_auth_required=True)
 
         fee_pct_str = fee["makerFee"] if order_type is OrderType.LIMIT_MAKER or (is_maker is not None and is_maker) else fee["takerFee"]
-        percent = Decimal(fee_pct_str) if fee['type'] == 'FEE_SCHEME_TYPE_PERCENT_QUOTE' else self.estimate_fee_pct(is_maker)
+        percent = Decimal(fee_pct_str) if fee['type'] == 'FEE_SCHEME_TYPE_PERCENT_QUOTE' else self.estimate_fee_pct(
+            is_maker)
         return percent
 
     def get_fee(self,
@@ -390,8 +392,10 @@ class LatokenExchange(ExchangeBase):
         function are ignore except order_type. Use OrderType.LIMIT_MAKER to specify you want trading fee for
         maker order.
         """
-        percent = self._ev_loop.run_until_complete(self.retrieve_fee(base_currency, quote_currency, order_type, is_maker))
-        return AddedToCostTradeFee(percent=percent) if order_side == TradeType.BUY else DeductedFromReturnsTradeFee(percent=percent)
+        percent = self._ev_loop.run_until_complete(
+            self.retrieve_fee(base_currency, quote_currency, order_type, is_maker))
+        return AddedToCostTradeFee(percent=percent) if order_side == TradeType.BUY else DeductedFromReturnsTradeFee(
+            percent=percent)
         # is_maker = order_type is OrderType.LIMIT_MAKER  # LIMIT_MAKER not supported by latoken
         # fee for user and pair
         # fee = await self._api_request(
@@ -465,10 +469,65 @@ class LatokenExchange(ExchangeBase):
                     if isinstance(cr, Exception):
                         continue
                     if isinstance(cr, dict) and "id" in cr:
-                        client_order_id = self._order_tracker.fetch_order(
-                            exchange_order_id=cr.get("id")).client_order_id
-                        order_id_set.remove(client_order_id)
-                        successful_cancellations.append(CancellationResult(client_order_id, True))
+                        exchange_order_id = cr.get("id")
+                        tracked_order = self._order_tracker.fetch_order(exchange_order_id=exchange_order_id)
+                        if tracked_order is None:
+                            self.logger().warning(
+                                f"cancel_all ERROR exchange_order_id={exchange_order_id} cr={cr}")
+                        else:
+                            client_order_id = tracked_order.client_order_id
+                            order_id_set.remove(client_order_id)
+                            successful_cancellations.append(CancellationResult(client_order_id, True))
+        except Exception:
+            self.logger().network(
+                "Unexpected error cancelling orders.",
+                exc_info=True,
+                app_warning_msg="Failed to cancel order with Latoken. Check API key and network connection."
+            )
+
+        failed_cancellations = [CancellationResult(oid, False) for oid in order_id_set]
+        return successful_cancellations + failed_cancellations
+
+    async def cancel_all_debug(self, timeout_seconds: float) -> List[CancellationResult]:
+        """
+        Cancels all currently active orders. The cancellations are performed in parallel tasks.
+        :param timeout_seconds: the maximum time (in seconds) the cancel logic should run
+        :return: a list of CancellationResult instances, one for each of the orders to be cancelled
+        """
+        incomplete_orders = [o for o in self.in_flight_orders.values() if not o.is_done]
+
+        # tasks = []
+        cancellation_results = []
+        timeout_execute_cancel = 1.0
+        for o in incomplete_orders:
+            self.logger().warning(
+                f"{time.time()} o.client_order_id={o.client_order_id}, o.exchange_order_id={o.exchange_order_id}")
+            execute_cancel_task = await self._execute_cancel(o.trading_pair, o.client_order_id)
+            await asyncio.sleep(timeout_execute_cancel)
+            cancellation_results.append(execute_cancel_task)
+            # tasks.append(self._execute_cancel(o.trading_pair, o.client_order_id))
+            # tasks.append(execute_cancel_task)
+
+        # tasks = [self._execute_cancel(o.trading_pair, o.client_order_id) for o in incomplete_orders]
+        order_id_set = set([o.client_order_id for o in incomplete_orders])
+        successful_cancellations = []
+
+        try:
+            async with timeout(timeout_seconds):
+                # cancellation_results = await safe_gather(*tasks, return_exceptions=True)
+                for cr in cancellation_results:
+                    if isinstance(cr, Exception):
+                        continue
+                    if isinstance(cr, dict) and "id" in cr:
+                        exchange_order_id = cr.get("id")
+                        tracked_order = self._order_tracker.fetch_order(exchange_order_id=exchange_order_id)
+                        if tracked_order is None:
+                            self.logger().warning(
+                                f"cancel_all ERROR exchange_order_id={exchange_order_id} cr={cr}")
+                        else:
+                            client_order_id = tracked_order.client_order_id
+                            order_id_set.remove(client_order_id)
+                            successful_cancellations.append(CancellationResult(client_order_id, True))
         except Exception:
             self.logger().network(
                 "Unexpected error cancelling orders.",
@@ -498,7 +557,8 @@ class LatokenExchange(ExchangeBase):
         trading_rule: TradingRule = self._trading_rules[trading_pair]
         quantized_price = self.quantize_order_price(trading_pair, price)
         quantize_amount_price = Decimal("0") if quantized_price.is_nan() else quantized_price
-        quantized_amount = self.quantize_order_amount(trading_pair=trading_pair, amount=amount, price=quantize_amount_price)
+        quantized_amount = self.quantize_order_amount(trading_pair=trading_pair, amount=amount,
+                                                      price=quantize_amount_price)
 
         self.start_tracking_order(
             order_id=order_id,
@@ -510,8 +570,9 @@ class LatokenExchange(ExchangeBase):
             order_type=order_type)
 
         if quantized_amount < trading_rule.min_order_size:
-            self.logger().warning(f"{trade_type.name.title()} order amount {quantized_amount} is lower than the minimum order"
-                                  f" size {trading_rule.min_order_size}. The order will not be created.")
+            self.logger().warning(
+                f"{trade_type.name.title()} order amount {quantized_amount} is lower than the minimum order"
+                f" size {trading_rule.min_order_size}. The order will not be created.")
             order_update: OrderUpdate = OrderUpdate(
                 client_order_id=order_id,
                 trading_pair=trading_pair,
@@ -727,6 +788,10 @@ class LatokenExchange(ExchangeBase):
         retval = []
         for rule in filter(latoken_utils.is_exchange_information_valid, pairs_list):
             try:
+                # trading_pair = rule['id']["symbol"].replace('/', '-')
+                # if trading_pair not in self._trading_pairs:
+                #     continue
+
                 symbol = f"{rule['id']['baseCurrency']}/{rule['id']['quoteCurrency']}"
                 trading_pair = await LatokenAPIOrderBookDataSource.trading_pair_associated_to_exchange_symbol(
                     symbol=symbol, domain=self._domain, api_factory=self._api_factory, throttler=self._throttler)
@@ -765,7 +830,8 @@ class LatokenExchange(ExchangeBase):
         # maybe request every currency if len(account_balance) > 5
         currency_lists = await safe_gather(*balance_to_gather, return_exceptions=True)
 
-        currencies = {currency["id"]: currency["tag"] for currency in currency_lists if isinstance(currency, dict)}  # TODO make dictionairy for this
+        currencies = {currency["id"]: currency["tag"] for currency in currency_lists if
+                      isinstance(currency, dict)}  # TODO make dictionairy for this
 
         for balance in balances:
             asset_name = currencies.get(balance["currency"], None)
@@ -816,7 +882,8 @@ class LatokenExchange(ExchangeBase):
             price = Decimal(order["price"])
             if tracked_order is not None:
                 trade_update = TradeUpdate(
-                    trade_id=f"WS_{timestamp}_{tracked_order.trading_pair}_{uuid.uuid4()}",  # sth unique to trigger trade update, the order doesn't have anything unique, the id of order contains the exchange id previously assigned by latoken
+                    trade_id=f"WS_{timestamp}_{tracked_order.trading_pair}_{uuid.uuid4()}",
+                    # sth unique to trigger trade update, the order doesn't have anything unique, the id of order contains the exchange id previously assigned by latoken
                     client_order_id=client_order_id,
                     exchange_order_id=order["id"],
                     trading_pair=tracked_order.trading_pair,
@@ -890,7 +957,8 @@ class LatokenExchange(ExchangeBase):
             trading_pairs = self._order_book_tracker._trading_pairs
             for trading_pair in trading_pairs:
                 base_quote = await LatokenAPIOrderBookDataSource.exchange_symbol_associated_to_pair(
-                    trading_pair=trading_pair, domain=self._domain, api_factory=self._api_factory, throttler=self._throttler)
+                    trading_pair=trading_pair, domain=self._domain, api_factory=self._api_factory,
+                    throttler=self._throttler)
                 params = {"limit": "100"}  # "from": "time"
                 tasks.append(self._api_request(
                     method=RESTMethod.GET, path_url=f"{CONSTANTS.TRADES_FOR_PAIR_PATH_URL}/{base_quote}",

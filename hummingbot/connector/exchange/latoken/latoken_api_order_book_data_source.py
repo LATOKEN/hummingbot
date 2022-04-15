@@ -20,6 +20,7 @@ import hummingbot.connector.exchange.latoken.latoken_constants as CONSTANTS
 from hummingbot.connector.exchange.latoken.latoken_utils import (
     public_rest_url,
     get_data,
+    # get_currency_data,
     create_full_mapping,
     is_exchange_information_valid,
     ws_url
@@ -483,6 +484,25 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         local_throttler = throttler or cls._get_throttler_instance()
         # it might be overkill to request everything,
         # but it is also supposed to demonstrate the full mapping
+        #
+        # currencies = set()
+        # for trading_pair in cls._trading_pairs:
+        #     """get uuid id for latoken ticker tag"""
+        #     base, quote = trading_pair.split('-')
+        #     currencies.add(base)
+        #     currencies.add(quote)
+        #
+        # currency_mapping = await get_currency_data(cls.logger(), domain, rest_assistant, local_throttler, currencies)
+        #
+        # for trading_pair in cls._trading_pairs:
+        #     base, quote = trading_pair.split('-')
+        #     base_id = currency_mapping.get('base', None)
+        #     quote_id = currency_mapping.get('quote', None)
+        #     if base_id and quote_id:
+        #         mapping[f"{base}/{quote}"] = f"{base_id}-{quote_id}"
+        #
+        # cls._trading_pair_symbol_map[domain] = mapping  # TODO add uuid-to-asset map for streaming updates of balances
+        # maybe request every currency if len(account_balance) > 5
         ticker_list, currency_list, pair_list = await safe_gather(
             get_data(cls.logger(), domain, rest_assistant, local_throttler, CONSTANTS.TICKER_PATH_URL),
             get_data(cls.logger(), domain, rest_assistant, local_throttler, CONSTANTS.CURRENCY_PATH_URL),
@@ -492,8 +512,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         full_mapping = create_full_mapping(ticker_list, currency_list, pair_list)
 
         for pair in filter(is_exchange_information_valid, full_mapping):
-            mapping[f"{pair['id']['baseCurrency']}/{pair['id']['quoteCurrency']}"] = pair["id"]["symbol"].replace('/',
-                                                                                                                  '-')
+            mapping[f"{pair['id']['baseCurrency']}/{pair['id']['quoteCurrency']}"] = pair["id"]["symbol"].replace('/', '-')
         cls._trading_pair_symbol_map[domain] = mapping  # TODO add uuid-to-asset map for streaming updates of balances
 
     async def _get_rest_assistant(self) -> RESTAssistant:

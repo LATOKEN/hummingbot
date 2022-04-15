@@ -2,7 +2,7 @@ import os
 import socket
 from decimal import Decimal
 from typing import Any, Dict
-
+# from hummingbot.core.utils.async_utils import safe_gather
 import hummingbot.connector.exchange.latoken.latoken_constants as CONSTANTS
 from hummingbot.core.web_assistant.connections.data_types import (
     RESTMethod,
@@ -71,6 +71,25 @@ def get_order_status_rest(status: str, filled: Decimal, quantity: Decimal):
     if new_state == OrderState.FILLED and quantity != filled:
         new_state = OrderState.PARTIALLY_FILLED
     return new_state
+
+
+# async def get_currency_data(logger, domain, rest_assistant, local_throttler, currencies) -> dict:
+#     requests = []
+#     currency_lists = None
+#     for currency in currencies:
+#         url = public_rest_url(path_url=f"{CONSTANTS.CURRENCY_PATH_URL}/{currency}", domain=domain)
+#         headers = {"Content-Type": "application/x-www-form-urlencoded"}
+#         request = RESTRequest(method=RESTMethod.GET, url=url, headers=headers, is_auth_required=False)
+#         requests.append(request)
+#         try:
+#             async with local_throttler.execute_task(limit_id=CONSTANTS.GLOBAL_RATE_LIMIT):
+#                 responses = await safe_gather(*requests, return_exceptions=True)
+#                 currency_lists = [await response.json() for response in responses]
+#         except Exception as ex:
+#             logger.error(f"There was an error requesting ({ex})")
+#
+#     currency_mapping = {currency_json["tag"]: currency_json["id"] for currency_json in currency_lists}
+#     return currency_mapping
 
 
 async def get_data(logger, domain, rest_assistant, local_throttler, path_url) -> list:

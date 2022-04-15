@@ -24,14 +24,14 @@ class LatokenOrderBook(OrderBook):
         """
         if metadata:
             msg.update(metadata)
-        timestamp_ms = timestamp * 1e-9  # there is no timestamp per order book level, so this is not really useful in stoikov, if you want to use snapshots for real-time data
+        timestamp_seconds = timestamp * 1e-9  # there is no timestamp per order book level, so this is not really useful in stoikov, if you want to use snapshots for real-time data
         msg["asks"] = get_book_side(msg.pop("ask"))
         msg["bids"] = get_book_side(msg.pop("bid"))
-        msg["update_id"] = timestamp_ms  # ts in nanosecond
+        msg["update_id"] = timestamp_seconds
         # tuple(sorted([('abc', 121), ('abc', 231), ('abc', 148), ('abc', 221)],
         #        key=lambda x: x[1])) # not sure asks or bids need to be presorted by price
         # order_book command does how to have correct sorting
-        return OrderBookMessage(OrderBookMessageType.SNAPSHOT, msg, timestamp=timestamp_ms)  # need float ts
+        return OrderBookMessage(OrderBookMessageType.SNAPSHOT, msg, timestamp=timestamp_seconds)  # need float ts
 
     @classmethod
     def diff_message_from_exchange(cls,
@@ -47,14 +47,14 @@ class LatokenOrderBook(OrderBook):
         """
         if metadata:
             msg.update(metadata)
-        timestamp_ms = timestamp * 1e-9
+        timestamp_seconds = timestamp * 1e-9
         return OrderBookMessage(OrderBookMessageType.DIFF, {
             "trading_pair": msg["trading_pair"],
             "first_update_id": msg["timestamp"] * 1e-3,  # could also use msg['headers']['message-id'] ?
-            "update_id": timestamp_ms,
+            "update_id": timestamp_seconds,
             "bids": get_book_side(msg["bid"]),
             "asks": get_book_side(msg["ask"])
-        }, timestamp=timestamp_ms)
+        }, timestamp=timestamp_seconds)
 
     @classmethod
     def trade_message_from_exchange(cls,
@@ -70,12 +70,12 @@ class LatokenOrderBook(OrderBook):
         """
         if metadata:
             msg.update(metadata)
-        timestamp_ms = timestamp * 1e-9
+        timestamp_seconds = timestamp * 1e-9
         return OrderBookMessage(OrderBookMessageType.TRADE, {
             "trading_pair": msg["trading_pair"],
             "trade_type": float(TradeType.BUY.value) if msg["makerBuyer"] else float(TradeType.SELL.value),
             "trade_id": msg["timestamp"] * 1e-3,  # could also use msg['headers']['message-id'] ?
-            "update_id": timestamp_ms,  # do we need body_timestamp here???
+            "update_id": timestamp_seconds,  # do we need body_timestamp here???
             "price": msg["price"],
             "amount": msg["quantity"]
-        }, timestamp=timestamp_ms)
+        }, timestamp=timestamp_seconds)
