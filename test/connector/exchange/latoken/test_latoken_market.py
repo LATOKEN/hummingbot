@@ -130,11 +130,11 @@ class LatokenExchangeUnitTest(unittest.TestCase):
     def test_get_fee(self):
         limit_fee: TradeFeeBase = self.market.get_fee(base_asset, quote_asset, OrderType.LIMIT,
                                                       TradeType.BUY, Decimal("1"), Decimal("1"))
-        self.assertGreater(limit_fee.percent, 0)
+        self.assertGreater(limit_fee.percent, Decimal("0"))
         self.assertEqual(len(limit_fee.flat_fees), 0)
         market_fee: TradeFeeBase = self.market.get_fee(base_asset, quote_asset, OrderType.MARKET,
                                                        TradeType.BUY, Decimal("1"))
-        self.assertGreater(market_fee.percent, 0)
+        self.assertGreater(market_fee.percent, Decimal("0"))
         self.assertEqual(len(market_fee.flat_fees), 0)
 
     def test_minimum_order_size(self):
@@ -292,9 +292,9 @@ class LatokenExchangeUnitTest(unittest.TestCase):
         self.assertEqual(base_asset, order_completed_event_buy.base_asset)
         self.assertEqual(quote_asset, order_completed_event_buy.quote_asset)
         self.assertAlmostEqual(base_amount_traded,
-                               order_completed_event_buy.base_asset_amount + order_completed_event_sell.base_asset_amount)
+                               order_completed_event_sell.base_asset_amount + order_completed_event_buy.base_asset_amount)
         self.assertAlmostEqual(quote_amount_traded,
-                               order_completed_event_buy.quote_asset_amount + order_completed_event_sell.quote_asset_amount)
+                               order_completed_event_sell.quote_asset_amount + order_completed_event_buy.quote_asset_amount)
         self.assertTrue(any([isinstance(event, SellOrderCreatedEvent) and event.order_id == order_id_buy
                              for event in self.market_logger.event_log]))
         # Reset the logs
@@ -428,9 +428,9 @@ class LatokenExchangeUnitTest(unittest.TestCase):
         # number of orders to be sent for testing cancellations (2 x order_count orders are sent : buy and sell)
         order_count = 1
         # timeout in seconds due to throttling of TPS coming from the exchange
-        time_out_open_orders = 120
+        time_out_open_orders = 12
         # timeout in seconds due to throttling of TPS coming from the exchange
-        time_out_cancellations = 200
+        time_out_cancellations = 20
 
         bid_price: Decimal = self.market.get_price(trading_pair, True)
         ask_price: Decimal = self.market.get_price(trading_pair, False)
