@@ -1,17 +1,15 @@
+from collections import OrderedDict
 import hashlib
 import hmac
-from collections import OrderedDict
-import json
+import ujson
 from aiohttp import payload
+import stomper
 from typing import (
     Any,
     Dict
 )
-from urllib.parse import urlencode, urlsplit
 from time import time
-
-import stomper
-
+from urllib.parse import urlencode, urlsplit
 from hummingbot.connector.time_synchronizer import TimeSynchronizer
 from hummingbot.core.web_assistant.auth import AuthBase
 from hummingbot.core.web_assistant.connections.data_types import RESTRequest, RESTMethod, WSRequest
@@ -29,7 +27,7 @@ class LatokenAuth(AuthBase):
             # request_params = self.add_auth_to_params(params=request.json)
             # request.json = dict(request_params)
             request_params = self.add_auth_to_params(params=request.data)
-            request.data = payload.JsonPayload(dict(request_params), dumps=json.dumps)
+            request.data = payload.JsonPayload(dict(request_params), dumps=ujson.dumps)
         else:
             request_params = self.add_auth_to_params(params=request.params)
             request.params = request_params

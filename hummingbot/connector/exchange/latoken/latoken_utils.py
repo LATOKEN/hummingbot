@@ -113,12 +113,6 @@ def create_full_mapping(ticker_list, currency_list, pair_list):
     # pair_dict = {f"{pair['baseCurrency']}/{pair['quoteCurrency']}": pair for pair in pair_list}
     currency_dict = {currency["id"]: currency for currency in currency_list}
 
-    # import json
-    # with open('data.json', 'w') as f:a
-    #     json.dump(currency_list, f)
-
-    # self.logger().warning(json.dumps(currency_list))
-
     for pt in pair_list:
         key = f"{pt['baseCurrency']}/{pt['quoteCurrency']}"
         is_valid = key in ticker_dict
