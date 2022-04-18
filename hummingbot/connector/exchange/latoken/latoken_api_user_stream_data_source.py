@@ -111,7 +111,7 @@ class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
                 async for ws_response in client.iter_messages():
                     msg_in = stomper.Frame()
                     data = msg_in.unpack(ws_response.data.decode())
-                    event_type = int(data['headers']['subscription'])
+                    event_type = int(data['headers']['subscription'].split('_')[0])
                     if event_type == CONSTANTS.SUBSCRIPTION_ID_ACCOUNT or event_type == CONSTANTS.SUBSCRIPTION_ID_ORDERS:
                         output.put_nowait(data)
 

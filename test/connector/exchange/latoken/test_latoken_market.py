@@ -422,7 +422,16 @@ class LatokenExchangeUnitTest(unittest.TestCase):
             recorder.stop()
             self.setUpClass()
 
-    def test_cancel_all(self):
+    # Place random orders and cancel them all. Beware : there are some time_out values that need
+    # to be chosen carefully depending on the throttling policy of the exchange, otherwise it will not work
+    def test_place_random_orders_and_cancel_all(self):
+        # number of orders to be sent for testing cancellations (2 x order_count orders are sent : buy and sell)
+        order_count = 100
+        # timeout in seconds due to throttling of TPS coming from the exchange
+        time_out_open_orders = 120
+        # timeout in seconds due to throttling of TPS coming from the exchange
+        time_out_cancellations = 200
+
         bid_price: Decimal = self.market.get_price(trading_pair, True)
         ask_price: Decimal = self.market.get_price(trading_pair, False)
         amount: Decimal = Decimal("0.04")
@@ -433,14 +442,20 @@ class LatokenExchangeUnitTest(unittest.TestCase):
         quantize_ask_price: Decimal = self.market.quantize_order_price(trading_pair, ask_price * Decimal("1.1"))
 
         order_ids = []
-        order_count = 1  # order_count = 100
-        time_out_open_orders = 10
-        time_out_cancellations = 20  # seconds
+
         for i in range(order_count):
-            x = self.market.trading_rules[trading_pair].min_price_increment * random.randint(0, 9) * quantize_bid_price
-            print(f"to be fixed {x}")  # TODO fix this
+            # Define a random diff price to change the price of placed orders
+            diff_price = self.market.trading_rules[trading_pair].min_price_increment * random.randint(0, 9)
+
+            quantize_bid_price = self.market.quantize_order_price(trading_pair, quantize_bid_price - diff_price)
+            quantize_ask_price = self.market.quantize_order_price(trading_pair, quantize_ask_price + diff_price)
+
+            print(f"test_place_random_orders_and_cancel_all : BUY@{quantize_bid_price}")
+            print(f"test_place_random_orders_and_cancel_all : SELL@{quantize_ask_price}")
+
             order_id_buy = self.market.buy(trading_pair, quantized_amount, OrderType.LIMIT, quantize_bid_price)
             order_id_sell = self.market.sell(trading_pair, quantized_amount, OrderType.LIMIT, quantize_ask_price)
+
             order_ids.append(order_id_buy)
             order_ids.append(order_id_sell)
 
@@ -451,8 +466,7 @@ class LatokenExchangeUnitTest(unittest.TestCase):
         self.assertTrue(all(are_all_orders_opened))
         are_all_orders_with_exchange_id = [order.exchange_order_id is not None for order in all_orders_opened]
         self.assertTrue(all(are_all_orders_with_exchange_id))
-        log = logging.getLogger("test_cancel_all")
-
+        log = logging.getLogger("test_place_random_orders_and_cancel_all")
         log.debug(f"{time.time()} STARTING TO CANCEL ALL")
         [cancellation_results] = self.run_parallel(self.market.cancel_all(time_out_cancellations))
         log.debug(f"{time.time()} CANCELLED ALL (?)")
@@ -461,5 +475,6 @@ class LatokenExchangeUnitTest(unittest.TestCase):
         # failing_order_ids = [self.market.all_orders[order_id].exchange_order_id is None for order_id in order_ids]
         are_all_orders_cancelled = [self.market.all_orders[order_id].current_state == OrderState.CANCELLED for order_id in order_ids]
         self.assertTrue(all(are_all_orders_cancelled))
+
         for cr in cancellation_results:
             self.assertEqual(cr.success, True)

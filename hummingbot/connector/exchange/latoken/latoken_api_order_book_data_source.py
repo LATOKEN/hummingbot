@@ -360,7 +360,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
                     msg_in = stomper.Frame()
                     data = msg_in.unpack(ws_response.data.decode())
 
-                    event_type = int(data['headers']['subscription'])
+                    event_type = int(data['headers']['subscription'].split('_')[0])
 
                     if event_type == CONSTANTS.SUBSCRIPTION_ID_BOOKS:
                         self._message_queue[CONSTANTS.DIFF_EVENT_TYPE].put_nowait(data)
@@ -429,8 +429,8 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
                     throttler=self._throttler)
 
                 path_params = {'symbol': symbol}
-                msg_subscribe_books = stomper.subscribe(CONSTANTS.BOOK_STREAM.format(**path_params), CONSTANTS.SUBSCRIPTION_ID_BOOKS, ack="auto")
-                msg_subscribe_trades = stomper.subscribe(CONSTANTS.TRADES_STREAM.format(**path_params), CONSTANTS.SUBSCRIPTION_ID_TRADES, ack="auto")
+                msg_subscribe_books = stomper.subscribe(CONSTANTS.BOOK_STREAM.format(**path_params), f"{CONSTANTS.SUBSCRIPTION_ID_BOOKS}_{symbol}", ack="auto")
+                msg_subscribe_trades = stomper.subscribe(CONSTANTS.TRADES_STREAM.format(**path_params), f"{CONSTANTS.SUBSCRIPTION_ID_TRADES}_{symbol}", ack="auto")
                 # TODO add incrementer on subscribe id for support of multiple subbscriptions/trading_pairs
                 # TODO add unit test
                 await client.subscribe(WSRequest(payload=msg_subscribe_books))

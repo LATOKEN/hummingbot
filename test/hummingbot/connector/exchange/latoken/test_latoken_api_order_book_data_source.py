@@ -3,24 +3,27 @@ import json
 import re
 import unittest
 from decimal import Decimal
+
 from typing import (
     Any,
     Awaitable,
     Dict,
     List,
 )
-import hummingbot.connector.exchange.latoken.latoken_utils as utils
+
 from unittest.mock import AsyncMock, patch, MagicMock
-import aiohttp
+
 from aioresponses.core import aioresponses
 from bidict import bidict
 
 import hummingbot.connector.exchange.latoken.latoken_constants as CONSTANTS
-
+import hummingbot.connector.exchange.latoken.latoken_utils as utils
 from hummingbot.connector.exchange.latoken.latoken_api_order_book_data_source import LatokenAPIOrderBookDataSource
+
 from hummingbot.core.api_throttler.async_throttler import AsyncThrottler
 from hummingbot.core.data_type.order_book import OrderBook
 from hummingbot.core.data_type.order_book_message import OrderBookMessage
+
 from test.hummingbot.connector.network_mocking_assistant import NetworkMockingAssistant
 
 
@@ -316,6 +319,7 @@ class LatokenAPIOrderBookDataSourceUnitTests(unittest.TestCase):
 
     @patch("aiohttp.ClientSession.ws_connect", new_callable=AsyncMock)
     def test_listen_for_subscriptions_subscribes_to_trades_and_order_diffs(self, ws_connect_mock):
+        import aiohttp
         ws_connect_mock.return_value = self.mocking_assistant.create_websocket_mock()
 
         self.mocking_assistant.add_websocket_aiohttp_message(

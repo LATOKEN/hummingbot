@@ -52,7 +52,7 @@ class LatokenUserStreamTrackerUnitTest(unittest.TestCase):
             try:
                 cmd = event_message.get('cmd', None)
                 if cmd and cmd == 'MESSAGE':
-                    subscription_id = int(event_message['headers']['subscription'])
+                    subscription_id = int(event_message['headers']['subscription'].split('_')[0])
                     body = ujson.loads(event_message["body"])
                     if subscription_id == CONSTANTS.SUBSCRIPTION_ID_ACCOUNT:
                         user_account_data.append(body["payload"])
