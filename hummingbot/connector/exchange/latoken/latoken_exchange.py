@@ -1145,7 +1145,7 @@ class LatokenExchange(ExchangeBase):
         headers = {
             "Content-Type": "application/json" if method == RESTMethod.POST else "application/x-www-form-urlencoded"}
         request = RESTRequest(
-            method=method, url=url, json=json, params=params, headers=headers, is_auth_required=is_auth_required)
+            method=method, url=url, data=json, params=params, headers=headers, is_auth_required=is_auth_required)
 
         client = await self._get_rest_assistant()
         # async with self._throttler.execute_task(limit_id=path_url):

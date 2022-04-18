@@ -1,7 +1,8 @@
 import hashlib
 import hmac
 from collections import OrderedDict
-
+import json
+from aiohttp import payload
 from typing import (
     Any,
     Dict
@@ -24,10 +25,11 @@ class LatokenAuth(AuthBase):
         self.time_provider = time_provider  # not used atm
 
     async def rest_authenticate(self, request: RESTRequest) -> RESTRequest:
-
         if request.method == RESTMethod.POST:
-            request_params = self.add_auth_to_params(params=request.json)
-            request.json = dict(request_params)
+            # request_params = self.add_auth_to_params(params=request.json)
+            # request.json = dict(request_params)
+            request_params = self.add_auth_to_params(params=request.data)
+            request.data = payload.JsonPayload(dict(request_params), dumps=json.dumps)
         else:
             request_params = self.add_auth_to_params(params=request.params)
             request.params = request_params
