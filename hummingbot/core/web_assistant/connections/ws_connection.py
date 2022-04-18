@@ -117,9 +117,6 @@ class WSConnection:
 
     @staticmethod
     def _build_resp(msg: aiohttp.WSMessage) -> WSResponse:
-        if msg.type == aiohttp.WSMsgType.BINARY:
-            data = msg.data
-        else:
-            data = msg.json()
+        data = msg.data if msg.type == aiohttp.WSMsgType.BINARY else msg.json()
         response = WSResponse(data)
         return response
