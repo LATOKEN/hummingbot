@@ -958,7 +958,7 @@ class LatokenExchange(ExchangeBase):
             for trading_pair in trading_pairs:
                 base_quote = await LatokenAPIOrderBookDataSource.exchange_symbol_associated_to_pair(
                     trading_pair=trading_pair, domain=self._domain, api_factory=self._api_factory,
-                    throttler=self._throttler)
+                    throttler=self._throttler)  # base_guid/quote_guid
                 params = {"limit": "100"}  # "from": "time"
                 tasks.append(self._api_request(
                     method=RESTMethod.GET, path_url=f"{CONSTANTS.TRADES_FOR_PAIR_PATH_URL}/{base_quote}",
@@ -1006,10 +1006,10 @@ class LatokenExchange(ExchangeBase):
 
                         if trade["direction"] == "TRADE_DIRECTION_BUY":
                             trade_type = TradeType.BUY
-                            currency_type = "baseCurrency"
+                            # currency_type = "baseCurrency"
                         else:
                             trade_type = TradeType.SELL
-                            currency_type = "quoteCurrency"
+                            # currency_type = "quoteCurrency"
 
                         self.trigger_event(
                             MarketEvent.OrderFilled,
@@ -1021,10 +1021,10 @@ class LatokenExchange(ExchangeBase):
                                 order_type=OrderType.LIMIT,
                                 price=price,
                                 amount=quantity,
-                                trade_fee=DeductedFromReturnsTradeFee(  # TODO this is not correct for Latoken
+                                trade_fee=DeductedFromReturnsTradeFee(  # TODO this is not correct for Latoken, check when deduct and addition
                                     flat_fees=[
                                         TokenAmount(
-                                            trade[currency_type],
+                                            trading_pair.split('-')[-1],  # use quote, trade[currency_type],
                                             fee
                                         )
                                     ]
@@ -1083,7 +1083,7 @@ class LatokenExchange(ExchangeBase):
                 filled = Decimal(order_update["filled"])
                 quantity = Decimal(order_update["quantity"])
 
-                new_state = latoken_utils.get_order_status_rest(status=status, filled=filled, quantity=quantity)
+                new_state = latoken_utils.get_order_status_rest(status=status, filled=filled, quantity=quantity)   # TODO review
 
                 update = OrderUpdate(
                     client_order_id=client_order_id,

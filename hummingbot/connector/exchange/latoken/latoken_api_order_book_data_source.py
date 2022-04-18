@@ -353,7 +353,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
                 })
                 connect_request: WSRequest = WSRequest(payload=msg_out.pack(), is_auth_required=True)
                 await client.send(connect_request)
-                await client.receive()
+                _ = await client.receive()
                 await self._subscribe_channels(client)
 
                 async for ws_response in client.iter_messages():
@@ -431,7 +431,8 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
                 path_params = {'symbol': symbol}
                 msg_subscribe_books = stomper.subscribe(CONSTANTS.BOOK_STREAM.format(**path_params), CONSTANTS.SUBSCRIPTION_ID_BOOKS, ack="auto")
                 msg_subscribe_trades = stomper.subscribe(CONSTANTS.TRADES_STREAM.format(**path_params), CONSTANTS.SUBSCRIPTION_ID_TRADES, ack="auto")
-
+                # TODO add incrementer on subscribe id for support of multiple subbscriptions/trading_pairs
+                # TODO add unit test
                 await client.subscribe(WSRequest(payload=msg_subscribe_books))
                 await client.subscribe(WSRequest(payload=msg_subscribe_trades))
 
@@ -466,7 +467,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
             resp: RESTResponse = await rest_assistant.call(request=request)
             if resp.status == 200:
                 resp_json = await resp.json()
-                return float(resp_json["lastPrice"])
+                return Decimal(resp_json["lastPrice"])
 
     @classmethod
     async def _init_trading_pair_symbols(

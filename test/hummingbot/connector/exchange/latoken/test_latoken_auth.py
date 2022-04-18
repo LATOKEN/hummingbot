@@ -52,7 +52,7 @@ class LatokenAuthTests(TestCase):
                           "X-LA-SIGNATURE": expected_rest_signature_get,
                           "X-LA-DIGEST": 'HMAC-SHA512'}, configured_request.headers)
 
-    # todo implement function definitions
+    # check /humming-bot/test/connector/exchange/latoken
     def test_rest_authenticate_post(self):
         pass
 

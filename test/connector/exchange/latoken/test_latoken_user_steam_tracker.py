@@ -56,6 +56,7 @@ class LatokenUserStreamTrackerUnitTest(unittest.TestCase):
                     body = ujson.loads(event_message["body"])
                     if subscription_id == CONSTANTS.SUBSCRIPTION_ID_ACCOUNT:
                         user_account_data.append(body["payload"])
+                        break  # we want a list with only one record for now
             except asyncio.CancelledError:
                 raise
             except Exception:
@@ -64,8 +65,9 @@ class LatokenUserStreamTrackerUnitTest(unittest.TestCase):
 
     def test_user_stream(self):
         # Wait process some msgs.
-        self.ev_loop.run_until_complete(self._user_stream_event_listener())
-        assert self.user_stream_tracker.user_stream.qsize() > 0
+        [result] = self.ev_loop.run_until_complete(self._user_stream_event_listener())
+        self.assertTrue("blocked" in result[0])
+        # assert self.user_stream_tracker.user_stream.qsize() > 0
 
 
 def main():

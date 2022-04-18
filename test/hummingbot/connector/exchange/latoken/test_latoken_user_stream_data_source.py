@@ -3,6 +3,7 @@ import json
 import re
 import unittest
 
+import aiohttp
 from aioresponses import aioresponses
 from typing import (
     Any,
@@ -28,13 +29,13 @@ class LatokenUserStreamDataSourceUnitTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         super().setUpClass()
         cls.ev_loop = asyncio.get_event_loop()
-        cls.base_asset = "COINALPHA"
-        cls.quote_asset = "HBOT"
-        cls.trading_pair = f"{cls.base_asset}-{cls.quote_asset}"
+        cls.base_asset = "d8ae67f2-f954-4014-98c8-64b1ac334c64"
+        cls.quote_asset = "0c3a106d-bde3-4c13-a26e-3fd2394529e5"
+        cls.trading_pair = "ETH-USDT"
         cls.ex_trading_pair = cls.base_asset + cls.quote_asset
-        cls.domain = "com"
+        cls.domain = "tech"
 
-        cls.listen_key = "TEST_LISTEN_KEY"
+        cls.listen_key = 'ffffffff-ffff-ffff-ffff-ffffffffff'
 
     def setUp(self) -> None:
         super().setUp()
@@ -86,27 +87,16 @@ class LatokenUserStreamDataSourceUnitTests(unittest.TestCase):
         resp = {
             "code": "ERROR CODE",
             "msg": "ERROR MESSAGE"
-        }
+        }  # TODO find error message
 
         return resp
 
     def _user_update_event(self):
-        # Balance Update
-        resp = {
-            "e": "balanceUpdate",
-            "E": 1573200697110,
-            "a": "BTC",
-            "d": "100.00000000",
-            "T": 1573200697068
-        }
-        return json.dumps(resp)
+        # Balance Update, so not the initial balance
+        return b'MESSAGE\ndestination:/user/2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f/v1/account\nmessage-id:9e8188c8-682c-41cd-9a14-722bf6dfd99e\ncontent-length:346\nsubscription:0\n\n{"payload":[{"id":"44d36460-46dc-4828-a17c-63b1a047b054","status":"ACCOUNT_STATUS_ACTIVE","type":"ACCOUNT_TYPE_SPOT","timestamp":1650120265819,"currency":"620f2019-33c0-423b-8a9d-cde4d7f8ef7f","available":"34.001000000000000000","blocked":"0.999000000000000000","user":"2d2a5729-e9e3-4f8b-9e3a-f1c5e147099f"}],"nonce":1,"timestamp":1650120265830}\x00'
 
     def _successfully_subscribed_event(self):
-        resp = {
-            "result": None,
-            "id": 1
-        }
-        return resp
+        return b'CONNECTED\nserver:vertx-stomp/3.9.6\nheart-beat:1000,1000\nsession:37a8e962-7fa7-4eab-b163-146eeafdef63\nversion:1.1\n\n\x00 '
 
     def test_last_recv_time(self):
         # Initial last_recv_time
@@ -124,7 +114,7 @@ class LatokenUserStreamDataSourceUnitTests(unittest.TestCase):
         url = utils.private_rest_url(path_url=CONSTANTS.USER_ID_PATH_URL, domain=self.domain)
         regex_url = re.compile(f"^{url}".replace(".", r"\.").replace("?", r"\?"))
 
-        mock_api.post(regex_url, status=400, body=json.dumps(self._error_response()))
+        mock_api.get(regex_url, status=400, body=json.dumps(self._error_response()))
 
         with self.assertRaises(IOError):
             self.async_run_with_timeout(self.data_source._get_listen_key())
@@ -134,10 +124,11 @@ class LatokenUserStreamDataSourceUnitTests(unittest.TestCase):
         url = utils.private_rest_url(path_url=CONSTANTS.USER_ID_PATH_URL, domain=self.domain)
         regex_url = re.compile(f"^{url}".replace(".", r"\.").replace("?", r"\?"))
 
-        mock_response = {
-            "listenKey": self.listen_key
-        }
-        mock_api.post(regex_url, body=json.dumps(mock_response))
+        mock_response = {'id': 'ffffffff-ffff-ffff-ffff-ffffffffff', 'status': 'ACTIVE', 'role': 'INVESTOR',
+                         'email': 'ed.rouwendaal@latoken.com', 'phone': '', 'authorities': [],
+                         'forceChangePassword': None, 'authType': 'API_KEY', 'socials': []}
+
+        mock_api.get(regex_url, body=json.dumps(mock_response))
 
         result: str = self.async_run_with_timeout(self.data_source._get_listen_key())
 
@@ -148,19 +139,24 @@ class LatokenUserStreamDataSourceUnitTests(unittest.TestCase):
         url = utils.private_rest_url(path_url=CONSTANTS.USER_ID_PATH_URL, domain=self.domain)
         regex_url = re.compile(f"^{url}".replace(".", r"\.").replace("?", r"\?"))
 
-        mock_api.put(regex_url, status=400, body=json.dumps(self._error_response()))
+        mock_api.get(regex_url, status=400, body=json.dumps(self._error_response()))
 
         self.data_source._current_listen_key = self.listen_key
         result: bool = self.async_run_with_timeout(self.data_source._ping_listen_key())
 
-        self.assertTrue(self._is_logged("WARNING", f"Failed to refresh the listen key {self.listen_key}: {self._error_response()}"))
+        self.assertTrue(
+            self._is_logged("WARNING", f"Failed to refresh the listen key {self.listen_key}: {self._error_response()}"))
         self.assertFalse(result)
 
     @aioresponses()
     def test_ping_listen_key_successful(self, mock_api):
         url = utils.private_rest_url(path_url=CONSTANTS.USER_ID_PATH_URL, domain=self.domain)
         regex_url = re.compile(f"^{url}".replace(".", r"\.").replace("?", r"\?"))
-        mock_api.put(regex_url, body=json.dumps({}))
+        mock_response = {'id': 'ffffffff-ffff-ffff-ffff-ffffffffff', 'status': 'ACTIVE', 'role': 'INVESTOR',
+                         'email': 'ed.rouwendaal@latoken.com', 'phone': '', 'authorities': [],
+                         'forceChangePassword': None, 'authType': 'API_KEY', 'socials': []}
+
+        mock_api.get(regex_url, body=json.dumps(mock_response))
 
         self.data_source._current_listen_key = self.listen_key
         result: bool = self.async_run_with_timeout(self.data_source._ping_listen_key())
@@ -211,13 +207,15 @@ class LatokenUserStreamDataSourceUnitTests(unittest.TestCase):
         url = utils.private_rest_url(path_url=CONSTANTS.USER_ID_PATH_URL, domain=self.domain)
         regex_url = re.compile(f"^{url}".replace(".", r"\.").replace("?", r"\?"))
 
-        mock_response = {
-            "listenKey": self.listen_key
-        }
-        mock_api.post(regex_url, body=json.dumps(mock_response))
+        mock_response = {'id': 'ffffffff-ffff-ffff-ffff-ffffffffff', 'status': 'ACTIVE', 'role': 'INVESTOR',
+                         'email': 'ed.rouwendaal@latoken.com', 'phone': '', 'authorities': [],
+                         'forceChangePassword': None, 'authType': 'API_KEY', 'socials': []}
+
+        mock_api.get(regex_url, body=json.dumps(mock_response))
 
         mock_ws.return_value = self.mocking_assistant.create_websocket_mock()
-        self.mocking_assistant.add_websocket_aiohttp_message(mock_ws.return_value, self._user_update_event())
+        self.mocking_assistant.add_websocket_aiohttp_message(mock_ws.return_value, self._successfully_subscribed_event(), message_type=aiohttp.WSMsgType.BINARY)
+        self.mocking_assistant.add_websocket_aiohttp_message(mock_ws.return_value, self._user_update_event(), message_type=aiohttp.WSMsgType.BINARY)
 
         msg_queue = asyncio.Queue()
         self.listening_task = self.ev_loop.create_task(
@@ -233,10 +231,11 @@ class LatokenUserStreamDataSourceUnitTests(unittest.TestCase):
         url = utils.private_rest_url(path_url=CONSTANTS.USER_ID_PATH_URL, domain=self.domain)
         regex_url = re.compile(f"^{url}".replace(".", r"\.").replace("?", r"\?"))
 
-        mock_response = {
-            "listenKey": self.listen_key
-        }
-        mock_api.post(regex_url, body=json.dumps(mock_response))
+        mock_response = {'id': 'ffffffff-ffff-ffff-ffff-ffffffffff', 'status': 'ACTIVE', 'role': 'INVESTOR',
+                         'email': 'ed.rouwendaal@latoken.com', 'phone': '', 'authorities': [],
+                         'forceChangePassword': None, 'authType': 'API_KEY', 'socials': []}
+
+        mock_api.get(regex_url, body=json.dumps(mock_response))
 
         mock_ws.return_value = self.mocking_assistant.create_websocket_mock()
         self.mocking_assistant.add_websocket_aiohttp_message(mock_ws.return_value, "")
@@ -256,10 +255,11 @@ class LatokenUserStreamDataSourceUnitTests(unittest.TestCase):
         url = utils.private_rest_url(path_url=CONSTANTS.USER_ID_PATH_URL, domain=self.domain)
         regex_url = re.compile(f"^{url}".replace(".", r"\.").replace("?", r"\?"))
 
-        mock_response = {
-            "listenKey": self.listen_key
-        }
-        mock_api.post(regex_url, body=json.dumps(mock_response))
+        mock_response = {'id': 'ffffffff-ffff-ffff-ffff-ffffffffff', 'status': 'ACTIVE', 'role': 'INVESTOR',
+                         'email': 'ed.rouwendaal@latoken.com', 'phone': '', 'authorities': [],
+                         'forceChangePassword': None, 'authType': 'API_KEY', 'socials': []}
+
+        mock_api.get(regex_url, body=json.dumps(mock_response))
 
         mock_ws.side_effect = lambda *arg, **kwars: self._create_exception_and_unlock_test_with_event(
             Exception("TEST ERROR."))
@@ -281,10 +281,11 @@ class LatokenUserStreamDataSourceUnitTests(unittest.TestCase):
         url = utils.private_rest_url(path_url=CONSTANTS.USER_ID_PATH_URL, domain=self.domain)
         regex_url = re.compile(f"^{url}".replace(".", r"\.").replace("?", r"\?"))
 
-        mock_response = {
-            "listenKey": self.listen_key
-        }
-        mock_api.post(regex_url, body=json.dumps(mock_response))
+        mock_response = {'id': 'ffffffff-ffff-ffff-ffff-ffffffffff', 'status': 'ACTIVE', 'role': 'INVESTOR',
+                         'email': 'ed.rouwendaal@latoken.com', 'phone': '', 'authorities': [],
+                         'forceChangePassword': None, 'authType': 'API_KEY', 'socials': []}
+
+        mock_api.get(regex_url, body=json.dumps(mock_response))
 
         msg_queue: asyncio.Queue = asyncio.Queue()
         mock_ws.return_value = self.mocking_assistant.create_websocket_mock()

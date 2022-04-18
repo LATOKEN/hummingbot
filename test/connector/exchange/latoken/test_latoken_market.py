@@ -198,6 +198,7 @@ class LatokenExchangeUnitTest(unittest.TestCase):
         # Reset the logs
         self.market_logger.clear()
 
+    # WARNING AUTOMATICALLY EXECUTES ORDER
     def test_execute_limit_buy(self):
         amount: Decimal = Decimal("0.04")
         quantized_amount: Decimal = self.market.quantize_order_amount(trading_pair,
@@ -248,45 +249,98 @@ class LatokenExchangeUnitTest(unittest.TestCase):
         # Reset the logs
         self.market_logger.clear()
 
+    # WARNING AUTOMATICALLY EXECUTES ORDER
     def test_execute_limit_sell(self):
-        amount: Decimal = Decimal(0.02)
+        amount: Decimal = Decimal("0.04")
         quantized_amount: Decimal = self.market.quantize_order_amount(trading_pair,
                                                                       amount)
-        ask_entries = self.market.order_books[trading_pair].ask_entries()
-        most_top_ask = next(ask_entries)
-        ask_price: Decimal = Decimal(most_top_ask.price)
 
-        quantize_ask_price = self.market.quantize_order_price(trading_pair, ask_price) * Decimal("0.9")
+        bid_entries = self.market.order_books[trading_pair].bid_entries()
+        # ask_entries = self.market.order_books[trading_pair].ask_entries()
+        most_top_bid = next(bid_entries)
+        # most_top_ask = next(ask_entries)
+        # bid_price: Decimal = Decimal(most_top_bid.price)
+        # quantize_bid_price = self.market.quantize_order_price(trading_pair, bid_price) * Decimal("1.1")
 
-        order_id = self.market.sell(trading_pair,
-                                    quantized_amount,
-                                    OrderType.LIMIT,
-                                    quantize_ask_price,
-                                    )
-        [order_completed_event] = self.run_parallel(
-            self.market_logger.wait_for(SellOrderCompletedEvent))
+        bid_price: Decimal = Decimal(most_top_bid.price)
+        min_price_increment = self.market.trading_rules[trading_pair].min_price_increment
+        bid_price_to_be_lifted = self.market.quantize_order_price(trading_pair, bid_price + min_price_increment)
 
-        order_completed_event: SellOrderCompletedEvent = order_completed_event
+        order_id_sell = self.market.buy(trading_pair, quantized_amount, OrderType.LIMIT, bid_price_to_be_lifted)
+        print(order_id_sell)
+        _ = self.run_parallel(
+            self.market_logger.wait_for(BuyOrderCreatedEvent))
+
+        order_id_buy = self.market.sell(trading_pair, quantized_amount, OrderType.LIMIT, bid_price_to_be_lifted)
+
+        # [order_completed_event_sell] = self.run_parallel(
+        #     self.market_logger.wait_for(SellOrderCompletedEvent))
+
+        order_completed_event_buy, order_completed_event_sell = self.run_parallel(
+            self.market_logger.wait_for(SellOrderCompletedEvent), self.market_logger.wait_for(BuyOrderCompletedEvent))
+
+        order_completed_event_buy: SellOrderCompletedEvent = order_completed_event_buy
         trade_events: List[OrderFilledEvent] = [t for t in self.market_logger.event_log
                                                 if isinstance(t, OrderFilledEvent)]
         base_amount_traded: Decimal = sum(t.amount for t in trade_events)
         quote_amount_traded: Decimal = sum(t.amount * t.price for t in trade_events)
 
         self.assertTrue([evt.order_type == OrderType.LIMIT for evt in trade_events])
-        self.assertEqual(order_id, order_completed_event.order_id)
+        self.assertEqual(order_id_buy, order_completed_event_buy.order_id)
         self.assertAlmostEqual(quantized_amount,
-                               order_completed_event.base_asset_amount)
-        self.assertEqual(base_asset, order_completed_event.base_asset)
-        self.assertEqual(quote_asset, order_completed_event.quote_asset)
+                               order_completed_event_buy.base_asset_amount)
+        self.assertEqual(base_asset, order_completed_event_buy.base_asset)
+        self.assertEqual(quote_asset, order_completed_event_buy.quote_asset)
         self.assertAlmostEqual(base_amount_traded,
-                               order_completed_event.base_asset_amount)
+                               order_completed_event_buy.base_asset_amount + order_completed_event_sell.base_asset_amount)
         self.assertAlmostEqual(quote_amount_traded,
-                               order_completed_event.quote_asset_amount)
-        self.assertTrue(any([isinstance(event, SellOrderCreatedEvent) and event.order_id == order_id
+                               order_completed_event_buy.quote_asset_amount + order_completed_event_sell.quote_asset_amount)
+        self.assertTrue(any([isinstance(event, SellOrderCreatedEvent) and event.order_id == order_id_buy
                              for event in self.market_logger.event_log]))
         # Reset the logs
         self.market_logger.clear()
 
+    # needs manual execution
+    # def test_execute_limit_sell(self):
+    #     amount: Decimal = Decimal(0.02)
+    #     quantized_amount: Decimal = self.market.quantize_order_amount(trading_pair,
+    #                                                                   amount)
+    #     ask_entries = self.market.order_books[trading_pair].ask_entries()
+    #     most_top_ask = next(ask_entries)
+    #     ask_price: Decimal = Decimal(most_top_ask.price)
+    #
+    #     quantize_ask_price = self.market.quantize_order_price(trading_pair, ask_price) * Decimal("0.9")
+    #
+    #     order_id = self.market.sell(trading_pair,
+    #                                 quantized_amount,
+    #                                 OrderType.LIMIT,
+    #                                 quantize_ask_price,
+    #                                 )
+    #     [order_completed_event] = self.run_parallel(
+    #         self.market_logger.wait_for(SellOrderCompletedEvent))
+    #
+    #     order_completed_event: SellOrderCompletedEvent = order_completed_event
+    #     trade_events: List[OrderFilledEvent] = [t for t in self.market_logger.event_log
+    #                                             if isinstance(t, OrderFilledEvent)]
+    #     base_amount_traded: Decimal = sum(t.amount for t in trade_events)
+    #     quote_amount_traded: Decimal = sum(t.amount * t.price for t in trade_events)
+    #
+    #     self.assertTrue([evt.order_type == OrderType.LIMIT for evt in trade_events])
+    #     self.assertEqual(order_id, order_completed_event.order_id)
+    #     self.assertAlmostEqual(quantized_amount,
+    #                            order_completed_event.base_asset_amount)
+    #     self.assertEqual(base_asset, order_completed_event.base_asset)
+    #     self.assertEqual(quote_asset, order_completed_event.quote_asset)
+    #     self.assertAlmostEqual(base_amount_traded,
+    #                            order_completed_event.base_asset_amount)
+    #     self.assertAlmostEqual(quote_amount_traded,
+    #                            order_completed_event.quote_asset_amount)
+    #     self.assertTrue(any([isinstance(event, SellOrderCreatedEvent) and event.order_id == order_id
+    #                          for event in self.market_logger.event_log]))
+    #     # Reset the logs
+    #     self.market_logger.clear()
+
+    # WARNING NEEDS MANUAL EXECUTIONS IN WEB INTERFACE!!! OTHERWISE THIS CAUSES TIMEOUTS! # TODO fix issue in this unit test, last line before finally fails for now, meaning issue with latoken integration
     def test_orders_saving_and_restoration(self):
         self.tearDownClass()
         self.setUpClass()
@@ -379,9 +433,9 @@ class LatokenExchangeUnitTest(unittest.TestCase):
         quantize_ask_price: Decimal = self.market.quantize_order_price(trading_pair, ask_price * Decimal("1.1"))
 
         order_ids = []
-        order_count = 100
-        time_out_open_orders = 120
-        time_out_cancellations = 200  # seconds
+        order_count = 1  # order_count = 100
+        time_out_open_orders = 10
+        time_out_cancellations = 20  # seconds
         for i in range(order_count):
             x = self.market.trading_rules[trading_pair].min_price_increment * random.randint(0, 9) * quantize_bid_price
             print(f"to be fixed {x}")  # TODO fix this

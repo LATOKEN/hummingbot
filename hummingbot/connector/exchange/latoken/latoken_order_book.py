@@ -50,7 +50,7 @@ class LatokenOrderBook(OrderBook):
         timestamp_seconds = timestamp * 1e-9
         return OrderBookMessage(OrderBookMessageType.DIFF, {
             "trading_pair": msg["trading_pair"],
-            "first_update_id": msg["timestamp"] * 1e-3,  # could also use msg['headers']['message-id'] ?
+            "first_update_id": msg["timestamp"],  # could also use msg['headers']['message-id'] ?
             "update_id": timestamp_seconds,
             "bids": get_book_side(msg["bid"]),
             "asks": get_book_side(msg["ask"])
