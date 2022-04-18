@@ -27,7 +27,7 @@ class RESTRequest:
     url: Optional[str] = None
     params: Optional[Mapping[str, str]] = None
     data: Any = None
-    json: Any = None
+    # json: Any = None
     headers: Optional[Mapping[str, str]] = None
     is_auth_required: bool = False
     throttler_limit_id: Optional[str] = None

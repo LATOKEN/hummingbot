@@ -55,7 +55,7 @@ class TestAuth(unittest.TestCase):
         headers = {
             "Content-Type": "application/json" if method == RESTMethod.POST else "application/x-www-form-urlencoded"}
         request = RESTRequest(
-            method=method, url=url, json=json, params=None, headers=headers, is_auth_required=True)
+            method=method, url=url, data=json, params=None, headers=headers, is_auth_required=True)
         client = await self.api_factory.get_rest_assistant()
         response = await client.call(request)
         return await response.json()
@@ -114,6 +114,18 @@ class TestAuth(unittest.TestCase):
     def test_rest_auth_post(self):
         new_order_id = latoken_utils.get_new_client_order_id(is_buy=True, trading_pair=self.trading_pair)
         base_id, quote_id = self.ev_loop.run_until_complete(self.get_tag_by_id(self.trading_pair))
+        # result = self.ev_loop.run_until_complete(self.rest_auth_post(json=payload.JsonPayload({
+        #     "baseCurrency": base_id,
+        #     "quoteCurrency": quote_id,
+        #     "side": "BID",
+        #     "condition": "GTC",
+        #     "type": "LIMIT",
+        #     "clientOrderId": new_order_id,
+        #     "price": "10103.19",
+        #     "quantity": ".001",
+        #     "timestamp": 1568185507
+        # }, dumps=ujson.dumps)))
+
         result = self.ev_loop.run_until_complete(self.rest_auth_post(json={
             "baseCurrency": base_id,
             "quoteCurrency": quote_id,

@@ -426,7 +426,7 @@ class LatokenExchangeUnitTest(unittest.TestCase):
     # to be chosen carefully depending on the throttling policy of the exchange, otherwise it will not work
     def test_place_random_orders_and_cancel_all(self):
         # number of orders to be sent for testing cancellations (2 x order_count orders are sent : buy and sell)
-        order_count = 100
+        order_count = 1
         # timeout in seconds due to throttling of TPS coming from the exchange
         time_out_open_orders = 120
         # timeout in seconds due to throttling of TPS coming from the exchange
