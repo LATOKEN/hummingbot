@@ -426,15 +426,15 @@ class LatokenExchangeUnitTest(unittest.TestCase):
     # to be chosen carefully depending on the throttling policy of the exchange, otherwise it will not work
     def test_place_random_orders_and_cancel_all(self):
         # number of orders to be sent for testing cancellations (2 x order_count orders are sent : buy and sell)
-        order_count = 1
+        order_count = 100
         # timeout in seconds due to throttling of TPS coming from the exchange
-        time_out_open_orders = 12
+        time_out_open_orders_sec = 10
         # timeout in seconds due to throttling of TPS coming from the exchange
-        time_out_cancellations = 20
+        time_out_cancellations_sec = 10
 
         bid_price: Decimal = self.market.get_price(trading_pair, True)
         ask_price: Decimal = self.market.get_price(trading_pair, False)
-        amount: Decimal = Decimal("0.04")
+        amount: Decimal = Decimal("0.01")
         quantized_amount: Decimal = self.market.quantize_order_amount(trading_pair, amount)
 
         # Intentionally setting invalid price to prevent getting filled
@@ -450,26 +450,21 @@ class LatokenExchangeUnitTest(unittest.TestCase):
             quantize_bid_price = self.market.quantize_order_price(trading_pair, quantize_bid_price - diff_price)
             quantize_ask_price = self.market.quantize_order_price(trading_pair, quantize_ask_price + diff_price)
 
-            print(f"test_place_random_orders_and_cancel_all : BUY@{quantize_bid_price}")
-            print(f"test_place_random_orders_and_cancel_all : SELL@{quantize_ask_price}")
-
             order_id_buy = self.market.buy(trading_pair, quantized_amount, OrderType.LIMIT, quantize_bid_price)
             order_id_sell = self.market.sell(trading_pair, quantized_amount, OrderType.LIMIT, quantize_ask_price)
 
             order_ids.append(order_id_buy)
             order_ids.append(order_id_sell)
 
-        self.run_parallel(asyncio.sleep(time_out_open_orders))
+        self.run_parallel(asyncio.sleep(time_out_open_orders_sec))
 
         all_orders_opened = [self.market.in_flight_orders[order_id] for order_id in order_ids]
+        self.assertEqual(order_count * 2, len(all_orders_opened))
         are_all_orders_opened = [order.current_state == OrderState.OPEN for order in all_orders_opened]
         self.assertTrue(all(are_all_orders_opened))
         are_all_orders_with_exchange_id = [order.exchange_order_id is not None for order in all_orders_opened]
         self.assertTrue(all(are_all_orders_with_exchange_id))
-        log = logging.getLogger("test_place_random_orders_and_cancel_all")
-        log.debug(f"{time.time()} STARTING TO CANCEL ALL")
-        [cancellation_results] = self.run_parallel(self.market.cancel_all(time_out_cancellations))
-        log.debug(f"{time.time()} CANCELLED ALL (?)")
+        [cancellation_results] = self.run_parallel(self.market.cancel_all(time_out_cancellations_sec))
         # all_failing_order_ids = [order_id not in self.market.all_orders for order_id in order_ids]
         # failing_order_ids = [order_id for order_id in order_ids if order_id not in self.market.all_orders]
         # failing_order_ids = [self.market.all_orders[order_id].exchange_order_id is None for order_id in order_ids]
