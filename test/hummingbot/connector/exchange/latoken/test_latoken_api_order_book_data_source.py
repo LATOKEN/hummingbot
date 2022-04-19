@@ -379,6 +379,9 @@ class LatokenAPIOrderBookDataSourceUnitTests(unittest.TestCase):
         # self.assertRaises(asyncio.CancelledError, self.async_run_with_timeout, self.listening_task)
         mock_ws = MagicMock()
         mock_ws.send.side_effect = asyncio.CancelledError
+        # mock_ws.return_value = self.mocking_assistant.create_websocket_mock()
+        # self.mocking_assistant.add_websocket_aiohttp_message(mock_ws.return_value, None)
+        # self.mocking_assistant.add_websocket_aiohttp_message(mock_ws.return_value, None)
 
         with self.assertRaises(asyncio.CancelledError):
             self.listening_task = self.ev_loop.create_task(self.data_source._subscribe_channels(mock_ws))

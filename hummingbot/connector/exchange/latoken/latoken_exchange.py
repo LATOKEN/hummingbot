@@ -750,7 +750,8 @@ class LatokenExchange(ExchangeBase):
         ticker_list, currency_list, pair_list = await safe_gather(
             self._api_request(method=RESTMethod.GET, path_url=CONSTANTS.TICKER_PATH_URL),
             self._api_request(method=RESTMethod.GET, path_url=CONSTANTS.CURRENCY_PATH_URL),
-            self._api_request(method=RESTMethod.GET, path_url=CONSTANTS.PAIR_PATH_URL), return_exceptions=True)
+            self._api_request(method=RESTMethod.GET, path_url=CONSTANTS.PAIR_PATH_URL),
+            return_exceptions=True)
 
         pairs = latoken_utils.create_full_mapping(ticker_list, currency_list, pair_list)
         trading_rules_list = await self._format_trading_rules(pairs)

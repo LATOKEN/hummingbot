@@ -429,8 +429,8 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
                     throttler=self._throttler)
 
                 path_params = {'symbol': symbol}
-                msg_subscribe_books = stomper.subscribe(CONSTANTS.BOOK_STREAM.format(**path_params), f"{CONSTANTS.SUBSCRIPTION_ID_BOOKS}_{symbol}", ack="auto")
-                msg_subscribe_trades = stomper.subscribe(CONSTANTS.TRADES_STREAM.format(**path_params), f"{CONSTANTS.SUBSCRIPTION_ID_TRADES}_{symbol}", ack="auto")
+                msg_subscribe_books = stomper.subscribe(CONSTANTS.BOOK_STREAM.format(**path_params), f"{CONSTANTS.SUBSCRIPTION_ID_BOOKS}_{trading_pair}", ack="auto")
+                msg_subscribe_trades = stomper.subscribe(CONSTANTS.TRADES_STREAM.format(**path_params), f"{CONSTANTS.SUBSCRIPTION_ID_TRADES}_{trading_pair}", ack="auto")
                 # TODO add incrementer on subscribe id for support of multiple subbscriptions/trading_pairs
                 # TODO add unit test
                 await client.subscribe(WSRequest(payload=msg_subscribe_books))
@@ -456,7 +456,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
                                      trading_pair: str,
                                      domain: str,
                                      rest_assistant: RESTAssistant,
-                                     throttler: AsyncThrottler) -> float:
+                                     throttler: AsyncThrottler) -> Decimal:
 
         url = public_rest_url(path_url=CONSTANTS.TICKER_PATH_URL, domain=domain)
         symbol = await cls.exchange_symbol_associated_to_pair(trading_pair=trading_pair, domain=domain, throttler=throttler)
