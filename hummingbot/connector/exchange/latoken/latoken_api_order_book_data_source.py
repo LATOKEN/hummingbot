@@ -352,7 +352,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
                     "heart-beat": "0,0"
                 })
                 connect_request: WSRequest = WSRequest(payload=msg_out.pack(), is_auth_required=True)
-                await client.subscribe(connect_request)
+                await client.send(connect_request)
                 _ = await client.receive()
                 await self._subscribe_channels(client)
 
@@ -421,6 +421,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         :param client: the websocket assistant used to connect to the exchange
         """
         try:
+            subscriptions = []
             for trading_pair in self._trading_pairs:
                 symbol = await self.exchange_symbol_associated_to_pair(
                     trading_pair=trading_pair,
@@ -432,10 +433,10 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
                 msg_subscribe_books = stomper.subscribe(CONSTANTS.BOOK_STREAM.format(**path_params), f"{CONSTANTS.SUBSCRIPTION_ID_BOOKS}_{trading_pair}", ack="auto")
                 msg_subscribe_trades = stomper.subscribe(CONSTANTS.TRADES_STREAM.format(**path_params), f"{CONSTANTS.SUBSCRIPTION_ID_TRADES}_{trading_pair}", ack="auto")
 
-                _ = await safe_gather(
-                    client.subscribe(WSRequest(payload=msg_subscribe_books)),
-                    client.subscribe(WSRequest(payload=msg_subscribe_trades))
-                )
+                subscriptions.append(client.subscribe(WSRequest(payload=msg_subscribe_books)))
+                subscriptions.append(client.subscribe(WSRequest(payload=msg_subscribe_trades)))
+
+            _ = await safe_gather(*subscriptions)
 
             self.logger().info("Subscribed to public order book and trade channels...")
         except asyncio.CancelledError:
@@ -488,7 +489,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         # but it is also supposed to demonstrate the full mapping
         #
         # currencies = set()
-        # for trading_pair in cls._trading_pairs:
+        # for trading_pair in cl:
         #     """get uuid id for latoken ticker tag"""
         #     base, quote = trading_pair.split('-')
         #     currencies.add(base)

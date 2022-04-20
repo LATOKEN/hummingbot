@@ -395,10 +395,10 @@ class LatokenExchange(ExchangeBase):
         function are ignore except order_type. Use OrderType.LIMIT_MAKER to specify you want trading fee for
         maker order.
         """
-        # percent = self._ev_loop.run_until_complete(
-        #     self.retrieve_fee(base_currency, quote_currency, order_type, is_maker))
-        # return AddedToCostTradeFee(percent=percent) if order_side == TradeType.BUY else DeductedFromReturnsTradeFee(
-        #     percent=percent)
+        percent = self._ev_loop.run_until_complete(
+            self.retrieve_fee(base_currency, quote_currency, order_type, is_maker))
+        return AddedToCostTradeFee(percent=percent) if order_side == TradeType.BUY else DeductedFromReturnsTradeFee(
+            percent=percent)
         # is_maker = order_type is OrderType.LIMIT_MAKER  # LIMIT_MAKER not supported by latoken
         # fee for user and pair
         # fee = await self._api_request(
@@ -411,10 +411,10 @@ class LatokenExchange(ExchangeBase):
         # "type": "FEE_SCHEME_TYPE_PERCENT_QUOTE","take": "FEE_SCHEME_TAKE_PROPORTION"
         # is_maker = order_type is OrderType.LIMIT_MAKER  # LIMIT_MAKER not supported by latoken
         # return DeductedFromReturnsTradeFee(percent=self.estimate_fee_pct(is_maker))
-        estimated_fee_pct = self.estimate_fee_pct(is_maker)
-        return AddedToCostTradeFee(
-            percent=estimated_fee_pct) if order_side == TradeType.BUY else DeductedFromReturnsTradeFee(
-            percent=estimated_fee_pct)
+        # estimated_fee_pct = self.estimate_fee_pct(is_maker)
+        # return AddedToCostTradeFee(
+        #     percent=estimated_fee_pct) if order_side == TradeType.BUY else DeductedFromReturnsTradeFee(
+        #     percent=estimated_fee_pct)
 
     def buy(self, trading_pair: str, amount: Decimal, order_type: OrderType = OrderType.LIMIT,
             price: Decimal = s_decimal_NaN, **kwargs) -> str:
