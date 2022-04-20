@@ -3,12 +3,12 @@ import ujson
 import unittest
 import stomper
 import conf
+from hummingbot.connector.exchange.latoken.custom.latoken_web_assistants_factory import LatokenWebAssistantsFactory
 from hummingbot.connector.exchange.latoken.latoken_auth import LatokenAuth
 from typing import Dict, Any
 from hummingbot.connector.exchange.latoken import latoken_constants as CONSTANTS
 from hummingbot.connector.exchange.latoken import latoken_utils
 from hummingbot.connector.time_synchronizer import TimeSynchronizer
-from hummingbot.core.web_assistant.web_assistants_factory import WebAssistantsFactory
 from hummingbot.core.web_assistant.ws_assistant import WSAssistant
 from hummingbot.core.web_assistant.connections.data_types import (
     RESTMethod,
@@ -28,7 +28,7 @@ class TestAuth(unittest.TestCase):
         cls.trading_pair = "BTC-USDT"
         ts = TimeSynchronizer()
         auth = LatokenAuth(api_key, secret_key, ts)
-        cls.api_factory = WebAssistantsFactory(auth=auth)
+        cls.api_factory = LatokenWebAssistantsFactory(auth=auth)
 
     async def rest(self, path_url: str) -> Dict[Any, Any]:
         """REST public request"""
