@@ -49,8 +49,10 @@ class LatokenAPIOrderBookDataSourceUnitTests(unittest.TestCase):
 
         self.throttler = AsyncThrottler(rate_limits=CONSTANTS.RATE_LIMITS)
         self.data_source = LatokenAPIOrderBookDataSource(trading_pairs=[self.trading_pair],
-                                                         throttler=self.throttler,
-                                                         domain=self.domain)
+                                                         domain=self.domain,
+
+                                                         throttler=self.throttler
+                                                         )
         self.data_source.logger().setLevel(1)
         self.data_source.logger().addHandler(self)
 

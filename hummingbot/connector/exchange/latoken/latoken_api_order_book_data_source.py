@@ -17,6 +17,7 @@ from typing import (
 from bidict import bidict
 
 import hummingbot.connector.exchange.latoken.latoken_constants as CONSTANTS
+from hummingbot.connector.exchange.latoken.custom.latoken_web_assistants_factory import LatokenWebAssistantsFactory
 from hummingbot.connector.exchange.latoken.latoken_utils import (
     public_rest_url,
     get_data,
@@ -66,7 +67,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         self._order_book_create_function = lambda: OrderBook()
         self._domain = domain
         self._throttler = throttler or self._get_throttler_instance()
-        self._api_factory = api_factory or build_api_factory()
+        self._api_factory = api_factory or LatokenWebAssistantsFactory()
         self._rest_assistant: Optional[RESTAssistant] = None
         self._ws_assistant: Optional[WSAssistant] = None
         self._message_queue: Dict[str, asyncio.Queue] = defaultdict(asyncio.Queue)
