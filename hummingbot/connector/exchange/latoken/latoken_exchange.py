@@ -810,7 +810,7 @@ class LatokenExchange(ExchangeBase):
                 min_order_quantity = Decimal(rule["minOrderQuantity"])
 
                 fee = None
-                if symbol in self._trading_pairs:
+                if trading_pair in self._trading_pairs:
                     fee = await self._api_request(
                         method=RESTMethod.GET,
                         path_url=f"{CONSTANTS.FEES_PATH_URL}/{symbol}",

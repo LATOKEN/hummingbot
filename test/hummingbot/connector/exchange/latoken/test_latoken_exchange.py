@@ -1055,6 +1055,7 @@ class LatokenExchangeTests(TestCase):
         ticker_url = utils.public_rest_url(path_url=CONSTANTS.TICKER_PATH_URL, domain=self.domain)
         currency_url = utils.public_rest_url(path_url=CONSTANTS.CURRENCY_PATH_URL, domain=self.domain)
         pair_url = utils.public_rest_url(path_url=CONSTANTS.PAIR_PATH_URL, domain=self.domain)
+        fee_schema_url = utils.public_rest_url(path_url=f"{CONSTANTS.FEES_PATH_URL}/{self.exchange_trading_pair }", domain=self.domain)
 
         ticker_list: List[Dict] = [
             {"symbol": self.trading_pair, "baseCurrency": self.base_asset,
@@ -1108,6 +1109,15 @@ class LatokenExchangeTests(TestCase):
         ]
 
         mock_api.get(pair_url, body=json.dumps(pair_list))
+
+        fee_schema = {
+            "makerFee": "0.002200000000000000",
+            "takerFee": "0.002800000000000000",
+            "type": "FEE_SCHEME_TYPE_PERCENT_QUOTE",
+            "take": "FEE_SCHEME_TAKE_PROPORTION"
+        }
+
+        mock_api.get(fee_schema_url, body=json.dumps(fee_schema))
 
         self.async_run_with_timeout(self.exchange._update_trading_rules())
         mapping = utils.create_full_mapping(ticker_list, currency_list, pair_list)

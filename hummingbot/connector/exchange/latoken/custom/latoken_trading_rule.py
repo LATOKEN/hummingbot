@@ -1,16 +1,16 @@
 from decimal import Decimal
 from hummingbot.connector.trading_rule import TradingRule
-from enum import Enum
+from enum import Enum, auto
 
 
 class LatokenCommissionType(Enum):
-    PERCENT = 1
-    ABSOLUTE = 2  # TODO review this
+    PERCENT = auto()
+    ABSOLUTE = auto()  # TODO review this
 
 
 class LatokenTakeType(Enum):
-    PROPORTION = 1
-    ABSOLUTE = 2
+    PROPORTION = auto()
+    ABSOLUTE = auto()
 
 
 fee_type = {"FEE_SCHEME_TYPE_PERCENT_QUOTE": LatokenCommissionType.PERCENT}
