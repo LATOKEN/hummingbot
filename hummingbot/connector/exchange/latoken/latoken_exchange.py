@@ -19,6 +19,8 @@ import hummingbot.connector.exchange.latoken.latoken_constants as CONSTANTS
 from hummingbot.connector.client_order_tracker import ClientOrderTracker
 from hummingbot.connector.exchange_base import ExchangeBase
 from hummingbot.connector.exchange.latoken import latoken_utils
+from hummingbot.connector.exchange.latoken.custom.latoken_trading_rule import (LatokenTakeType, LatokenCommissionType,
+                                                                               LatokenTradingRule)
 from hummingbot.connector.exchange.latoken.latoken_api_order_book_data_source import LatokenAPIOrderBookDataSource
 from hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source import LatokenAPIUserStreamDataSource
 from hummingbot.connector.exchange.latoken.latoken_auth import LatokenAuth
@@ -26,7 +28,7 @@ from hummingbot.connector.exchange.latoken.latoken_order_book_tracker import Lat
 from hummingbot.connector.exchange.latoken.latoken_user_stream_tracker import LatokenUserStreamTracker
 from hummingbot.connector.exchange.latoken.custom.latoken_web_assistants_factory import LatokenWebAssistantsFactory
 from hummingbot.connector.time_synchronizer import TimeSynchronizer
-from hummingbot.connector.trading_rule import TradingRule
+# from hummingbot.connector.trading_rule import TradingRule
 from hummingbot.connector.utils import TradeFillOrderDetails
 from hummingbot.core.api_throttler.async_throttler import AsyncThrottler
 from hummingbot.core.data_type.cancellation_result import CancellationResult
@@ -97,6 +99,7 @@ class LatokenExchange(ExchangeBase):
         self._user_stream_tracker = LatokenUserStreamTracker(
             auth=self._auth, domain=domain, data_source=data_source, throttler=self._throttler)
         self._ev_loop = asyncio.get_event_loop()
+
         self._poll_notifier = asyncio.Event()
         self._last_timestamp = 0
         self._order_not_found_records = {}  # Dict[client_order_id:str, count:int]
@@ -126,7 +129,7 @@ class LatokenExchange(ExchangeBase):
         return self._order_book_tracker.order_books
 
     @property
-    def trading_rules(self) -> Dict[str, TradingRule]:
+    def trading_rules(self) -> Dict[str, LatokenTradingRule]:
         return self._trading_rules
 
     @property
@@ -389,23 +392,23 @@ class LatokenExchange(ExchangeBase):
         :param price: the order price
         :return: the estimated fee for the order
         """
-
         """
         To get trading fee, this function is simplified by using fee override configuration. Most parameters to this
         function are ignore except order_type. Use OrderType.LIMIT_MAKER to specify you want trading fee for
         maker order.
         """
-        percent = self._ev_loop.run_until_complete(
-            self.retrieve_fee(base_currency, quote_currency, order_type, is_maker))
-        return AddedToCostTradeFee(percent=percent) if order_side == TradeType.BUY else DeductedFromReturnsTradeFee(
-            percent=percent)
-        # is_maker = order_type is OrderType.LIMIT_MAKER  # LIMIT_MAKER not supported by latoken
+        trading_pair = f"{base_currency}-{quote_currency}"
+        trading_rule = self._trading_rules[trading_pair]
+        if trading_rule.type == LatokenTakeType.PROPORTION or trading_rule.take == LatokenCommissionType.PERCENT:
+            pass  # TODO please review
+        percent = trading_rule.maker_fee if order_type is OrderType.LIMIT_MAKER or (is_maker is not None and is_maker) else trading_rule.taker_fee
+        return AddedToCostTradeFee(percent=percent) if order_side == TradeType.BUY else DeductedFromReturnsTradeFee(percent=percent)
+        # is_maker = order_type is OrderType.LIMIT_MAKER  # LIMIT_MAKER not supported by Latoken
         # fee for user and pair
         # fee = await self._api_request(
         #     method=RESTMethod.POST,
         #     path_url=f"{CONSTANTS.FEES_PATH_URL}/{base_currency}/{quote_currency}",
         #     is_auth_required=True)
-        #
         # fee_pct_str = fee["makerFee"] if order_type is OrderType.LIMIT_MAKER or (is_maker is not None and is_maker) else fee["takerFee"]
         # percent = Decimal(fee_pct_str) if fee['type'] == 'FEE_SCHEME_TYPE_PERCENT_QUOTE' else self.estimate_fee_pct(is_maker)
         # "type": "FEE_SCHEME_TYPE_PERCENT_QUOTE","take": "FEE_SCHEME_TAKE_PROPORTION"
@@ -557,7 +560,7 @@ class LatokenExchange(ExchangeBase):
         :param order_type: the type of order to create (MARKET, LIMIT, LIMIT_MAKER)
         :param price: the order price
         """
-        trading_rule: TradingRule = self._trading_rules[trading_pair]
+        trading_rule: LatokenTradingRule = self._trading_rules[trading_pair]
         quantized_price = self.quantize_order_price(trading_pair, price)
         quantize_amount_price = Decimal("0") if quantized_price.is_nan() else quantized_price
         quantized_amount = self.quantize_order_amount(trading_pair=trading_pair, amount=amount,
@@ -760,7 +763,7 @@ class LatokenExchange(ExchangeBase):
         for trading_rule in trading_rules_list:
             self._trading_rules[trading_rule.trading_pair] = trading_rule
 
-    async def _format_trading_rules(self, pairs_list: List[Any]) -> List[TradingRule]:
+    async def _format_trading_rules(self, pairs_list: List[Any]) -> List[LatokenTradingRule]:
         """
         Example: https://api.latoken.com/doc/v2/#tag/Pair
         [
@@ -806,19 +809,28 @@ class LatokenExchange(ExchangeBase):
                 min_order_value = Decimal(rule["minOrderCostUsd"])
                 min_order_quantity = Decimal(rule["minOrderQuantity"])
 
-                retval.append(
-                    TradingRule(
-                        trading_pair,
-                        min_order_size=max(min_order_size, quantity_tick),
-                        min_price_increment=price_tick,
-                        min_base_amount_increment=quantity_tick,
-                        min_quote_amount_increment=price_tick,
-                        min_notional_size=min_order_quantity,
-                        min_order_value=min_order_value,  # not sure if this is ok when non USD?!?
-                        # max_price_significant_digits=len(rule["maxOrderCostUsd"])
-                        # supports_market_orders = False,
-                    )
+                fee = None
+                if symbol in self._trading_pairs:
+                    fee = await self._api_request(
+                        method=RESTMethod.GET,
+                        path_url=f"{CONSTANTS.FEES_PATH_URL}/{symbol}",
+                        is_auth_required=True)
+
+                tr = LatokenTradingRule(
+                    trading_pair,
+                    min_order_size=max(min_order_size, quantity_tick),
+                    min_price_increment=price_tick,
+                    min_base_amount_increment=quantity_tick,
+                    min_quote_amount_increment=price_tick,
+                    min_notional_size=min_order_quantity,
+                    min_order_value=min_order_value,  # not sure if this is ok when non USD?!?
+                    fee_schema=fee,
+                    # max_price_significant_digits=len(rule["maxOrderCostUsd"])
+                    # supports_market_orders = False,
                 )
+
+                retval.append(tr)
+
             except Exception:
                 self.logger().exception(f"Error parsing the trading pair rule {rule}. Skipping.")
         return retval
