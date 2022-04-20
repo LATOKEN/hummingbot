@@ -24,6 +24,7 @@ from hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source i
 from hummingbot.connector.exchange.latoken.latoken_auth import LatokenAuth
 from hummingbot.connector.exchange.latoken.latoken_order_book_tracker import LatokenOrderBookTracker
 from hummingbot.connector.exchange.latoken.latoken_user_stream_tracker import LatokenUserStreamTracker
+from hummingbot.connector.exchange.latoken.custom.latoken_web_assistants_factory import LatokenWebAssistantsFactory
 from hummingbot.connector.time_synchronizer import TimeSynchronizer
 from hummingbot.connector.trading_rule import TradingRule
 from hummingbot.connector.utils import TradeFillOrderDetails
@@ -53,7 +54,6 @@ from hummingbot.core.utils.async_utils import (
 )
 from hummingbot.core.web_assistant.connections.data_types import RESTMethod, RESTRequest
 from hummingbot.core.web_assistant.rest_assistant import RESTAssistant
-from hummingbot.core.web_assistant.web_assistants_factory import WebAssistantsFactory
 from hummingbot.logger import HummingbotLogger
 
 s_logger = None
@@ -84,7 +84,7 @@ class LatokenExchange(ExchangeBase):
             api_key=latoken_api_key,
             secret_key=latoken_api_secret,
             time_provider=self._latoken_time_synchronizer)
-        self._api_factory = WebAssistantsFactory(auth=self._auth)
+        self._api_factory = LatokenWebAssistantsFactory(auth=self._auth)
         self._rest_assistant = None
         self._throttler = AsyncThrottler(CONSTANTS.RATE_LIMITS)
         self._order_book_tracker = LatokenOrderBookTracker(

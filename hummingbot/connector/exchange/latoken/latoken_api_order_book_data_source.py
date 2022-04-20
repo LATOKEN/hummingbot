@@ -352,9 +352,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
                     "heart-beat": "0,0"
                 })
                 connect_request: WSRequest = WSRequest(payload=msg_out.pack(), is_auth_required=True)
-                # we call these private modifiers to prevent changes in hbot framework
-                connect_payload_str = (await client._auth.ws_authenticate(connect_request)).payload
-                await client._connection._connection.send_str(connect_payload_str)
+                await client.subscribe(connect_request)
                 _ = await client.receive()
                 await self._subscribe_channels(client)
 
@@ -434,16 +432,10 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
                 msg_subscribe_books = stomper.subscribe(CONSTANTS.BOOK_STREAM.format(**path_params), f"{CONSTANTS.SUBSCRIPTION_ID_BOOKS}_{trading_pair}", ack="auto")
                 msg_subscribe_trades = stomper.subscribe(CONSTANTS.TRADES_STREAM.format(**path_params), f"{CONSTANTS.SUBSCRIPTION_ID_TRADES}_{trading_pair}", ack="auto")
 
-                # _ = await safe_gather(
-                #     client.subscribe(WSRequest(payload=msg_subscribe_books)),
-                #     client.subscribe(WSRequest(payload=msg_subscribe_trades)),
-                #     return_exceptions=True)
-                client._connection._ensure_connected()
                 _ = await safe_gather(
-                    client._connection._connection.send_str(data=msg_subscribe_books),
-                    client._connection._connection.send_str(data=msg_subscribe_trades),
-                    return_exceptions=True
-                )
+                    client.subscribe(WSRequest(payload=msg_subscribe_books)),
+                    client.subscribe(WSRequest(payload=msg_subscribe_trades)),
+                    return_exceptions=True)
 
             self.logger().info("Subscribed to public order book and trade channels...")
         except asyncio.CancelledError:
