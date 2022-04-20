@@ -6,12 +6,14 @@ import logging
 from hummingbot.connector.exchange.latoken import latoken_constants as CONSTANTS
 from typing import Dict
 from typing import AsyncIterable
+
+from hummingbot.connector.exchange.latoken.custom.latoken_web_assistants_factory import LatokenWebAssistantsFactory
 from hummingbot.connector.exchange.latoken.latoken_auth import LatokenAuth
 from hummingbot.connector.exchange.latoken.latoken_user_stream_tracker import \
     LatokenUserStreamTracker
 from hummingbot.connector.time_synchronizer import TimeSynchronizer
 from hummingbot.core.api_throttler.async_throttler import AsyncThrottler
-from hummingbot.core.web_assistant.web_assistants_factory import WebAssistantsFactory
+
 from hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source import LatokenAPIUserStreamDataSource
 domain = "tech"
 
@@ -24,7 +26,7 @@ class LatokenUserStreamTrackerUnitTest(unittest.TestCase):
         auth = LatokenAuth(conf.latoken_api_key, conf.latoken_secret_key, ts)
         cls.trading_pair = ["ETH-USDT"]
         throttler = AsyncThrottler(CONSTANTS.RATE_LIMITS)
-        api_factory = WebAssistantsFactory(auth=auth)
+        api_factory = LatokenWebAssistantsFactory(auth=auth)
         data_source = LatokenAPIUserStreamDataSource(
             auth=auth, domain=domain, api_factory=api_factory, throttler=throttler)
         cls.user_stream_tracker: LatokenUserStreamTracker = LatokenUserStreamTracker(
