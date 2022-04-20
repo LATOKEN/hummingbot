@@ -45,10 +45,7 @@ class WSConnection:
 
     async def send(self, request: WSRequest):
         self._ensure_connected()
-        if isinstance(request.payload, str):
-            await self._connection.send_str(request.payload)
-        else:
-            await self._connection.send_json(request.payload)
+        await self._connection.send_json(request.payload)
 
     async def ping(self):
         await self._connection.ping()

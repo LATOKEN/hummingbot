@@ -85,5 +85,5 @@ class LatokenAuth(AuthBase):
         request.payload = payload.pack()
         return request  # pass-through
 
-    def generate_auth_payload(self, param):  # todo
+    def generate_auth_payload(self, param):
         pass

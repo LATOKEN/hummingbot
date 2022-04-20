@@ -93,7 +93,9 @@ class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
                 })
 
                 connect_request: WSRequest = WSRequest(payload=msg_out.pack(), is_auth_required=True)
-                await client.send(connect_request)
+                # await client.send(connect_request)
+                connect_payload_str = (await client._auth.ws_authenticate(connect_request)).payload
+                await client._connection._connection.send_str(connect_payload_str)
                 await client.receive()
                 # subscription request
                 path_params = {'user': self._current_listen_key}
@@ -103,10 +105,18 @@ class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
                 msg_subscribe_account = stomper.subscribe(
                     CONSTANTS.ACCOUNT_STREAM.format(**path_params), CONSTANTS.SUBSCRIPTION_ID_ACCOUNT, ack="auto")
 
-                _ = await safe_gather(
-                    client.subscribe(request=WSRequest(payload=msg_subscribe_orders)),
-                    client.subscribe(request=WSRequest(payload=msg_subscribe_account)), return_exceptions=True)
+                # _ = await safe_gather(
+                #     client.subscribe(request=WSRequest(payload=msg_subscribe_orders)),
+                #     client.subscribe(request=WSRequest(payload=msg_subscribe_account)),
+                #     return_exceptions=True)
 
+                # we call these private modifiers to prevent changes in hbot framework
+                client._connection._ensure_connected()
+                _ = await safe_gather(
+                    client._connection._connection.send_str(data=msg_subscribe_orders),  # request=WSRequest(payload=msg_subscribe_orders)),
+                    client._connection._connection.send_str(data=msg_subscribe_account),
+                    return_exceptions=True
+                )
                 # queue subscription messages
                 async for ws_response in client.iter_messages():
                     msg_in = stomper.Frame()
