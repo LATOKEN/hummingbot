@@ -434,8 +434,8 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
 
                 _ = await safe_gather(
                     client.subscribe(WSRequest(payload=msg_subscribe_books)),
-                    client.subscribe(WSRequest(payload=msg_subscribe_trades)),
-                    return_exceptions=True)
+                    client.subscribe(WSRequest(payload=msg_subscribe_trades))
+                )
 
             self.logger().info("Subscribed to public order book and trade channels...")
         except asyncio.CancelledError:

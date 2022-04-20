@@ -42,11 +42,11 @@ mock_api_enabled = os.getenv("MOCK_API_ENABLED")
 for key in connector_keys().keys():
     locals()[key] = os.getenv(key.upper())
 
-latoken_api_key = '8a8b913f-b124-4d1a-819b-298aaef60242'
-latoken_secret_key = 'YTFlZjRjMzgtMGUxZS00MDc5LWJhYzgtMWI3ZmU4NTAzZTUx'
+# latoken_api_key = '8a8b913f-b124-4d1a-819b-298aaef60242'
+# latoken_secret_key = 'YTFlZjRjMzgtMGUxZS00MDc5LWJhYzgtMWI3ZmU4NTAzZTUx'
 # Stas S dev stand API keys
-# latoken_api_key = 'b71d0424-5168-4cdf-9748-0d6236d8bb8d'
-# latoken_secret_key = 'YTU2ZGM3MDktMjQxYy00NDIxLWEwNDQtMGY0YzM0YTM4YmJk'
+latoken_api_key = 'b71d0424-5168-4cdf-9748-0d6236d8bb8d'
+latoken_secret_key = 'YTU2ZGM3MDktMjQxYy00NDIxLWEwNDQtMGY0YzM0YTM4YmJk'
 
 """
 # AscendEX Tests
