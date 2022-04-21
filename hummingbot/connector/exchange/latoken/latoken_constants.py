@@ -90,7 +90,7 @@ GLOBAL_RATE_LIMIT = "global"  # TODO this needs some review
 
 RATE_LIMITS = [
     # Pools
-    RateLimit(limit_id=GLOBAL_RATE_LIMIT, limit=50, time_interval=ONE_SECOND),
+    RateLimit(limit_id=GLOBAL_RATE_LIMIT, limit=100, time_interval=ONE_SECOND),
     # RateLimit(limit_id=ACCOUNT, limit=5, time_interval=ONE_SECOND),
     # RateLimit(limit_id=TIME, limit=5, time_interval=ONE_SECOND),
     # RateLimit(limit_id=TICKER_PATH_URL, limit=5, time_interval=ONE_SECOND),

@@ -11,17 +11,12 @@ from hummingbot.core.web_assistant.ws_pre_processors import WSPreProcessorBase
 
 
 class LatokenWebAssistantsFactory(WebAssistantsFactory):
-    def __init__(
-        self,
-        rest_pre_processors: Optional[List[RESTPreProcessorBase]] = None,
-        rest_post_processors: Optional[List[RESTPostProcessorBase]] = None,
-        ws_pre_processors: Optional[List[WSPreProcessorBase]] = None,
-        ws_post_processors: Optional[List[WSPostProcessorBase]] = None,
-        auth: Optional[AuthBase] = None,
-
-    ):
+    def __init__(self, rest_pre_processors: Optional[List[RESTPreProcessorBase]] = None,
+                 rest_post_processors: Optional[List[RESTPostProcessorBase]] = None,
+                 ws_pre_processors: Optional[List[WSPreProcessorBase]] = None,
+                 ws_post_processors: Optional[List[WSPostProcessorBase]] = None, auth: Optional[AuthBase] = None):
         self._connections_factory = LatokenConnectionsFactory()
-        self._rest_pre_processors = rest_pre_processors or []
+        self._rest_pre_processors = rest_pre_processors or []  # TODO implement REST/WS stomper pre/postprocessing
         self._rest_post_processors = rest_post_processors or []
         self._ws_pre_processors = ws_pre_processors or []
         self._ws_post_processors = ws_post_processors or []

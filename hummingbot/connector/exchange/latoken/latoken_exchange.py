@@ -353,8 +353,7 @@ class LatokenExchange(ExchangeBase):
         notional_size = current_price * quantized_amount
 
         # Add 1% as a safety factor in case the prices changed while making the order.
-        if notional_size < trading_rule.min_notional_size * Decimal(
-                "1.01"):  # TODO does this make sense? put 1.01 to 1.00
+        if notional_size < trading_rule.min_notional_size * Decimal("1.01"):  # TODO does this make sense? put 1.01 to 1.00??
             return s_decimal_0
 
         return quantized_amount
@@ -594,9 +593,7 @@ class LatokenExchange(ExchangeBase):
 
         if tracked_order is not None:
             try:
-                api_json = {
-                    "id": exchange_order_id,  # order_id,
-                }
+                api_json = {"id": exchange_order_id}
                 cancel_result = await self._api_request(
                     method=RESTMethod.POST,
                     path_url=CONSTANTS.ORDER_CANCEL_PATH_URL,
@@ -666,7 +663,7 @@ class LatokenExchange(ExchangeBase):
         Updates the trading rules by requesting the latest definitions from the exchange.
         Executes regularly every 30 minutes
         """
-        while True:  # TODO add fees retrieval for get_fee
+        while True:
             try:
                 await safe_gather(
                     self._update_trading_rules(),

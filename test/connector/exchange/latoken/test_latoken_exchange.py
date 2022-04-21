@@ -348,6 +348,7 @@ class LatokenExchangeUnitTest(unittest.TestCase):
 
         config_path: str = "test_config"
         strategy_name: str = "test_strategy"
+
         sql: SQLConnectionManager = SQLConnectionManager(SQLConnectionType.TRADE_FILLS, db_path=self.db_path)
         order_id: Optional[str] = None
 
