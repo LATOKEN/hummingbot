@@ -498,6 +498,8 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         #
         # currency_mapping = await get_currency_data(cls.logger(), domain, rest_assistant, local_throttler, currencies)
         #
+        # TODO problem is trading_pairs is not present, but this would be nice to have
+
         # for trading_pair in cls._trading_pairs:
         #     base, quote = trading_pair.split('-')
         #     base_id = currency_mapping.get('base', None)

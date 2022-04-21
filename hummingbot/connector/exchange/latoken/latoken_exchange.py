@@ -390,12 +390,8 @@ class LatokenExchange(ExchangeBase):
         :param order_side: if the order is for buying or selling
         :param amount: the order amount
         :param price: the order price
+        :param is_maker: if we take into account maker fee (True) or taker fee (None, False)
         :return: the estimated fee for the order
-        """
-        """
-        To get trading fee, this function is simplified by using fee override configuration. Most parameters to this
-        function are ignore except order_type. Use OrderType.LIMIT_MAKER to specify you want trading fee for
-        maker order.
         """
         trading_pair = f"{base_currency}-{quote_currency}"
         trading_rule = self._trading_rules[trading_pair]
@@ -403,21 +399,6 @@ class LatokenExchange(ExchangeBase):
             pass  # TODO please review
         percent = trading_rule.maker_fee if order_type is OrderType.LIMIT_MAKER or (is_maker is not None and is_maker) else trading_rule.taker_fee
         return AddedToCostTradeFee(percent=percent) if order_side == TradeType.BUY else DeductedFromReturnsTradeFee(percent=percent)
-        # is_maker = order_type is OrderType.LIMIT_MAKER  # LIMIT_MAKER not supported by Latoken
-        # fee for user and pair
-        # fee = await self._api_request(
-        #     method=RESTMethod.POST,
-        #     path_url=f"{CONSTANTS.FEES_PATH_URL}/{base_currency}/{quote_currency}",
-        #     is_auth_required=True)
-        # fee_pct_str = fee["makerFee"] if order_type is OrderType.LIMIT_MAKER or (is_maker is not None and is_maker) else fee["takerFee"]
-        # percent = Decimal(fee_pct_str) if fee['type'] == 'FEE_SCHEME_TYPE_PERCENT_QUOTE' else self.estimate_fee_pct(is_maker)
-        # "type": "FEE_SCHEME_TYPE_PERCENT_QUOTE","take": "FEE_SCHEME_TAKE_PROPORTION"
-        # is_maker = order_type is OrderType.LIMIT_MAKER  # LIMIT_MAKER not supported by latoken
-        # return DeductedFromReturnsTradeFee(percent=self.estimate_fee_pct(is_maker))
-        # estimated_fee_pct = self.estimate_fee_pct(is_maker)
-        # return AddedToCostTradeFee(
-        #     percent=estimated_fee_pct) if order_side == TradeType.BUY else DeductedFromReturnsTradeFee(
-        #     percent=estimated_fee_pct)
 
     def buy(self, trading_pair: str, amount: Decimal, order_type: OrderType = OrderType.LIMIT,
             price: Decimal = s_decimal_NaN, **kwargs) -> str:
@@ -471,56 +452,6 @@ class LatokenExchange(ExchangeBase):
         try:
             async with timeout(timeout_seconds):
                 cancellation_results = await safe_gather(*tasks, return_exceptions=True)
-                for cr in cancellation_results:
-                    if isinstance(cr, Exception):
-                        continue
-                    if isinstance(cr, dict) and "id" in cr:
-                        exchange_order_id = cr.get("id")
-                        tracked_order = self._order_tracker.fetch_order(exchange_order_id=exchange_order_id)
-                        if tracked_order is None:
-                            self.logger().warning(
-                                f"cancel_all ERROR exchange_order_id={exchange_order_id} cr={cr}")
-                        else:
-                            client_order_id = tracked_order.client_order_id
-                            order_id_set.remove(client_order_id)
-                            successful_cancellations.append(CancellationResult(client_order_id, True))
-        except Exception:
-            self.logger().network(
-                "Unexpected error cancelling orders.",
-                exc_info=True,
-                app_warning_msg="Failed to cancel order with Latoken. Check API key and network connection."
-            )
-
-        failed_cancellations = [CancellationResult(oid, False) for oid in order_id_set]
-        return successful_cancellations + failed_cancellations
-
-    async def cancel_all_debug(self, timeout_seconds: float) -> List[CancellationResult]:
-        """
-        Cancels all currently active orders. The cancellations are performed in parallel tasks.
-        :param timeout_seconds: the maximum time (in seconds) the cancel logic should run
-        :return: a list of CancellationResult instances, one for each of the orders to be cancelled
-        """
-        incomplete_orders = [o for o in self.in_flight_orders.values() if not o.is_done]
-
-        # tasks = []
-        cancellation_results = []
-        timeout_execute_cancel = 1.0
-        for o in incomplete_orders:
-            self.logger().warning(
-                f"{time.time()} o.client_order_id={o.client_order_id}, o.exchange_order_id={o.exchange_order_id}")
-            execute_cancel_task = await self._execute_cancel(o.trading_pair, o.client_order_id)
-            await asyncio.sleep(timeout_execute_cancel)
-            cancellation_results.append(execute_cancel_task)
-            # tasks.append(self._execute_cancel(o.trading_pair, o.client_order_id))
-            # tasks.append(execute_cancel_task)
-
-        # tasks = [self._execute_cancel(o.trading_pair, o.client_order_id) for o in incomplete_orders]
-        order_id_set = set([o.client_order_id for o in incomplete_orders])
-        successful_cancellations = []
-
-        try:
-            async with timeout(timeout_seconds):
-                # cancellation_results = await safe_gather(*tasks, return_exceptions=True)
                 for cr in cancellation_results:
                     if isinstance(cr, Exception):
                         continue
@@ -816,20 +747,20 @@ class LatokenExchange(ExchangeBase):
                         path_url=f"{CONSTANTS.FEES_PATH_URL}/{symbol}",
                         is_auth_required=True)
 
-                tr = LatokenTradingRule(
+                latoken_trading_rule = LatokenTradingRule(
                     trading_pair,
                     min_order_size=max(min_order_size, quantity_tick),
                     min_price_increment=price_tick,
                     min_base_amount_increment=quantity_tick,
                     min_quote_amount_increment=price_tick,
                     min_notional_size=min_order_quantity,
-                    min_order_value=min_order_value,  # not sure if this is ok when non USD?!?
+                    min_order_value=min_order_value,  # TODO not sure if this is ok when non USD?!?
                     fee_schema=fee,
                     # max_price_significant_digits=len(rule["maxOrderCostUsd"])
                     # supports_market_orders = False,
                 )
 
-                retval.append(tr)
+                retval.append(latoken_trading_rule)
 
             except Exception:
                 self.logger().exception(f"Error parsing the trading pair rule {rule}. Skipping.")
@@ -847,7 +778,7 @@ class LatokenExchange(ExchangeBase):
         currency_lists = await safe_gather(*balance_to_gather, return_exceptions=True)
 
         currencies = {currency["id"]: currency["tag"] for currency in currency_lists if
-                      isinstance(currency, dict)}  # TODO make dictionairy for this
+                      isinstance(currency, dict)}
 
         for balance in balances:
             asset_name = currencies.get(balance["currency"], None)
@@ -897,9 +828,10 @@ class LatokenExchange(ExchangeBase):
             tracked_order = self._order_tracker.fetch_order(client_order_id=client_order_id)
             price = Decimal(order["price"])
             if tracked_order is not None:
+                '''something unique is put in trade update -> trade_id, the order doesn't have anything unique,
+                the id of order contains the exchange id previously assigned by Latoken'''
                 trade_update = TradeUpdate(
                     trade_id=f"WS_{timestamp}_{tracked_order.trading_pair}_{uuid.uuid4()}",
-                    # sth unique to trigger trade update, the order doesn't have anything unique, the id of order contains the exchange id previously assigned by latoken
                     client_order_id=client_order_id,
                     exchange_order_id=order["id"],
                     trading_pair=tracked_order.trading_pair,
@@ -908,7 +840,7 @@ class LatokenExchange(ExchangeBase):
                     fill_base_amount=delta_filled,
                     fill_quote_amount=price * delta_filled,
                     fee_asset=tracked_order.quote_asset,
-                    fee_paid=Decimal(order.get("fee", 0)),  # or get fee
+                    fee_paid=Decimal(order.get("fee", 0)),  # TODO review
                 )
                 self._order_tracker.process_trade_update(trade_update)
 
@@ -990,6 +922,7 @@ class LatokenExchange(ExchangeBase):
                         app_warning_msg=f"Failed to fetch trade update for {trading_pair}."
                     )
                     continue
+
                 for trade in trades:
                     exchange_order_id = trade["id"]
                     fee = Decimal(trade["fee"])
@@ -1020,13 +953,9 @@ class LatokenExchange(ExchangeBase):
                             exchange_trade_id=exchange_order_id,
                             symbol=trading_pair))
 
-                        if trade["direction"] == "TRADE_DIRECTION_BUY":
-                            trade_type = TradeType.BUY
-                            # currency_type = "baseCurrency"
-                        else:
-                            trade_type = TradeType.SELL
-                            # currency_type = "quoteCurrency"
-
+                        trade_type = TradeType.BUY if trade["direction"] == "TRADE_DIRECTION_BUY" else TradeType.SELL
+                        flat_fee = [TokenAmount(trading_pair.split('-')[-1], fee)]
+                        trade_fee = AddedToCostTradeFee(flat_fees=flat_fee) if trade_type == TradeType.BUY else DeductedFromReturnsTradeFee(flat_fees=flat_fee)
                         self.trigger_event(
                             MarketEvent.OrderFilled,
                             OrderFilledEvent(
@@ -1037,14 +966,7 @@ class LatokenExchange(ExchangeBase):
                                 order_type=OrderType.LIMIT,
                                 price=price,
                                 amount=quantity,
-                                trade_fee=DeductedFromReturnsTradeFee(  # TODO this is not correct for Latoken, check when deduct and addition
-                                    flat_fees=[
-                                        TokenAmount(
-                                            trading_pair.split('-')[-1],  # use quote, trade[currency_type],
-                                            fee
-                                        )
-                                    ]
-                                ),
+                                trade_fee=trade_fee,
                                 exchange_trade_id=exchange_order_id
                             ))
                         self.logger().info(f"Recreating missing trade in TradeFill: {trade}")
