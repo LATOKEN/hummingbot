@@ -358,11 +358,11 @@ class LatokenExchangeUnitTest(unittest.TestCase):
         try:
             self.assertEqual(0, len(self.market.tracking_states))
 
-            amount: Decimal = Decimal("0.04")
-            current_ask_price: Decimal = self.market.get_price(trading_pair, False)
-            bid_price: Decimal = Decimal("0.9") * current_ask_price
-            quantize_ask_price: Decimal = self.market.quantize_order_price(trading_pair, bid_price)
-            order_id = self.market.buy(trading_pair, amount, OrderType.LIMIT, quantize_ask_price)
+            amount: Decimal = Decimal("2.0")
+            current_bid_price: Decimal = self.market.get_price(trading_pair, False)
+            bid_price: Decimal = Decimal("0.9") * current_bid_price
+            quantize_bid_price: Decimal = self.market.quantize_order_price(trading_pair, bid_price)
+            order_id = self.market.buy(trading_pair, amount, OrderType.LIMIT, quantize_bid_price)
 
             [order_created_event] = self.run_parallel(self.market_logger.wait_for(BuyOrderCreatedEvent))
             order_created_event: BuyOrderCreatedEvent = order_created_event
