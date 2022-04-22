@@ -401,6 +401,7 @@ class LatokenExchangeUnitTest(unittest.TestCase):
 
             saved_market_states = recorder.get_market_states(config_path, self.market, session=session)
             self.clock.add_iterator(self.market)
+
             self.assertEqual(0, len(self.market.limit_orders))
             self.assertEqual(0, len(self.market.tracking_states))
             self.market.restore_tracking_states(saved_market_states.saved_state)
@@ -413,6 +414,8 @@ class LatokenExchangeUnitTest(unittest.TestCase):
             order_id = None
             self.assertEqual(0, len(self.market.limit_orders))
             self.assertEqual(0, len(self.market.tracking_states))
+            # TODO review strange behavior we expect to have cancellation removed from market state already
+            recorder.save_market_states(config_path, self.market, session)
             saved_market_states = recorder.get_market_states(config_path, self.market, session=session)
             self.assertEqual(0, len(saved_market_states.saved_state))
         finally:
