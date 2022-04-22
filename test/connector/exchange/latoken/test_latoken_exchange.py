@@ -358,7 +358,7 @@ class LatokenExchangeUnitTest(unittest.TestCase):
         try:
             self.assertEqual(0, len(self.market.tracking_states))
 
-            amount: Decimal = Decimal("2.0")
+            amount: Decimal = Decimal(".04")
             current_bid_price: Decimal = self.market.get_price(trading_pair, False)
             bid_price: Decimal = Decimal("0.9") * current_bid_price
             quantize_bid_price: Decimal = self.market.quantize_order_price(trading_pair, bid_price)
