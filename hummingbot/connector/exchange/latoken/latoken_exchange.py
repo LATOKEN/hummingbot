@@ -28,7 +28,6 @@ from hummingbot.connector.exchange.latoken.latoken_order_book_tracker import Lat
 from hummingbot.connector.exchange.latoken.latoken_user_stream_tracker import LatokenUserStreamTracker
 from hummingbot.connector.exchange.latoken.custom.latoken_web_assistants_factory import LatokenWebAssistantsFactory
 from hummingbot.connector.time_synchronizer import TimeSynchronizer
-# from hummingbot.connector.trading_rule import TradingRule
 from hummingbot.connector.utils import TradeFillOrderDetails
 from hummingbot.core.api_throttler.async_throttler import AsyncThrottler
 from hummingbot.core.data_type.cancellation_result import CancellationResult
@@ -44,10 +43,10 @@ from hummingbot.core.data_type.trade_fee import (
 from hummingbot.core.event.events import (
     MarketEvent,
     OrderFilledEvent,
-    # OrderType,
+    OrderType,
     TradeType,
 )
-from hummingbot.core.event.events import OrderType
+
 
 from hummingbot.core.network_iterator import NetworkStatus
 from hummingbot.core.utils.async_utils import (
