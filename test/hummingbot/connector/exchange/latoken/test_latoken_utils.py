@@ -17,7 +17,7 @@ class LatokenUtilTestCases(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         super().setUpClass()
-        cls.domain = "tech"
+        cls.domain = "com"
         cls.endpoint = CONSTANTS.DOMAIN_TO_ENDPOINT[cls.domain]
         cls.base_asset = "ETH"
         cls.quote_asset = "USDT"

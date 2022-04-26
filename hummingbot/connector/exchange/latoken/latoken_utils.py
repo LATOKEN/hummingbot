@@ -216,21 +216,8 @@ KEYS = {
 }
 
 
-OTHER_DOMAINS = ["latoken_tech"]
-OTHER_DOMAINS_PARAMETER = {"latoken_tech": "tech"}
-OTHER_DOMAINS_EXAMPLE_PAIR = {"latoken_tech": "HBTEST-USDT"}
-OTHER_DOMAINS_DEFAULT_FEES = {"latoken_tech": [0.1, 0.1]}
-OTHER_DOMAINS_KEYS = {"latoken_tech": {
-    "latoken_tech_api_key":
-        ConfigVar(key="latoken_tech_api_key",
-                  prompt="Enter your Latoken Tech API key >>> ",
-                  required_if=using_exchange("latoken_tech"),
-                  is_secure=True,
-                  is_connect_key=True),
-    "latoken_tech_api_secret":
-        ConfigVar(key="latoken_tech_api_secret",
-                  prompt="Enter your Latoken Tech API secret >>> ",
-                  required_if=using_exchange("latoken_tech"),
-                  is_secure=True,
-                  is_connect_key=True),
-}}
+OTHER_DOMAINS = []
+OTHER_DOMAINS_PARAMETER = {}
+OTHER_DOMAINS_EXAMPLE_PAIR = {}
+OTHER_DOMAINS_DEFAULT_FEES = {}
+OTHER_DOMAINS_KEYS = {}

@@ -49,7 +49,7 @@ class LatokenExchangeTests(TestCase):
         cls.trading_pair = "ETH-USDT"
         cls.exchange_trading_pair = f"{cls.base_asset}/{cls.quote_asset}"
         cls.symbol = f"{cls.base_asset}{cls.quote_asset}"
-        cls.domain = "tech"
+        cls.domain = "com"
 
     def setUp(self) -> None:
         super().setUp()

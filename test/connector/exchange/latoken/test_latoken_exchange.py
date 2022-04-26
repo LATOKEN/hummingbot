@@ -49,7 +49,7 @@ API_KEY = conf.latoken_api_key
 API_SECRET = conf.latoken_secret_key
 trading_pair = "ETH-USDT"
 base_asset, quote_asset = trading_pair.split("-")
-domain = "tech"
+domain = "com"
 
 
 class LatokenExchangeUnitTest(unittest.TestCase):

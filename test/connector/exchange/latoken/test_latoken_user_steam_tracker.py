@@ -15,7 +15,7 @@ from hummingbot.connector.time_synchronizer import TimeSynchronizer
 from hummingbot.core.api_throttler.async_throttler import AsyncThrottler
 
 from hummingbot.connector.exchange.latoken.latoken_api_user_stream_data_source import LatokenAPIUserStreamDataSource
-domain = "tech"
+domain = "com"
 
 
 class LatokenUserStreamTrackerUnitTest(unittest.TestCase):

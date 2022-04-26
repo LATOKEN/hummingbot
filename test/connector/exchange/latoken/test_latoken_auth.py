@@ -21,7 +21,7 @@ from hummingbot.core.web_assistant.connections.data_types import (
 class TestAuth(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.domain = "tech"
+        cls.domain = "com"
         cls.ev_loop: asyncio.BaseEventLoop = asyncio.get_event_loop()
         api_key = conf.latoken_api_key
         secret_key = conf.latoken_secret_key

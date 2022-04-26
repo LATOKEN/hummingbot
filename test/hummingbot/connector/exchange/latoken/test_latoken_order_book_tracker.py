@@ -24,7 +24,7 @@ class LatokenOrderBookTrackerUnitTests(unittest.TestCase):
         cls.base_asset = "d8ae67f2-f954-4014-98c8-64b1ac334c64"
         cls.quote_asset = "0c3a106d-bde3-4c13-a26e-3fd2394529e5"
         cls.trading_pair = "ETH-USDT"
-        cls.domain = "tech"
+        cls.domain = "com"
 
         cls.ev_loop = asyncio.get_event_loop()
 

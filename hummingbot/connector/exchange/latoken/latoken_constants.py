@@ -3,7 +3,7 @@ from hummingbot.core.api_throttler.data_types import RateLimit  # ,LinkedLimitWe
 HBOT_ORDER_ID_PREFIX = "latoken-hbot"  # not sure how to interpret this for latoken
 
 
-DOMAIN_TO_ENDPOINT = {"tech": "api-qa-equity.dev3.nekotal", "com": "api.latoken"}
+DOMAIN_TO_ENDPOINT = {"com": "api.latoken"}
 
 # Base URL
 REST_URL = "https://{}.{}"
@@ -90,15 +90,5 @@ TRADE_EVENT_TYPE = "trade"
 GLOBAL_RATE_LIMIT = "global"  # TODO this needs some review
 
 RATE_LIMITS = [
-    # Pools
     RateLimit(limit_id=GLOBAL_RATE_LIMIT, limit=MAX_ALLOWED_TPS, time_interval=ONE_SECOND),
-    # RateLimit(limit_id=ACCOUNT, limit=5, time_interval=ONE_SECOND),
-    # RateLimit(limit_id=TIME, limit=5, time_interval=ONE_SECOND),
-    # RateLimit(limit_id=TICKER_PATH_URL, limit=5, time_interval=ONE_SECOND),
-
-    # # Weighted Limits
-    # RateLimit(limit_id=TICKER_PRICE_CHANGE_PATH_URL, limit=MAX_REQUEST, time_interval=ONE_MINUTE,
-    #           linked_limits=[LinkedLimitWeightPair(REQUEST_WEIGHT, 40)]),
-    # RateLimit(limit_id=EXCHANGE_INFO_PATH_URL, limit=MAX_REQUEST, time_interval=ONE_MINUTE,
-    #           linked_limits=[(LinkedLimitWeightPair(REQUEST_WEIGHT, 10))]),
 ]

@@ -39,7 +39,7 @@ class LatokenAPIOrderBookDataSourceUnitTests(unittest.TestCase):
         cls.quote_asset = "0c3a106d-bde3-4c13-a26e-3fd2394529e5"
         cls.trading_pair = "ETH-USDT"
         # cls.ex_trading_pair = cls.base_asset + cls.quote_asset
-        cls.domain = "tech"
+        cls.domain = "com"
 
     def setUp(self) -> None:
         super().setUp()
