@@ -80,7 +80,7 @@ class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
                 self._manage_listen_key_task = safe_ensure_future(self._manage_listen_key_task_loop())
                 await self._listen_key_initialized_event.wait()
 
-                client: WSAssistant = await self._get_ws_assistant()
+                client: WSAssistant = await self._api_factory.get_ws_assistant()
                 await client.connect(
                     ws_url=latoken_utils.ws_url(self._domain),
                     ping_timeout=CONSTANTS.WS_HEARTBEAT_TIME_INTERVAL)
@@ -136,7 +136,7 @@ class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
         url = latoken_utils.private_rest_url(path_url=CONSTANTS.USER_ID_PATH_URL, domain=self._domain)
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         request = RESTRequest(method=RESTMethod.GET, url=url, headers=headers, is_auth_required=True)
-        client = await self._get_rest_assistant()
+        client = await self._api_factory.get_rest_assistant()
         # async with self._throttler.execute_task(limit_id=CONSTANTS.LATOKEN_USER_STREAM_PATH_URL):
         async with self._throttler.execute_task(limit_id=CONSTANTS.GLOBAL_RATE_LIMIT):
             response: RESTResponse = await client.call(request)
@@ -149,7 +149,7 @@ class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
     async def _ping_listen_key(self) -> bool:  # possibly can be skipped
         url = latoken_utils.private_rest_url(path_url=CONSTANTS.USER_ID_PATH_URL, domain=self._domain)
         request = RESTRequest(method=RESTMethod.GET, url=url, is_auth_required=True)
-        rest_assistant = await self._get_rest_assistant()
+        rest_assistant = await self._api_factory.get_rest_assistant()
         async with self._throttler.execute_task(limit_id=CONSTANTS.GLOBAL_RATE_LIMIT):
             response: RESTResponse = await rest_assistant.call(request=request)
             data: Dict[str, str] = await response.json()
@@ -182,11 +182,11 @@ class LatokenAPIUserStreamDataSource(UserStreamTrackerDataSource):
             self._current_listen_key = None
             self._listen_key_initialized_event.clear()
 
-    async def _get_rest_assistant(self) -> RESTAssistant:
-        if self._rest_assistant is None:
-            self._rest_assistant = await self._api_factory.get_rest_assistant()
-        return self._rest_assistant
-
+    # async def _get_rest_assistant(self) -> RESTAssistant:
+    #     if self._rest_assistant is None:
+    #         self._rest_assistant = await self._api_factory.get_rest_assistant()
+    #     return self._rest_assistant
+    #
     async def _get_ws_assistant(self) -> WSAssistant:
         if self._ws_assistant is None:
             self._ws_assistant = await self._api_factory.get_ws_assistant()
