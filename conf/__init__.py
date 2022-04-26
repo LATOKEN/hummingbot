@@ -42,10 +42,6 @@ mock_api_enabled = os.getenv("MOCK_API_ENABLED")
 for key in connector_keys().keys():
     locals()[key] = os.getenv(key.upper())
 
-# Ed R dev stand API keys
-# latoken_api_key = '8a8b913f-b124-4d1a-819b-298aaef60242'
-# latoken_secret_key = 'YTFlZjRjMzgtMGUxZS00MDc5LWJhYzgtMWI3ZmU4NTAzZTUx'
-# Stas S dev stand API keys
 latoken_api_key = 'b71d0424-5168-4cdf-9748-0d6236d8bb8d'
 latoken_secret_key = 'YTU2ZGM3MDktMjQxYy00NDIxLWEwNDQtMGY0YzM0YTM4YmJk'
 
@@ -82,16 +78,16 @@ loopring_private_key = os.getenv("LOOPRING_PRIVATE_KEY")
 bittrex_api_key = os.getenv("BITTREX_API_KEY")
 bittrex_secret_key = os.getenv("BITTREX_SECRET_KEY")
 
-# Latoken Tests
-latoken_api_key = os.getenv("LATOKEN_API_KEY")
-latoken_secret_key = os.getenv("LATOKEN_SECRET_KEY")
-
 # KuCoin Tests
 kucoin_api_key = os.getenv("KUCOIN_API_KEY")
 kucoin_secret_key = os.getenv("KUCOIN_SECRET_KEY")
 kucoin_passphrase = os.getenv("KUCOIN_PASSPHRASE")
 
 test_web3_provider_list = [os.getenv("WEB3_PROVIDER")]
+
+# Latoken Tests
+latoken_api_key = os.getenv("LATOKEN_API_KEY")
+latoken_secret_key = os.getenv("LATOKEN_SECRET_KEY")
 
 # Liquid Tests
 liquid_api_key = os.getenv("LIQUID_API_KEY")
@@ -135,6 +131,10 @@ wazirx_secret_key = os.getenv("WAZIRX_SECRET_KEY")
 # AltMarkets.io Test
 altmarkets_api_key = os.getenv("ALTMARKETS_API_KEY")
 altmarkets_secret_key = os.getenv("ALTMARKETS_SECRET_KEY")
+
+# CoinFLEX Test
+coinflex_api_key = os.getenv("COINFLEX_API_KEY")
+coinflex_api_secret = os.getenv("COINFLEX_API_SECRET")
 
 # Wallet Tests
 test_erc20_token_address = os.getenv("TEST_ERC20_TOKEN_ADDRESS")

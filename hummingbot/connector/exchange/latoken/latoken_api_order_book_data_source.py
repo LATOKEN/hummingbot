@@ -343,7 +343,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         client: WSAssistant = None
         while True:
             try:
-                client: WSAssistant = await self._get_ws_assistant()
+                client: WSAssistant = await self._api_factory.get_ws_assistant()
                 await client.connect(ws_url=ws_url(self._domain), ping_timeout=CONSTANTS.WS_HEARTBEAT_TIME_INTERVAL)
 
                 msg_out = stomper.Frame()
@@ -391,7 +391,7 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         :param limit: the depth of the order book to retrieve
         :return: the response from the exchange (JSON dictionary)
         """
-        rest_assistant = await self._get_rest_assistant()
+        rest_assistant = await self._api_factory.get_rest_assistant()
         params = {}
 
         if limit != 0:
@@ -520,13 +520,3 @@ class LatokenAPIOrderBookDataSource(OrderBookTrackerDataSource):
         for pair in filter(is_exchange_information_valid, full_mapping):
             mapping[f"{pair['id']['baseCurrency']}/{pair['id']['quoteCurrency']}"] = pair["id"]["symbol"].replace('/', '-')
         cls._trading_pair_symbol_map[domain] = mapping  # TODO add uuid-to-asset map for streaming updates of balances
-
-    async def _get_rest_assistant(self) -> RESTAssistant:
-        if self._rest_assistant is None:
-            self._rest_assistant = await self._api_factory.get_rest_assistant()
-        return self._rest_assistant
-
-    async def _get_ws_assistant(self) -> WSAssistant:
-        if self._ws_assistant is None:
-            self._ws_assistant = await self._api_factory.get_ws_assistant()
-        return self._ws_assistant

@@ -20,10 +20,9 @@ class LatokenUserStreamTracker(UserStreamTracker):
 
     def __init__(self, auth: LatokenAuth, data_source: Optional[UserStreamTrackerDataSource],
                  domain: str = "com", throttler: Optional[AsyncThrottler] = None):
-        super().__init__()
+        super().__init__(data_source)
         self._auth: LatokenAuth = auth
         self._ev_loop: asyncio.events.AbstractEventLoop = asyncio.get_event_loop()
-        self._data_source: Optional[UserStreamTrackerDataSource] = data_source
         self._user_stream_tracking_task: Optional[asyncio.Task] = None
         self._domain = domain
         self._throttler = throttler

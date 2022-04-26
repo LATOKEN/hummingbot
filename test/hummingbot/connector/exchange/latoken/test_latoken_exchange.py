@@ -1343,7 +1343,6 @@ class LatokenExchangeTests(TestCase):
         self.assertEqual(order.client_order_id, buy_event.order_id)
         self.assertEqual(order.base_asset, buy_event.base_asset)
         self.assertEqual(order.quote_asset, buy_event.quote_asset)
-        self.assertEqual(quote, buy_event.fee_asset)
         self.assertEqual(order.amount, buy_event.base_asset_amount)
         self.assertEqual(Decimal(delta_filled) * Decimal(price), buy_event.quote_asset_amount)
         self.assertEqual(order.order_type, buy_event.order_type)

@@ -34,6 +34,8 @@ from hummingbot.core.data_type.cancellation_result import CancellationResult
 from hummingbot.core.data_type.in_flight_order import InFlightOrder, OrderUpdate, OrderState, TradeUpdate
 from hummingbot.core.data_type.limit_order import LimitOrder
 from hummingbot.core.data_type.order_book import OrderBook
+
+from hummingbot.core.data_type.order_book_tracker import OrderBookTracker
 from hummingbot.core.data_type.trade_fee import (
     AddedToCostTradeFee,
     DeductedFromReturnsTradeFee,
@@ -88,11 +90,21 @@ class LatokenExchange(ExchangeBase):
         self._api_factory = LatokenWebAssistantsFactory(auth=self._auth)
         self._rest_assistant = None
         self._throttler = AsyncThrottler(CONSTANTS.RATE_LIMITS)
-        self._order_book_tracker = LatokenOrderBookTracker(
+
+        self._order_book_tracker = OrderBookTracker(
+            data_source=LatokenAPIOrderBookDataSource(
+                trading_pairs=trading_pairs,
+                domain=self._domain,
+                api_factory=self._api_factory,
+                throttler=self._throttler),
             trading_pairs=trading_pairs,
-            domain=domain,
-            api_factory=self._api_factory,
-            throttler=self._throttler)
+            domain=self._domain)
+
+        # self._order_book_tracker = LatokenOrderBookTracker(
+        #     trading_pairs=trading_pairs,
+        #     domain=domain,
+        #     api_factory=self._api_factory,
+        #     throttler=self._throttler)
         data_source = LatokenAPIUserStreamDataSource(
             auth=self._auth, domain=self._domain, api_factory=self._api_factory, throttler=self._throttler)
         self._user_stream_tracker = LatokenUserStreamTracker(
