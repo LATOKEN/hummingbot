@@ -51,5 +51,6 @@ git clone --branch TRD-3815-latoken-into-hummingbot-integration https://gitlab.n
 export hummingbotPath="$(pwd)/humming-bot" && cd $hummingbotPath && ./clean && ./install
 # Activate environment and compile code
 conda activate hummingbot && ./compile
+# now there should be a venv in miniconda3/env folder called hummingbot (without -, so not humming-bot which you need to select in PyCharm)
 # Start Hummingbot
 winpty python bin/hummingbot.py

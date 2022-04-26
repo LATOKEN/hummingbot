@@ -57,8 +57,10 @@ class SQLConnectionManager:
     def create_db_path(cls, db_path: Optional[str] = None, db_name: Optional[str] = None) -> str:
         if db_path is not None:
             return db_path
-
-        return join(data_path(), f"{db_name}.sqlite" if db_name is not None else "hummingbot_trades.sqlite")
+        if db_name is not None:
+            return join(data_path(), f"{db_name}.sqlite")
+        else:
+            return join(data_path(), "hummingbot_trades.sqlite")
 
     @classmethod
     def get_db_engine(cls,
@@ -85,7 +87,7 @@ class SQLConnectionManager:
                  connection_type: SQLConnectionType,
                  db_path: Optional[str] = None,
                  db_name: Optional[str] = None,
-                 called_from_migrator=False):
+                 called_from_migrator = False):
         db_path = self.create_db_path(db_path, db_name)
         self.db_path = db_path
 
