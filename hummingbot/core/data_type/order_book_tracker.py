@@ -1,28 +1,30 @@
-#!/usr/bin/env python
 import asyncio
+import logging
+import re
+import time
 from abc import ABC
 from collections import deque
 from enum import Enum
-import logging
-import pandas as pd
-from decimal import Decimal
-import re
 from typing import (
-    Dict,
     Deque,
+    Dict,
+    List,
     Optional,
     Tuple,
-    List)
-import time
-from hummingbot.core.event.events import OrderBookTradeEvent, TradeType
-from hummingbot.logger import HummingbotLogger
-from hummingbot.core.data_type.order_book import OrderBook
-from hummingbot.core.utils.async_utils import safe_ensure_future
-from .order_book_message import (
-    OrderBookMessageType,
-    OrderBookMessage,
 )
+
+import pandas as pd
+
+from hummingbot.core.data_type.common import TradeType
+from hummingbot.core.data_type.order_book import OrderBook
 from hummingbot.core.data_type.order_book_tracker_data_source import OrderBookTrackerDataSource
+from hummingbot.core.event.events import OrderBookTradeEvent
+from hummingbot.core.utils.async_utils import safe_ensure_future
+from hummingbot.logger import HummingbotLogger
+from .order_book_message import (
+    OrderBookMessage,
+    OrderBookMessageType,
+)
 
 TRADING_PAIR_FILTER = re.compile(r"(BTC|ETH|USDT)$")
 
@@ -297,8 +299,8 @@ class OrderBookTracker(ABC):
                 order_book.apply_trade(OrderBookTradeEvent(
                     trading_pair=trade_message.trading_pair,
                     timestamp=trade_message.timestamp,
-                    price=Decimal(trade_message.content["price"]),
-                    amount=Decimal(trade_message.content["amount"]),
+                    price=float(trade_message.content["price"]),
+                    amount=float(trade_message.content["amount"]),
                     type=TradeType.SELL if
                     trade_message.content["trade_type"] == float(TradeType.SELL.value) else TradeType.BUY
                 ))

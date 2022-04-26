@@ -299,12 +299,13 @@ class LatokenExchange(ExchangeBase):
         self._order_tracker.start_tracking_order(
             InFlightOrder(
                 client_order_id=order_id,
-                exchange_order_id=exchange_order_id,
                 trading_pair=trading_pair,
                 order_type=order_type,
                 trade_type=trade_type,
                 amount=amount,
                 price=price,
+                exchange_order_id=exchange_order_id,
+                creation_timestamp=self.current_timestamp
             )
         )
 
@@ -512,7 +513,7 @@ class LatokenExchange(ExchangeBase):
             order_update: OrderUpdate = OrderUpdate(
                 client_order_id=order_id,
                 trading_pair=trading_pair,
-                update_timestamp=int(self.current_timestamp * 1e3),
+                update_timestamp=self.current_timestamp,
                 new_state=OrderState.FAILED,
             )
             self._order_tracker.process_order_update(order_update)
@@ -554,12 +555,11 @@ class LatokenExchange(ExchangeBase):
                 exchange_order_id = str(order_result["id"])
 
                 order_update: OrderUpdate = OrderUpdate(
-                    client_order_id=order_id,
-                    exchange_order_id=exchange_order_id,
                     trading_pair=trading_pair,
-                    update_timestamp=int(self.current_timestamp * 1e3),
-                    # TODO Latoken does not return exchange update time?
+                    update_timestamp=self.current_timestamp,
                     new_state=OrderState.OPEN,
+                    client_order_id=order_id,
+                    exchange_order_id=exchange_order_id,  # TODO Latoken does not return exchange update time?
                 )
                 self._order_tracker.process_order_update(order_update)
             else:
@@ -577,7 +577,7 @@ class LatokenExchange(ExchangeBase):
             order_update: OrderUpdate = OrderUpdate(
                 client_order_id=order_id,
                 trading_pair=trading_pair,
-                update_timestamp=int(self.current_timestamp * 1e3),
+                update_timestamp=self.current_timestamp,
                 new_state=OrderState.FAILED,
             )
             self._order_tracker.process_order_update(order_update)
@@ -607,13 +607,10 @@ class LatokenExchange(ExchangeBase):
                         self.logger().warning("Cancellation of order sent outside a started live trading strategy")
                         await asyncio.sleep(1.0)
 
-                    order_update_timestamp = self.current_timestamp
-                    update_timestamp = int(order_update_timestamp * 1e3)
-
                     order_update: OrderUpdate = OrderUpdate(
                         client_order_id=order_id,
                         trading_pair=tracked_order.trading_pair,
-                        update_timestamp=update_timestamp,
+                        update_timestamp=self.current_timestamp,
                         new_state=OrderState.CANCELLED,
                     )
 
@@ -819,7 +816,7 @@ class LatokenExchange(ExchangeBase):
         if state is None:
             return
 
-        timestamp = order["timestamp"]
+        timestamp = float(order["timestamp"]) * 1e-3
 
         if state == OrderState.FILLED or state == OrderState.PARTIALLY_FILLED:
             tracked_order = self._order_tracker.fetch_order(client_order_id=client_order_id)
@@ -827,17 +824,22 @@ class LatokenExchange(ExchangeBase):
             if tracked_order is not None:
                 '''something unique is put in trade update -> trade_id, the order doesn't have anything unique,
                 the id of order contains the exchange id previously assigned by Latoken'''
+                spot_fee = TradeFeeBase.new_spot_fee(
+                    fee_schema=self.trade_fee_schema(),
+                    trade_type=tracked_order.trade_type,
+                    percent_token=tracked_order.quote_asset,
+                    flat_fees=[TokenAmount(amount=Decimal(order.get("fee", 0)), token=tracked_order.quote_asset)]
+                )
                 trade_update = TradeUpdate(
                     trade_id=f"WS_{timestamp}_{tracked_order.trading_pair}_{uuid.uuid4()}",
                     client_order_id=client_order_id,
                     exchange_order_id=order["id"],
                     trading_pair=tracked_order.trading_pair,
-                    fill_timestamp=int(timestamp),
+                    fill_timestamp=timestamp,
                     fill_price=price,
                     fill_base_amount=delta_filled,
                     fill_quote_amount=price * delta_filled,
-                    fee_asset=tracked_order.quote_asset,
-                    fee_paid=Decimal(order.get("fee", 0)),  # TODO review
+                    fee=spot_fee,
                 )
                 self._order_tracker.process_trade_update(trade_update)
 
@@ -929,16 +931,24 @@ class LatokenExchange(ExchangeBase):
 
                     tracked_order = order_by_exchange_id_map.get(exchange_order_id, None)
                     if tracked_order is not None:
+                        spot_fee = TradeFeeBase.new_spot_fee(
+                            fee_schema=self.trade_fee_schema(),
+                            trade_type=tracked_order.trade_type,
+                            percent_token=tracked_order.quote_asset,
+                            flat_fees=[
+                                TokenAmount(amount=Decimal(fee), token=tracked_order.quote_asset)]
+                        )
                         # This is a fill for a tracked order
                         trade_update = TradeUpdate(
                             trade_id=f"REST_{timestamp}_{tracked_order.trading_pair}_{uuid.uuid4()}",
                             client_order_id=tracked_order.client_order_id,
                             exchange_order_id=exchange_order_id,
                             trading_pair=trading_pair,
-                            fee_asset=tracked_order.quote_asset,
+                            # fee_asset=tracked_order.quote_asset,
                             fill_base_amount=quantity,
                             fill_quote_amount=Decimal(trade["cost"]),
-                            fee_paid=fee,
+                            # fee_paid=fee,
+                            fee=spot_fee,
                             fill_price=price,
                             fill_timestamp=int(timestamp),
                         )
@@ -1008,7 +1018,7 @@ class LatokenExchange(ExchangeBase):
                     order_update: OrderUpdate = OrderUpdate(
                         client_order_id=client_order_id,
                         trading_pair=tracked_order.trading_pair,
-                        update_timestamp=int(self.current_timestamp * 1e3),
+                        update_timestamp=self.current_timestamp,
                         new_state=OrderState.FAILED,
                     )
                     self._order_tracker.process_order_update(order_update)
@@ -1024,7 +1034,7 @@ class LatokenExchange(ExchangeBase):
                     client_order_id=client_order_id,
                     exchange_order_id=order_update["id"],
                     trading_pair=tracked_order.trading_pair,
-                    update_timestamp=int(order_update["timestamp"]),
+                    update_timestamp=float(order_update["timestamp"]) * 1e-3,
                     new_state=new_state,
                 )
                 self._order_tracker.process_order_update(update)

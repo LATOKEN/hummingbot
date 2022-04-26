@@ -35,6 +35,7 @@ USER_ID_PATH_URL = "/auth/user"  # https://api.latoken.com/doc/ws/#section/Accou
 FEES_PATH_URL = "/auth/trade/fee"
 
 WS_HEARTBEAT_TIME_INTERVAL = 30
+MAX_ALLOWED_TPS = 100
 #
 # Latoken params
 
@@ -90,7 +91,7 @@ GLOBAL_RATE_LIMIT = "global"  # TODO this needs some review
 
 RATE_LIMITS = [
     # Pools
-    RateLimit(limit_id=GLOBAL_RATE_LIMIT, limit=100, time_interval=ONE_SECOND),
+    RateLimit(limit_id=GLOBAL_RATE_LIMIT, limit=MAX_ALLOWED_TPS, time_interval=ONE_SECOND),
     # RateLimit(limit_id=ACCOUNT, limit=5, time_interval=ONE_SECOND),
     # RateLimit(limit_id=TIME, limit=5, time_interval=ONE_SECOND),
     # RateLimit(limit_id=TICKER_PATH_URL, limit=5, time_interval=ONE_SECOND),
