@@ -8,18 +8,9 @@ from typing import (
     Tuple,
 )
 import warnings
-import logging
-pmm_logger = None
 
 
 cdef class TradingIntensityIndicator():
-
-    @classmethod
-    def logger(cls):
-        global pmm_logger
-        if pmm_logger is None:
-            pmm_logger = logging.getLogger(__name__)
-        return pmm_logger
 
     def __init__(self, sampling_length: int = 30):
         self._alpha = 0
@@ -31,7 +22,6 @@ cdef class TradingIntensityIndicator():
         self._samples_length = 0
 
         warnings.simplefilter("ignore", OptimizeWarning)
-
 
     def _simulate_execution(self, bids_df, asks_df):
         self.c_simulate_execution(bids_df, asks_df)
@@ -67,13 +57,14 @@ cdef class TradingIntensityIndicator():
         # Higher bids were filled - someone matched them - a determined seller
         # Equal bids - if amount lower - partially filled
         for index, row in _bids_df[_bids_df['price'] >= bid].iterrows():
-            amount, price, price_level = row['amount'], row['price'], abs(price - price_prev)
-            if price == bid:
-                first_bid_amount = bids_df["amount"].iloc[0]
-                if first_bid_amount < amount:
-                    new_amount = amount - first_bid_amount
-                    trades += [{'price_level': price_level, 'amount': new_amount}]
+            if row['price'] == bid:
+                if bids_df["amount"].iloc[0] < row['amount']:
+                    amount = row['amount'] - bids_df["amount"].iloc[0]
+                    price_level = abs(row['price'] - price_prev)
+                    trades += [{'price_level': price_level, 'amount': amount}]
             else:
+                amount = row['amount']
+                price_level = abs(row['price'] - price_prev)
                 trades += [{'price_level': price_level, 'amount': amount}]
 
         # Lower asks were filled - someone matched them - a determined buyer
@@ -90,7 +81,6 @@ cdef class TradingIntensityIndicator():
                 trades += [{'price_level': price_level, 'amount': amount}]
 
         # Add trades
-        self.logger().warning(f"DEBUG 3 - TRADES: {trades}")
         self._trades += [trades]
         if len(self._trades) > _sampling_length:
             self._trades = self._trades[1:]
@@ -119,71 +109,47 @@ cdef class TradingIntensityIndicator():
 
         price_levels = sorted(price_levels, reverse=True)
 
-        for price_level in price_levels:  # TODO looks like redundant if statement
-            if len(lambdas) == 0:
-                lambdas += [trades_consolidated[price_level]]
-            else:
-                lambdas += [trades_consolidated[price_level]]
+        for price_level in price_levels:
+            lambdas += [trades_consolidated[price_level]]
 
         # Adjust to be able to calculate log
         lambdas_adj = [10**-10 if x==0 else x for x in lambdas]
 
         # Fit the probability density function; reuse previously calculated parameters as initial values
         try:
-            self.logger().warning(f"c_estimate_intensity:: DEBUG 5.0.1 price_levels={price_levels} lambdas_adj={lambdas_adj}")
             params = curve_fit(lambda t, a, b: a*np.exp(-b*t),
                                price_levels,
                                lambdas_adj,
                                p0=(self._alpha, self._kappa),
                                method='dogbox',
                                bounds=([0, 0], [np.inf, np.inf]))
-            self.logger().warning(f"c_estimate_intensity:: DEBUG 5.0.2 params=\n{params}")
+
             self._kappa = Decimal(str(params[0][1]))
             self._alpha = Decimal(str(params[0][0]))
         except (RuntimeError, ValueError) as e:
-            self.logger().warning(f"c_estimate_intensity:: DEBUG 5.2 kappa={self._kappa} alpha={self._alpha}")
             pass
-        finally:
-            self._kappa = Decimal(0.3)  # TODO HACK
-            self._alpha = Decimal(1.5)
-            self.logger().warning(f"c_estimate_intensity:: DEBUG 5.3 kappa={self._kappa} alpha={self._alpha} ")
-
-
-    def get_trades(self):
-        return self._trades
 
     def add_sample(self, value: Tuple[pd.DataFrame, pd.DataFrame]):
         bids_df = value[0]
         asks_df = value[1]
 
-        self.logger().warning(f"add_sample:: DEBUG 0- \nBIDS \n{bids_df} \n\n BIDS_OLD {self._bids_df}")
-        self.logger().warning(f"-")
-        self.logger().warning(f"add_sample:: DEBUG 0 - \nASKS \n{asks_df} \n\n ASKS_OLD {self._asks_df}")
-
-        self.logger().warning(f"add_sample:: DEBUG 1 ")
         if bids_df.empty or asks_df.empty:
             return
 
-        self.logger().warning(f"add_sample:: DEBUG 2 ")
         # Skip snapshots where no trades occured
         if self._bids_df is not None and self._bids_df.equals(bids_df):
             return
 
-        self.logger().warning(f"add_sample:: DEBUG 3 ")
         if self._asks_df is not None and self._asks_df.equals(asks_df):
             return
 
-        self.logger().warning(f"add_sample:: DEBUG 4")
         if self._bids_df is not None and self._asks_df is not None:
             # Retrieve previous order book, evaluate execution
-            self.logger().warning(f"add_sample:: DEBUG 4.0")
             self.c_simulate_execution(bids_df, asks_df)
 
             if self.is_sampling_buffer_full:
-                self.logger().warning(f"add_sample:: DEBUG 4.1 - \nBIDS {bids_df} \n\nASKS {asks_df}")
                 # Estimate alpha and kappa
                 self.c_estimate_intensity()
-                self.logger().warning(f"add_sample:: DEBUG 4.2 - alpha {self._alpha} kappa {self._kappa}")
 
         # Store the orderbook
         self._bids_df = bids_df
