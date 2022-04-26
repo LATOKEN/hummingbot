@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
 from datetime import time
-from typing import Union
+from typing import (
+    Union,
+)
 
 from hummingbot.strategy.strategy_base import StrategyBase
 
@@ -33,7 +35,7 @@ class ConditionalExecutionState(ABC):
         self._closing_time = value
 
     @abstractmethod
-    def process_tick(self, timestamp: float, strategy: StrategyBase):
+    def process_tick(self, strategy: StrategyBase):
         pass
 
 
@@ -76,57 +78,44 @@ class RunInTimeConditionalExecutionState(ConditionalExecutionState):
                 return f"run daily between {self._start_timestamp} and {self._end_timestamp}"
 
     def process_tick(self, timestamp: float, strategy: StrategyBase):
-        strategy.logger().debug("conditional_execution_state.process_tick : DEBUG 1.0")
         if isinstance(self._start_timestamp, datetime):
             # From datetime
             # From datetime to datetime
             if self._end_timestamp is not None:
+
                 self._closing_time = (self._end_timestamp.timestamp() - self._start_timestamp.timestamp()) * 1000
-                strategy.logger().debug("conditional_execution_state.process_tick : DEBUG 1.1 : _end_timestamp={_end_timestamp}, _closing_time={_closing_time}")
 
                 if self._start_timestamp.timestamp() <= timestamp < self._end_timestamp.timestamp():
                     self._time_left = max((self._end_timestamp.timestamp() - timestamp) * 1000, 0)
-                    strategy.logger().debug("conditional_execution_state.process_tick : DEBUG 1.2 : _time_left={_time_left}")
                     strategy.process_tick(timestamp)
                 else:
                     self._time_left = 0
                     strategy.cancel_active_orders()
-                    strategy.logger().debug("conditional_execution_state.process_tick : DEBUG 1.3 : strategy.cancel_active_orders()")
                     strategy.logger().debug("Time span execution: tick will not be processed "
                                             f"(executing between {self._start_timestamp.isoformat(sep=' ')} "
                                             f"and {self._end_timestamp.isoformat(sep=' ')})")
             else:
                 self._closing_time = None
                 self._time_left = None
-                strategy.logger().debug("conditional_execution_state.process_tick : DEBUG 2.1 : _end_timestamp={_end_timestamp}, _closing_time={_closing_time}")
                 if self._start_timestamp.timestamp() <= timestamp:
-                    strategy.logger().debug("conditional_execution_state.process_tick : DEBUG 2.2 : _start_timestamp={_start_timestamp}, timestamp={timestamp}, starting strategy.process_tick()")
                     strategy.process_tick(timestamp)
-                    strategy.logger().debug("conditional_execution_state.process_tick : DEBUG 2.3 : finished strategy.process_tick()")
                 else:
-                    strategy.logger().debug("conditional_execution_state.process_tick : DEBUG 3.1 : starting strategy.cancel_active_orders()")
                     strategy.cancel_active_orders()
-                    strategy.logger().debug("conditional_execution_state.process_tick : DEBUG 3.2 : finished stratgy.cancel_active_orders()")
                     strategy.logger().debug("Delayed start execution: tick will not be processed "
                                             f"(executing from {self._start_timestamp.isoformat(sep=' ')})")
         if isinstance(self._start_timestamp, time):
             # Daily between times
             if self._end_timestamp is not None:
-                strategy.logger().debug("conditional_execution_state.process_tick : DEBUG 4.0 : _end_timestamp={_end_timestamp}")
 
                 self._closing_time = (datetime.combine(datetime.today(), self._end_timestamp) - datetime.combine(datetime.today(), self._start_timestamp)).total_seconds() * 1000
                 current_time = datetime.fromtimestamp(timestamp).time()
 
                 if self._start_timestamp <= current_time < self._end_timestamp:
                     self._time_left = max((datetime.combine(datetime.today(), self._end_timestamp) - datetime.combine(datetime.today(), current_time)).total_seconds() * 1000, 0)
-                    strategy.logger().debug("conditional_execution_state.process_tick : DEBUG 4.1 : _time_left={self._time_left}, timestamp={timestamp}, starting strategy.process_tick")
                     strategy.process_tick(timestamp)
-                    strategy.logger().debug("conditional_execution_state.process_tick : DEBUG 4.2 : finished strategy.process_tick")
                 else:
                     self._time_left = 0
-                    strategy.logger().debug("conditional_execution_state.process_tick : DEBUG 5.1 : _time={self._time}, starting strategy.cancel_active_orders()")
                     strategy.cancel_active_orders()
-                    strategy.logger().debug("conditional_execution_state.process_tick : DEBUG 5.2 : finishing strategy.cancel_active_orders()")
                     strategy.logger().debug("Time span execution: tick will not be processed "
                                             f"(executing between {self._start_timestamp} "
                                             f"and {self._end_timestamp})")
